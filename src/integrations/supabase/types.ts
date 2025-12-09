@@ -14,30 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      meeting_participants: {
         Row: {
           created_at: string
-          email: string
           id: string
-          name: string
-          updated_at: string
+          meeting_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          email: string
           id?: string
-          name: string
-          updated_at?: string
+          meeting_id: string
           user_id: string
         }
         Update: {
           created_at?: string
+          id?: string
+          meeting_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          end_time: string | null
+          id: string
+          meeting_date: string
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          meeting_date: string
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          meeting_date?: string
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          additional_info: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          position: Database["public"]["Enums"]["user_position"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_info?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          position?: Database["public"]["Enums"]["user_position"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_info?: string | null
+          created_at?: string
           email?: string
           id?: string
           name?: string
+          phone?: string | null
+          position?: Database["public"]["Enums"]["user_position"] | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      task_assignees: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_attachments: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          task_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          task_id: string
+          uploaded_by: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          task_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          created_by: string
+          deadline: string | null
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -49,7 +271,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      task_status: "todo" | "in_progress" | "review" | "done"
+      user_position:
+        | "director"
+        | "manager"
+        | "developer"
+        | "designer"
+        | "analyst"
+        | "accountant"
+        | "hr"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +407,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      task_status: ["todo", "in_progress", "review", "done"],
+      user_position: [
+        "director",
+        "manager",
+        "developer",
+        "designer",
+        "analyst",
+        "accountant",
+        "hr",
+        "other",
+      ],
+    },
   },
 } as const
