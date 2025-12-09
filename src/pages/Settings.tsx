@@ -1,0 +1,153 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { UserPosition, POSITION_LABELS } from '@/types/database';
+
+const Settings = () => {
+  const { profile, refetchProfile } = useAuth();
+  const [name, setName] = useState(profile?.name || '');
+  const [phone, setPhone] = useState(profile?.phone || '');
+  const [position, setPosition] = useState<UserPosition | ''>(profile?.position || '');
+  const [additionalInfo, setAdditionalInfo] = useState(profile?.additional_info || '');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async () => {
+    if (!profile || !name.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name,
+          phone: phone || null,
+          position: position || null,
+          additional_info: additionalInfo || null,
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Настройки сохранены' });
+      refetchProfile();
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast({ title: 'Ошибка при сохранении', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initials = profile?.name
+    ? profile.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'U';
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Настройки</h1>
+        <p className="text-muted-foreground">Управление профилем и настройками аккаунта</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Профиль
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium text-lg">{profile?.name || 'Пользователь'}</h3>
+              <p className="text-sm text-muted-foreground">{profile?.email}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">ФИО *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Введите ваше имя"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Телефон</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+7 (999) 123-45-67"
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Должность</Label>
+              <Select value={position} onValueChange={(v) => setPosition(v as UserPosition)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите должность" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(POSITION_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="additionalInfo">Дополнительная информация</Label>
+              <Textarea
+                id="additionalInfo"
+                value={additionalInfo}
+                onChange={(e) => setAdditionalInfo(e.target.value)}
+                rows={4}
+                placeholder="Любая дополнительная информация о вас..."
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={loading || !name.trim()}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Сохранить изменения
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Settings;
