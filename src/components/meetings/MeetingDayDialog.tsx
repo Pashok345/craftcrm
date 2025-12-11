@@ -1,0 +1,199 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Clock, Users, ChevronRight } from 'lucide-react';
+import { format, isSameDay } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { Meeting, Profile } from '@/types/database';
+import { MeetingDialog } from './MeetingDialog';
+import { MeetingDetailDialog } from './MeetingDetailDialog';
+
+interface MeetingWithParticipants extends Meeting {
+  participants?: Profile[];
+}
+
+interface MeetingDayDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedDate: Date | null;
+  onSuccess: () => void;
+}
+
+export const MeetingDayDialog = ({
+  open,
+  onOpenChange,
+  selectedDate,
+  onSuccess,
+}: MeetingDayDialogProps) => {
+  const [meetings, setMeetings] = useState<MeetingWithParticipants[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingWithParticipants | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && selectedDate) {
+      fetchMeetingsForDay();
+    }
+  }, [open, selectedDate]);
+
+  const fetchMeetingsForDay = async () => {
+    if (!selectedDate) return;
+    setLoading(true);
+    try {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      
+      const { data: meetingsData, error } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('meeting_date', dateStr)
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+
+      // Fetch participants for each meeting
+      const meetingsWithParticipants = await Promise.all(
+        (meetingsData || []).map(async (meeting) => {
+          const { data: participantsData } = await supabase
+            .from('meeting_participants')
+            .select('user_id')
+            .eq('meeting_id', meeting.id);
+
+          if (participantsData && participantsData.length > 0) {
+            const userIds = participantsData.map((p) => p.user_id);
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('*')
+              .in('user_id', userIds);
+
+            return { ...meeting, participants: profiles as Profile[] };
+          }
+          return { ...meeting, participants: [] };
+        })
+      );
+
+      setMeetings(meetingsWithParticipants as MeetingWithParticipants[]);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMeetingClick = (meeting: MeetingWithParticipants) => {
+    setSelectedMeeting(meeting);
+    setDetailDialogOpen(true);
+  };
+
+  const handleCreateSuccess = () => {
+    fetchMeetingsForDay();
+    onSuccess();
+  };
+
+  const handleDetailClose = () => {
+    setDetailDialogOpen(false);
+    setSelectedMeeting(null);
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>
+                {selectedDate && format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+              </span>
+              <Button
+                size="sm"
+                onClick={() => setCreateDialogOpen(true)}
+                className="gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Добавить
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[400px]">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            ) : meetings.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Нет встреч на этот день
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {meetings.map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    onClick={() => handleMeetingClick(meeting)}
+                    className="p-3 rounded-lg border bg-card hover:bg-accent/50 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-foreground truncate">
+                          {meeting.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>
+                            {meeting.start_time.slice(0, 5)}
+                            {meeting.end_time && ` - ${meeting.end_time.slice(0, 5)}`}
+                          </span>
+                        </div>
+                        {meeting.participants && meeting.participants.length > 0 && (
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <div className="flex flex-wrap gap-1">
+                              {meeting.participants.slice(0, 3).map((p) => (
+                                <Badge key={p.user_id} variant="secondary" className="text-xs">
+                                  {p.name?.split(' ')[0] || p.email.split('@')[0]}
+                                </Badge>
+                              ))}
+                              {meeting.participants.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{meeting.participants.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      <MeetingDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        selectedDate={selectedDate}
+        onSuccess={handleCreateSuccess}
+      />
+
+      <MeetingDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={handleDetailClose}
+        meeting={selectedMeeting}
+        onSuccess={handleCreateSuccess}
+      />
+    </>
+  );
+};

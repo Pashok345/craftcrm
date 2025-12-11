@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus, Clock, Users } from 'lucide-react';
 import { Meeting, Profile } from '@/types/database';
-import { MeetingDialog } from '@/components/meetings/MeetingDialog';
+import { MeetingDayDialog } from '@/components/meetings/MeetingDayDialog';
 import {
   format,
   startOfMonth,
@@ -176,7 +176,7 @@ const Meetings = () => {
         </CardContent>
       </Card>
 
-      <MeetingDialog
+      <MeetingDayDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         selectedDate={selectedDate}
