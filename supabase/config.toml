@@ -1,1 +1,4 @@
 project_id = "iibqglmxhaiecueqbudh"
+
+[functions.send-meeting-reminders]
+verify_jwt = false
