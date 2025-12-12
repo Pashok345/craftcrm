@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Phone, Briefcase, User } from 'lucide-react';
+import { Mail, Phone, User, Plus } from 'lucide-react';
 import { Profile, POSITION_LABELS, UserPosition } from '@/types/database';
 import { UserDialog } from '@/components/users/UserDialog';
+import { AddUserDialog } from '@/components/users/AddUserDialog';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const Users = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const { isAdmin } = useUserRole();
 
   useEffect(() => {
     fetchUsers();
@@ -48,9 +53,17 @@ const Users = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Пользователи</h1>
-        <p className="text-muted-foreground">Все пользователи CRM системы</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Пользователи</h1>
+          <p className="text-muted-foreground">Все пользователи CRM системы</p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Добавить пользователя
+          </Button>
+        )}
       </div>
 
       {users.length === 0 ? (
@@ -60,7 +73,10 @@ const Users = () => {
               <User className="h-6 w-6 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">Нет пользователей</h3>
-            <p className="text-muted-foreground">Пользователи появятся после регистрации</p>
+            <p className="text-muted-foreground mb-4">Пользователи появятся после регистрации</p>
+            {isAdmin && (
+              <Button onClick={() => setAddDialogOpen(true)}>Добавить пользователя</Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -127,6 +143,12 @@ const Users = () => {
           onUpdate={fetchUsers}
         />
       )}
+
+      <AddUserDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSuccess={fetchUsers}
+      />
     </div>
   );
 };

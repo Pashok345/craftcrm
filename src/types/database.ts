@@ -2,6 +2,10 @@ export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 
 export type UserPosition = 'director' | 'manager' | 'developer' | 'designer' | 'analyst' | 'accountant' | 'hr' | 'other';
 
+export type AppRole = 'admin' | 'user';
+
+export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+
 export const POSITION_LABELS: Record<UserPosition, string> = {
   director: 'Директор',
   manager: 'Менеджер',
@@ -27,6 +31,22 @@ export const STATUS_COLORS: Record<TaskStatus, string> = {
   done: 'bg-crm-success/10 text-crm-success',
 };
 
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  planning: 'Планирование',
+  active: 'Активный',
+  on_hold: 'Приостановлен',
+  completed: 'Завершён',
+  cancelled: 'Отменён',
+};
+
+export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
+  planning: 'bg-muted text-muted-foreground',
+  active: 'bg-crm-success/10 text-crm-success',
+  on_hold: 'bg-crm-warning/10 text-crm-warning',
+  completed: 'bg-primary/10 text-primary',
+  cancelled: 'bg-destructive/10 text-destructive',
+};
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -39,12 +59,20 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: AppRole;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
   deadline?: string;
   status: TaskStatus;
+  project_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -95,4 +123,18 @@ export interface MeetingParticipant {
   meeting_id: string;
   user_id: string;
   created_at: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  status: ProjectStatus;
+  manager_id?: string;
+  budget?: number;
+  start_date?: string;
+  end_date?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }

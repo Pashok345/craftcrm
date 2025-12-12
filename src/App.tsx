@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
+import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/projects" element={<Projects />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
