@@ -25,7 +25,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { TaskStatus, STATUS_LABELS, Profile } from '@/types/database';
+import { TaskStatus, STATUS_LABELS, Profile, Project } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 
 interface TaskDialogProps {
@@ -39,7 +39,9 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState<Date>();
   const [status, setStatus] = useState<TaskStatus>('todo');
+  const [projectId, setProjectId] = useState<string>('');
   const [users, setUsers] = useState<Profile[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [executors, setExecutors] = useState<string[]>([]);
   const [observers, setObservers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,12 +51,18 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
   useEffect(() => {
     if (open) {
       fetchUsers();
+      fetchProjects();
     }
   }, [open]);
 
   const fetchUsers = async () => {
     const { data } = await supabase.from('profiles').select('*');
     if (data) setUsers(data as Profile[]);
+  };
+
+  const fetchProjects = async () => {
+    const { data } = await supabase.from('projects').select('*').order('title');
+    if (data) setProjects(data as unknown as Project[]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,6 +78,7 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
           description: description || null,
           deadline: deadline?.toISOString() || null,
           status,
+          project_id: projectId || null,
           created_by: user.id,
         })
         .select()
@@ -104,6 +113,7 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
     setDescription('');
     setDeadline(undefined);
     setStatus('todo');
+    setProjectId('');
     setExecutors([]);
     setObservers([]);
   };
@@ -165,20 +175,39 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label>Статус</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Статус</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Проект</Label>
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Без проекта" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Без проекта</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">

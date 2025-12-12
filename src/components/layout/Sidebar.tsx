@@ -4,6 +4,7 @@ import {
   CheckSquare, 
   Calendar, 
   Users,
+  Folder,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -17,6 +18,7 @@ interface SidebarProps {
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Дашборд', path: '/dashboard' },
+  { icon: Folder, label: 'Проекты', path: '/projects' },
   { icon: CheckSquare, label: 'Задачи', path: '/tasks' },
   { icon: Calendar, label: 'Встречи', path: '/meetings' },
   { icon: Users, label: 'Пользователи', path: '/users' },
