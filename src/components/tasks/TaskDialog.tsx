@@ -28,18 +28,31 @@ import { cn } from '@/lib/utils';
 import { TaskStatus, STATUS_LABELS, Profile, Project } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 
+const TASK_COLORS = [
+  { value: '#3b82f6', label: 'Синий' },
+  { value: '#22c55e', label: 'Зелёный' },
+  { value: '#eab308', label: 'Жёлтый' },
+  { value: '#f97316', label: 'Оранжевый' },
+  { value: '#ef4444', label: 'Красный' },
+  { value: '#a855f7', label: 'Фиолетовый' },
+  { value: '#ec4899', label: 'Розовый' },
+  { value: '#06b6d4', label: 'Голубой' },
+];
+
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  defaultProjectId?: string;
 }
 
-export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) => {
+export const TaskDialog = ({ open, onOpenChange, onSuccess, defaultProjectId }: TaskDialogProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState<Date>();
   const [status, setStatus] = useState<TaskStatus>('todo');
   const [projectId, setProjectId] = useState<string>('');
+  const [color, setColor] = useState('#3b82f6');
   const [users, setUsers] = useState<Profile[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [executors, setExecutors] = useState<string[]>([]);
@@ -52,8 +65,11 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
     if (open) {
       fetchUsers();
       fetchProjects();
+      if (defaultProjectId) {
+        setProjectId(defaultProjectId);
+      }
     }
-  }, [open]);
+  }, [open, defaultProjectId]);
 
   const fetchUsers = async () => {
     const { data } = await supabase.from('profiles').select('*');
@@ -79,6 +95,7 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
           deadline: deadline?.toISOString() || null,
           status,
           project_id: projectId || null,
+          color,
           created_by: user.id,
         })
         .select()
@@ -114,6 +131,7 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
     setDeadline(undefined);
     setStatus('todo');
     setProjectId('');
+    setColor('#3b82f6');
     setExecutors([]);
     setObservers([]);
   };
@@ -175,6 +193,25 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
             </Popover>
           </div>
 
+          <div className="space-y-2">
+            <Label>Цвет на диаграмме</Label>
+            <div className="flex flex-wrap gap-2">
+              {TASK_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  className={cn(
+                    'w-8 h-8 rounded-full border-2 transition-all',
+                    color === c.value ? 'border-foreground scale-110' : 'border-transparent'
+                  )}
+                  style={{ backgroundColor: c.value }}
+                  onClick={() => setColor(c.value)}
+                  title={c.label}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Статус</Label>
@@ -194,12 +231,12 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess }: TaskDialogProps) =
 
             <div className="space-y-2">
               <Label>Проект</Label>
-              <Select value={projectId} onValueChange={setProjectId}>
+              <Select value={projectId || 'none'} onValueChange={(v) => setProjectId(v === 'none' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Без проекта" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без проекта</SelectItem>
+                  <SelectItem value="none">Без проекта</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.title}

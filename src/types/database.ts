@@ -73,6 +73,7 @@ export interface Task {
   deadline?: string;
   status: TaskStatus;
   project_id?: string;
+  color?: string;
   created_by: string;
   created_at: string;
   updated_at: string;

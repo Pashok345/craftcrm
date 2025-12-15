@@ -135,11 +135,7 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
                           style={{
                             left: position.left + 2,
                             width: position.width,
-                            background: task.status === 'done'
-                              ? 'hsl(var(--crm-success))'
-                              : task.status === 'in_progress'
-                              ? 'hsl(var(--crm-warning))'
-                              : 'hsl(var(--primary))',
+                            background: task.color || '#3b82f6',
                           }}
                           onClick={() => onTaskClick(task)}
                         />
