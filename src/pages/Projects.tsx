@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Folder, Calendar, DollarSign, User } from 'lucide-react';
 import { Project, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { ProjectDetailDialog } from '@/components/projects/ProjectDetailDialog';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -14,6 +15,7 @@ const Projects = () => {
   const [managers, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -95,6 +97,7 @@ const Projects = () => {
               key={project.id}
               className="cursor-pointer hover:shadow-md transition-shadow animate-slide-up"
               style={{ animationDelay: `${index * 0.03}s` }}
+              onClick={() => setSelectedProject(project)}
             >
               <CardContent className="p-4">
                 <div className="space-y-3">
@@ -150,6 +153,13 @@ const Projects = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={fetchProjects}
+      />
+
+      <ProjectDetailDialog
+        project={selectedProject}
+        open={!!selectedProject}
+        onOpenChange={(open) => !open && setSelectedProject(null)}
+        onUpdate={fetchProjects}
       />
     </div>
   );
