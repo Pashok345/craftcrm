@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Profile } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface HeaderProps {
   profile: Profile | null;
@@ -36,6 +37,7 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
       </div>
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">

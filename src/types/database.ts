@@ -66,6 +66,11 @@ export interface UserRole {
   created_at: string;
 }
 
+export interface TaskLink {
+  title: string;
+  url: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -74,9 +79,21 @@ export interface Task {
   status: TaskStatus;
   project_id?: string;
   color?: string;
+  links?: TaskLink[];
   created_by: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  task_id?: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export interface TaskAssignee {

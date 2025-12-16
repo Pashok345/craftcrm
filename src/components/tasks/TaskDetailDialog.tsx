@@ -12,11 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, User, Loader2 } from 'lucide-react';
+import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Task, TaskComment, TaskAttachment, Profile, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { Task, TaskComment, TaskAttachment, Profile, STATUS_LABELS, STATUS_COLORS, TaskLink } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { TaskEditDialog } from './TaskEditDialog';
 
 interface TaskDetailDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [assignees, setAssignees] = useState<{ user: Profile; role: string }[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -144,6 +146,25 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
         });
       }
 
+      // Create notifications for assignees about new comment
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+
+      for (const assignee of assignees) {
+        if (assignee.user.user_id !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: assignee.user.user_id,
+            type: 'comment',
+            title: 'Новый комментарий',
+            message: `${userProfile?.name || 'Пользователь'} добавил комментарий к задаче "${task.title}"`,
+            task_id: task.id,
+          });
+        }
+      }
+
       setNewComment('');
       setFiles([]);
       fetchComments();
@@ -178,9 +199,17 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            {task.title}
-            <Badge className={STATUS_COLORS[task.status]}>{STATUS_LABELS[task.status]}</Badge>
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {task.title}
+              <Badge className={STATUS_COLORS[task.status]}>{STATUS_LABELS[task.status]}</Badge>
+            </div>
+            {user?.id === task.created_by && (
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                Редактировать
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -197,6 +226,30 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
               </div>
             )}
           </div>
+
+          {/* Links section */}
+          {task.links && (task.links as TaskLink[]).length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Link2 className="h-4 w-4" />
+                Ссылки:
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {(task.links as TaskLink[]).map((link, i) => (
+                  <a
+                    key={i}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1 bg-muted px-2 py-1 rounded"
+                  >
+                    <Link2 className="h-3 w-3" />
+                    {link.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {assignees.length > 0 && (
             <div className="space-y-2">
@@ -304,6 +357,16 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
           </div>
         </div>
       </DialogContent>
+      
+      <TaskEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        task={task}
+        onSuccess={() => {
+          onUpdate();
+          setEditOpen(false);
+        }}
+      />
     </Dialog>
   );
 };

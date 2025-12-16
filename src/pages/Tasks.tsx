@@ -34,7 +34,7 @@ const Tasks = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTasks((data || []) as Task[]);
+      setTasks((data || []) as unknown as Task[]);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
