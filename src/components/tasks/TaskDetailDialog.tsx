@@ -21,7 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: Task;
+  task: Task | null;
   onUpdate: () => void;
 }
 
@@ -40,13 +40,14 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
   const { user } = useAuth();
 
   useEffect(() => {
-    if (open) {
+    if (open && task) {
       fetchComments();
       fetchAssignees();
     }
-  }, [open, task.id]);
+  }, [open, task?.id]);
 
   const fetchComments = async () => {
+    if (!task) return;
     const { data: commentsData } = await supabase
       .from('task_comments')
       .select('*')
@@ -78,6 +79,7 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
   };
 
   const fetchAssignees = async () => {
+    if (!task) return;
     const { data } = await supabase
       .from('task_assignees')
       .select('*')
@@ -100,7 +102,7 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
   };
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user || !task) return;
 
     setLoading(true);
     try {
@@ -159,6 +161,18 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
       setFiles(Array.from(e.target.files));
     }
   };
+
+  if (!task) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
