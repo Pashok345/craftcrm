@@ -64,7 +64,17 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
 
   const stats = getTaskStats();
 
-  if (!project) return null;
+  if (!project) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>
