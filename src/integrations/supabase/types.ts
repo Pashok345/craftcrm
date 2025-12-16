@@ -79,6 +79,47 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          task_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          task_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          task_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           additional_info: string | null
@@ -280,6 +321,7 @@ export type Database = {
           deadline: string | null
           description: string | null
           id: string
+          links: Json | null
           project_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
@@ -292,6 +334,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          links?: Json | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
@@ -304,6 +347,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          links?: Json | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
