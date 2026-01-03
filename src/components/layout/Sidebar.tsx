@@ -6,10 +6,12 @@ import {
   Users,
   Folder,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Menu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import logo from '@/assets/logo.png';
 
 interface SidebarProps {
@@ -17,15 +19,17 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Дашборд', path: '/dashboard' },
-  { icon: Folder, label: 'Проекты', path: '/projects' },
-  { icon: CheckSquare, label: 'Задачи', path: '/tasks' },
-  { icon: Calendar, label: 'Встречи', path: '/meetings' },
-  { icon: Users, label: 'Пользователи', path: '/users' },
-];
-
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+  const { t } = useLanguage();
+  
+  const menuItems = [
+    { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
+    { icon: Folder, label: t('projects'), path: '/projects' },
+    { icon: CheckSquare, label: t('tasks'), path: '/tasks' },
+    { icon: Calendar, label: t('meetings'), path: '/meetings' },
+    { icon: Users, label: t('users'), path: '/users' },
+  ];
+
   return (
     <aside
       className={cn(
@@ -33,24 +37,29 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      <div className="p-4 flex items-center justify-between border-b border-border">
+      <div className="p-4 flex items-center justify-between border-b border-border min-h-[65px]">
         {!collapsed ? (
-          <img src={logo} alt="CraftCRM" className="h-8 object-contain" />
+          <img src={logo} alt="CraftCRM" className="h-12 object-contain" />
         ) : (
-          <img src={logo} alt="CraftCRM" className="h-6 w-6 object-contain mx-auto" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="mx-auto"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className={cn('shrink-0', collapsed && 'hidden')}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="shrink-0"
+          >
             <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+          </Button>
+        )}
       </div>
 
       <nav className="flex-1 p-2 space-y-1">

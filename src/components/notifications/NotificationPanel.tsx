@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Notification {
   id: string;
@@ -28,6 +29,9 @@ interface NotificationPanelProps {
 export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { user } = useAuth();
+  const { language, t } = useLanguage();
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   useEffect(() => {
     if (user) {
@@ -182,7 +186,7 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Уведомления
+              {t('notifications')}
               {unreadCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
                   {unreadCount}
@@ -197,11 +201,11 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
             <div className="flex gap-2 mt-2">
               <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs">
                 <Check className="h-3 w-3 mr-1" />
-                Прочитать все
+                {t('markAllRead')}
               </Button>
               <Button variant="outline" size="sm" onClick={clearAll} className="text-xs text-destructive hover:text-destructive">
                 <Trash2 className="h-3 w-3 mr-1" />
-                Очистить
+                {t('delete')}
               </Button>
             </div>
           )}
@@ -211,7 +215,7 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <Bell className="h-12 w-12 mb-4 opacity-30" />
-              <p className="text-sm">Нет уведомлений</p>
+              <p className="text-sm">{t('noNotifications')}</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -247,7 +251,7 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
                       <p className="text-xs text-muted-foreground mt-2">
                         {formatDistanceToNow(new Date(notification.created_at), {
                           addSuffix: true,
-                          locale: ru,
+                          locale: dateLocale,
                         })}
                       </p>
                     </div>
