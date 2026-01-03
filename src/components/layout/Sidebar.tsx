@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.png';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -33,14 +34,16 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       )}
     >
       <div className="p-4 flex items-center justify-between border-b border-border">
-        {!collapsed && (
-          <span className="text-lg font-bold text-foreground">CRM Pro</span>
+        {!collapsed ? (
+          <img src={logo} alt="CraftCRM" className="h-8 object-contain" />
+        ) : (
+          <img src={logo} alt="CraftCRM" className="h-6 w-6 object-contain mx-auto" />
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className={cn('shrink-0', collapsed && 'mx-auto')}
+          className={cn('shrink-0', collapsed && 'hidden')}
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
