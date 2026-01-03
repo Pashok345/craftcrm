@@ -156,3 +156,33 @@ export interface Project {
   created_at: string;
   updated_at: string;
 }
+
+export interface ChatGroup {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'group' | 'direct' | 'task';
+  task_id?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMember {
+  id: string;
+  chat_id: string;
+  user_id: string;
+  role: 'admin' | 'member';
+  last_read_at?: string;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  chat_id: string;
+  user_id: string;
+  content: string;
+  reply_to_id?: string;
+  created_at: string;
+  updated_at: string;
+}

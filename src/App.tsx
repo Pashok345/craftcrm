@@ -13,6 +13,7 @@ import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
+import Messages from "./pages/Messages";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/messages" element={<Messages />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
