@@ -5,18 +5,31 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Phone, User, Plus } from 'lucide-react';
-import { Profile, POSITION_LABELS, UserPosition } from '@/types/database';
+import { Profile, UserPosition } from '@/types/database';
 import { UserDialog } from '@/components/users/UserDialog';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Users = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const { isAdmin } = useUserRole();
+
+  const positionLabels: Record<UserPosition, string> = {
+    director: t('director'),
+    manager: t('manager'),
+    developer: t('developer'),
+    designer: t('designer'),
+    analyst: t('analyst'),
+    accountant: t('accountant'),
+    hr: t('hr'),
+    other: t('other'),
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -55,13 +68,13 @@ const Users = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Пользователи</h1>
-          <p className="text-muted-foreground">Все пользователи CRM системы</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('usersTitle')}</h1>
+          <p className="text-muted-foreground">{t('usersDescription')}</p>
         </div>
         {isAdmin && (
           <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Добавить пользователя
+            {t('addUser')}
           </Button>
         )}
       </div>
@@ -72,10 +85,10 @@ const Users = () => {
             <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
               <User className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Нет пользователей</h3>
-            <p className="text-muted-foreground mb-4">Пользователи появятся после регистрации</p>
+            <h3 className="text-lg font-medium text-foreground mb-2">{t('noUsers')}</h3>
+            <p className="text-muted-foreground mb-4">{t('usersWillAppear')}</p>
             {isAdmin && (
-              <Button onClick={() => setAddDialogOpen(true)}>Добавить пользователя</Button>
+              <Button onClick={() => setAddDialogOpen(true)}>{t('addUser')}</Button>
             )}
           </CardContent>
         </Card>
@@ -107,11 +120,11 @@ const Users = () => {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-foreground truncate">
-                        {user.name || 'Без имени'}
+                        {user.name || t('noName')}
                       </h3>
                       {user.position && (
                         <Badge variant="secondary" className="mt-1">
-                          {POSITION_LABELS[user.position as UserPosition] || user.position}
+                          {positionLabels[user.position as UserPosition] || user.position}
                         </Badge>
                       )}
                       <div className="mt-3 space-y-1">

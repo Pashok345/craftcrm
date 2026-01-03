@@ -40,6 +40,12 @@ const Settings = () => {
     other: t('other'),
   };
 
+  const languageLabels: Record<Language, string> = {
+    ru: 'RUS',
+    en: 'ENG',
+    uk: 'UKR',
+  };
+
   const handleSave = async () => {
     if (!profile || !name.trim()) return;
 
@@ -92,29 +98,18 @@ const Settings = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <Button
-              variant={language === 'ru' ? 'default' : 'outline'}
-              onClick={() => setLanguage('ru')}
-              className="flex-1"
-            >
-              🇷🇺 {t('russian')}
-            </Button>
-            <Button
-              variant={language === 'en' ? 'default' : 'outline'}
-              onClick={() => setLanguage('en')}
-              className="flex-1"
-            >
-              🇬🇧 {t('english')}
-            </Button>
-            <Button
-              variant={language === 'uk' ? 'default' : 'outline'}
-              onClick={() => setLanguage('uk')}
-              className="flex-1"
-            >
-              🇺🇦 {t('ukrainian')}
-            </Button>
-          </div>
+          <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(languageLabels).map(([key, label]) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 

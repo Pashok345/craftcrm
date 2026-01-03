@@ -62,6 +62,8 @@ export const translations: Translations = {
   chatName: { ru: 'Название чата', en: 'Chat name', uk: 'Назва чату' },
   chatDescription: { ru: 'Описание', en: 'Description', uk: 'Опис' },
   participants: { ru: 'Участники', en: 'Participants', uk: 'Учасники' },
+  participantsMenu: { ru: 'Участники', en: 'Participants', uk: 'Учасники' },
+  settingsMenu: { ru: 'Настройки', en: 'Settings', uk: 'Налаштування' },
   cancel: { ru: 'Отмена', en: 'Cancel', uk: 'Скасувати' },
   create: { ru: 'Создать', en: 'Create', uk: 'Створити' },
   
@@ -77,12 +79,75 @@ export const translations: Translations = {
   
   // Dashboard
   welcomeBack: { ru: 'С возвращением', en: 'Welcome back', uk: 'З поверненням' },
-  overview: { ru: 'Обзор вашей активности', en: 'Your activity overview', uk: 'Огляд вашої активності' },
-  totalProjects: { ru: 'Всего проектов', en: 'Total Projects', uk: 'Усього проектів' },
-  activeTasks: { ru: 'Активных задач', en: 'Active Tasks', uk: 'Активних завдань' },
-  upcomingMeetings: { ru: 'Предстоящие встречи', en: 'Upcoming Meetings', uk: 'Майбутні зустрічі' },
-  teamMembers: { ru: 'Участников команды', en: 'Team Members', uk: 'Учасників команди' },
-  recentTasks: { ru: 'Последние задачи', en: 'Recent Tasks', uk: 'Останні завдання' },
+  overview: { ru: 'Обзор вашей CRM системы', en: 'Overview of your CRM system', uk: 'Огляд вашої CRM системи' },
+  totalTasks: { ru: 'Всего задач', en: 'Total Tasks', uk: 'Усього завдань' },
+  completedTasks: { ru: 'Выполнено задач', en: 'Completed Tasks', uk: 'Виконано завдань' },
+  totalMessages: { ru: 'Сообщений', en: 'Messages', uk: 'Повідомлень' },
+  teamMembers: { ru: 'Сотрудников', en: 'Team Members', uk: 'Співробітників' },
+  timeStats: { ru: 'Общее время на задачи', en: 'Total time on tasks', uk: 'Загальний час на завдання' },
+  timeStatsDesc: { ru: 'Статистика по времени будет доступна после добавления задач с оценкой времени', en: 'Time statistics will be available after adding tasks with time estimates', uk: 'Статистика за часом буде доступна після додавання завдань з оцінкою часу' },
+  
+  // Tasks
+  tasksTitle: { ru: 'Задачи', en: 'Tasks', uk: 'Завдання' },
+  tasksDescription: { ru: 'Управление задачами проекта', en: 'Project task management', uk: 'Керування завданнями проекту' },
+  addTask: { ru: 'Добавить задачу', en: 'Add task', uk: 'Додати завдання' },
+  list: { ru: 'Список', en: 'List', uk: 'Список' },
+  ganttChart: { ru: 'Диаграмма Ганта', en: 'Gantt Chart', uk: 'Діаграма Ганта' },
+  kanban: { ru: 'Канбан', en: 'Kanban', uk: 'Канбан' },
+  noTasks: { ru: 'Нет задач', en: 'No tasks', uk: 'Немає завдань' },
+  createFirstTask: { ru: 'Создайте первую задачу для начала работы', en: 'Create your first task to get started', uk: 'Створіть перше завдання для початку роботи' },
+  createTask: { ru: 'Создать задачу', en: 'Create task', uk: 'Створити завдання' },
+  
+  // Task statuses
+  statusTodo: { ru: 'К выполнению', en: 'To Do', uk: 'До виконання' },
+  statusInProgress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
+  statusReview: { ru: 'На проверке', en: 'In Review', uk: 'На перевірці' },
+  statusDone: { ru: 'Выполнено', en: 'Done', uk: 'Виконано' },
+  
+  // Kanban
+  addColumn: { ru: 'Добавить колонку', en: 'Add column', uk: 'Додати колонку' },
+  columnName: { ru: 'Название колонки', en: 'Column name', uk: 'Назва колонки' },
+  editColumn: { ru: 'Редактировать', en: 'Edit', uk: 'Редагувати' },
+  deleteColumn: { ru: 'Удалить', en: 'Delete', uk: 'Видалити' },
+  saveColumn: { ru: 'Сохранить', en: 'Save', uk: 'Зберегти' },
+  
+  // Projects
+  projectsTitle: { ru: 'Проекты', en: 'Projects', uk: 'Проекти' },
+  projectsDescription: { ru: 'Управление проектами компании', en: 'Company project management', uk: 'Керування проектами компанії' },
+  newProject: { ru: 'Новый проект', en: 'New project', uk: 'Новий проект' },
+  noProjects: { ru: 'Нет проектов', en: 'No projects', uk: 'Немає проектів' },
+  createFirstProject: { ru: 'Создайте первый проект для начала работы', en: 'Create your first project to get started', uk: 'Створіть перший проект для початку роботи' },
+  createProject: { ru: 'Создать проект', en: 'Create project', uk: 'Створити проект' },
+  
+  // Project statuses
+  projectPlanning: { ru: 'Планирование', en: 'Planning', uk: 'Планування' },
+  projectActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+  projectOnHold: { ru: 'Приостановлен', en: 'On Hold', uk: 'Призупинено' },
+  projectCompleted: { ru: 'Завершён', en: 'Completed', uk: 'Завершено' },
+  projectCancelled: { ru: 'Отменён', en: 'Cancelled', uk: 'Скасовано' },
+  
+  // Meetings
+  meetingsTitle: { ru: 'Встречи', en: 'Meetings', uk: 'Зустрічі' },
+  meetingsDescription: { ru: 'Календарь встреч и мероприятий', en: 'Calendar of meetings and events', uk: 'Календар зустрічей та заходів' },
+  addMeeting: { ru: 'Добавить встречу', en: 'Add meeting', uk: 'Додати зустріч' },
+  more: { ru: 'ещё', en: 'more', uk: 'ще' },
+  
+  // Week days
+  mon: { ru: 'Пн', en: 'Mon', uk: 'Пн' },
+  tue: { ru: 'Вт', en: 'Tue', uk: 'Вт' },
+  wed: { ru: 'Ср', en: 'Wed', uk: 'Ср' },
+  thu: { ru: 'Чт', en: 'Thu', uk: 'Чт' },
+  fri: { ru: 'Пт', en: 'Fri', uk: 'Пт' },
+  sat: { ru: 'Сб', en: 'Sat', uk: 'Сб' },
+  sun: { ru: 'Вс', en: 'Sun', uk: 'Нд' },
+  
+  // Users
+  usersTitle: { ru: 'Пользователи', en: 'Users', uk: 'Користувачі' },
+  usersDescription: { ru: 'Все пользователи CRM системы', en: 'All CRM system users', uk: 'Усі користувачі CRM системи' },
+  addUser: { ru: 'Добавить пользователя', en: 'Add user', uk: 'Додати користувача' },
+  noUsers: { ru: 'Нет пользователей', en: 'No users', uk: 'Немає користувачів' },
+  usersWillAppear: { ru: 'Пользователи появятся после регистрации', en: 'Users will appear after registration', uk: 'Користувачі зʼявляться після реєстрації' },
+  noName: { ru: 'Без имени', en: 'No name', uk: 'Без імені' },
   
   // Common
   loading: { ru: 'Загрузка...', en: 'Loading...', uk: 'Завантаження...' },
