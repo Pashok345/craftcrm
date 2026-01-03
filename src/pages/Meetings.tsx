@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Plus, Clock, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Meeting, Profile } from '@/types/database';
 import { MeetingDayDialog } from '@/components/meetings/MeetingDayDialog';
 import {
@@ -18,19 +17,33 @@ import {
   startOfWeek,
   endOfWeek,
 } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MeetingWithParticipants extends Meeting {
   participants?: Profile[];
 }
 
 const Meetings = () => {
+  const { t, language } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<MeetingWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  const weekDays = [
+    t('mon'),
+    t('tue'),
+    t('wed'),
+    t('thu'),
+    t('fri'),
+    t('sat'),
+    t('sun'),
+  ];
 
   useEffect(() => {
     fetchMeetings();
@@ -63,8 +76,6 @@ const Meetings = () => {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-
   const getMeetingsForDay = (date: Date) => {
     return meetings.filter((m) => isSameDay(new Date(m.meeting_date), date));
   };
@@ -86,12 +97,12 @@ const Meetings = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Встречи</h1>
-          <p className="text-muted-foreground">Календарь встреч и мероприятий</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('meetingsTitle')}</h1>
+          <p className="text-muted-foreground">{t('meetingsDescription')}</p>
         </div>
         <Button onClick={() => { setSelectedDate(new Date()); setDialogOpen(true); }} className="gap-2">
           <Plus className="h-4 w-4" />
-          Добавить встречу
+          {t('addMeeting')}
         </Button>
       </div>
 
@@ -107,7 +118,7 @@ const Meetings = () => {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-lg font-semibold text-foreground capitalize">
-              {format(currentDate, 'LLLL yyyy', { locale: ru })}
+              {format(currentDate, 'LLLL yyyy', { locale: dateLocale })}
             </h2>
             <Button
               variant="outline"
@@ -165,7 +176,7 @@ const Meetings = () => {
                     ))}
                     {dayMeetings.length > 2 && (
                       <div className="text-xs text-muted-foreground">
-                        +{dayMeetings.length - 2} ещё
+                        +{dayMeetings.length - 2} {t('more')}
                       </div>
                     )}
                   </div>

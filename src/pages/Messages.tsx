@@ -16,8 +16,8 @@ import {
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow, format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { format } from 'date-fns';
+import { ru, enUS, uk } from 'date-fns/locale';
 import { CreateChatDialog } from '@/components/messages/CreateChatDialog';
 import {
   DropdownMenu,
@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ChatGroup {
   id: string;
@@ -60,6 +61,7 @@ interface Profile {
 
 const Messages = () => {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [chats, setChats] = useState<ChatGroup[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatGroup | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -69,6 +71,8 @@ const Messages = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   useEffect(() => {
     if (user) {
@@ -217,7 +221,7 @@ const Messages = () => {
     let currentDate = '';
 
     msgs.forEach((msg) => {
-      const msgDate = format(new Date(msg.created_at), 'dd MMMM yyyy', { locale: ru });
+      const msgDate = format(new Date(msg.created_at), 'dd MMMM yyyy', { locale: dateLocale });
       if (msgDate !== currentDate) {
         currentDate = msgDate;
         groups.push({ date: msgDate, messages: [msg] });
@@ -235,7 +239,7 @@ const Messages = () => {
       <div className="w-80 border-r border-border flex flex-col bg-card">
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Сообщения</h2>
+            <h2 className="text-lg font-semibold">{t('messagesTitle')}</h2>
             <Button size="icon" variant="ghost" onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4" />
             </Button>
@@ -243,7 +247,7 @@ const Messages = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск чатов..."
+              placeholder={t('searchChats')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -253,17 +257,17 @@ const Messages = () => {
 
         <ScrollArea className="flex-1">
           {loading ? (
-            <div className="p-4 text-center text-muted-foreground">Загрузка...</div>
+            <div className="p-4 text-center text-muted-foreground">{t('loading')}</div>
           ) : filteredChats.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Нет чатов</p>
+              <p className="text-sm">{t('noChats')}</p>
               <Button
                 variant="link"
                 className="mt-2"
                 onClick={() => setCreateDialogOpen(true)}
               >
-                Создать первый чат
+                {t('createFirstChat')}
               </Button>
             </div>
           ) : (
@@ -319,8 +323,8 @@ const Messages = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Участники</DropdownMenuItem>
-                  <DropdownMenuItem>Настройки</DropdownMenuItem>
+                  <DropdownMenuItem>{t('participantsMenu')}</DropdownMenuItem>
+                  <DropdownMenuItem>{t('settingsMenu')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -388,7 +392,7 @@ const Messages = () => {
             <div className="p-4 border-t border-border bg-card">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Напишите сообщение..."
+                  placeholder={t('typeMessage')}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -404,7 +408,7 @@ const Messages = () => {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <p>Выберите чат для начала общения</p>
+              <p>{t('selectChatToStart')}</p>
             </div>
           </div>
         )}

@@ -4,15 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, List, BarChart3 } from 'lucide-react';
-import { Task, STATUS_LABELS, STATUS_COLORS, Project } from '@/types/database';
+import { Plus, Calendar, List, BarChart3, Columns } from 'lucide-react';
+import { Task, Project } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { TaskDetailDialog } from '@/components/tasks/TaskDetailDialog';
 import { GanttChart } from '@/components/tasks/GanttChart';
+import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Tasks = () => {
+  const { t, language } = useLanguage();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
   const [loading, setLoading] = useState(true);
@@ -20,6 +23,22 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  const statusLabels: Record<string, string> = {
+    todo: t('statusTodo'),
+    in_progress: t('statusInProgress'),
+    review: t('statusReview'),
+    done: t('statusDone'),
+  };
+
+  const STATUS_COLORS: Record<string, string> = {
+    todo: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-crm-warning/10 text-crm-warning',
+    review: 'bg-primary/10 text-primary',
+    done: 'bg-crm-success/10 text-crm-success',
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -70,12 +89,12 @@ const Tasks = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Задачи</h1>
-          <p className="text-muted-foreground">Управление задачами проекта</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('tasksTitle')}</h1>
+          <p className="text-muted-foreground">{t('tasksDescription')}</p>
         </div>
         <Button onClick={() => setDialogOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Добавить задачу
+          {t('addTask')}
         </Button>
       </div>
 
@@ -83,11 +102,15 @@ const Tasks = () => {
         <TabsList>
           <TabsTrigger value="list" className="gap-2">
             <List className="h-4 w-4" />
-            Список
+            {t('list')}
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="gap-2">
+            <Columns className="h-4 w-4" />
+            {t('kanban')}
           </TabsTrigger>
           <TabsTrigger value="gantt" className="gap-2">
             <BarChart3 className="h-4 w-4" />
-            Диаграмма Ганта
+            {t('ganttChart')}
           </TabsTrigger>
         </TabsList>
 
@@ -98,9 +121,9 @@ const Tasks = () => {
                 <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
                   <Plus className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">Нет задач</h3>
-                <p className="text-muted-foreground mb-4">Создайте первую задачу для начала работы</p>
-                <Button onClick={() => setDialogOpen(true)}>Создать задачу</Button>
+                <h3 className="text-lg font-medium text-foreground mb-2">{t('noTasks')}</h3>
+                <p className="text-muted-foreground mb-4">{t('createFirstTask')}</p>
+                <Button onClick={() => setDialogOpen(true)}>{t('createTask')}</Button>
               </CardContent>
             </Card>
           ) : (
@@ -132,13 +155,13 @@ const Tasks = () => {
                           {task.deadline && (
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Calendar className="h-4 w-4" />
-                              {format(new Date(task.deadline), 'd MMM yyyy', { locale: ru })}
+                              {format(new Date(task.deadline), 'd MMM yyyy', { locale: dateLocale })}
                             </div>
                           )}
                         </div>
                       </div>
                       <Badge className={STATUS_COLORS[task.status]}>
-                        {STATUS_LABELS[task.status]}
+                        {statusLabels[task.status]}
                       </Badge>
                     </div>
                   </CardContent>
@@ -146,6 +169,15 @@ const Tasks = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-4">
+          <KanbanBoard 
+            tasks={tasks} 
+            projects={projects} 
+            onTaskClick={handleTaskClick}
+            onTaskUpdate={fetchTasks}
+          />
         </TabsContent>
 
         <TabsContent value="gantt" className="mt-4">

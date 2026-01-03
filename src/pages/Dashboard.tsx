@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckSquare, MessageSquare, Clock, Users } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Analytics {
   totalTasks: number;
@@ -11,6 +12,7 @@ interface Analytics {
 }
 
 const Dashboard = () => {
+  const { t } = useLanguage();
   const [analytics, setAnalytics] = useState<Analytics>({
     totalTasks: 0,
     completedTasks: 0,
@@ -47,25 +49,25 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: 'Всего задач',
+      title: t('totalTasks'),
       value: analytics.totalTasks,
       icon: CheckSquare,
       color: 'bg-primary/10 text-primary',
     },
     {
-      title: 'Выполнено задач',
+      title: t('completedTasks'),
       value: analytics.completedTasks,
       icon: CheckSquare,
       color: 'bg-crm-success/10 text-crm-success',
     },
     {
-      title: 'Сообщений',
+      title: t('totalMessages'),
       value: analytics.totalComments,
       icon: MessageSquare,
       color: 'bg-crm-warning/10 text-crm-warning',
     },
     {
-      title: 'Сотрудников',
+      title: t('teamMembers'),
       value: analytics.totalUsers,
       icon: Users,
       color: 'bg-accent/10 text-accent',
@@ -83,8 +85,8 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Дашборд</h1>
-        <p className="text-muted-foreground">Обзор вашей CRM системы</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+        <p className="text-muted-foreground">{t('overview')}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -109,12 +111,12 @@ const Dashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
-            Общее время на задачи
+            {t('timeStats')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Статистика по времени будет доступна после добавления задач с оценкой времени
+            {t('timeStatsDesc')}
           </p>
         </CardContent>
       </Card>

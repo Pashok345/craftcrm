@@ -4,18 +4,30 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Folder, Calendar, DollarSign, User } from 'lucide-react';
-import { Project, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
+import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { ProjectDetailDialog } from '@/components/projects/ProjectDetailDialog';
 import { format, parseISO } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Projects = () => {
+  const { t, language } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
   const [managers, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  const statusLabels: Record<string, string> = {
+    planning: t('projectPlanning'),
+    active: t('projectActive'),
+    on_hold: t('projectOnHold'),
+    completed: t('projectCompleted'),
+    cancelled: t('projectCancelled'),
+  };
 
   useEffect(() => {
     fetchProjects();
@@ -51,9 +63,9 @@ const Projects = () => {
 
   const formatBudget = (budget?: number) => {
     if (!budget) return null;
-    return new Intl.NumberFormat('ru-RU', {
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language === 'uk' ? 'uk-UA' : 'ru-RU', {
       style: 'currency',
-      currency: 'RUB',
+      currency: language === 'en' ? 'USD' : language === 'uk' ? 'UAH' : 'RUB',
       maximumFractionDigits: 0,
     }).format(budget);
   };
@@ -70,12 +82,12 @@ const Projects = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Проекты</h1>
-          <p className="text-muted-foreground">Управление проектами компании</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('projectsTitle')}</h1>
+          <p className="text-muted-foreground">{t('projectsDescription')}</p>
         </div>
         <Button onClick={() => setDialogOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Новый проект
+          {t('newProject')}
         </Button>
       </div>
 
@@ -85,9 +97,9 @@ const Projects = () => {
             <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
               <Folder className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Нет проектов</h3>
-            <p className="text-muted-foreground mb-4">Создайте первый проект для начала работы</p>
-            <Button onClick={() => setDialogOpen(true)}>Создать проект</Button>
+            <h3 className="text-lg font-medium text-foreground mb-2">{t('noProjects')}</h3>
+            <p className="text-muted-foreground mb-4">{t('createFirstProject')}</p>
+            <Button onClick={() => setDialogOpen(true)}>{t('createProject')}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -106,7 +118,7 @@ const Projects = () => {
                       {project.title}
                     </h3>
                     <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                      {PROJECT_STATUS_LABELS[project.status]}
+                      {statusLabels[project.status]}
                     </Badge>
                   </div>
 
@@ -135,9 +147,9 @@ const Projects = () => {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {project.start_date && format(parseISO(project.start_date), 'd MMM', { locale: ru })}
+                          {project.start_date && format(parseISO(project.start_date), 'd MMM', { locale: dateLocale })}
                           {project.start_date && project.end_date && ' – '}
-                          {project.end_date && format(parseISO(project.end_date), 'd MMM yyyy', { locale: ru })}
+                          {project.end_date && format(parseISO(project.end_date), 'd MMM yyyy', { locale: dateLocale })}
                         </span>
                       </div>
                     )}
