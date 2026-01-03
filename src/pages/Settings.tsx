@@ -14,18 +14,31 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { UserPosition, POSITION_LABELS } from '@/types/database';
+import { UserPosition } from '@/types/database';
+import { useLanguage, Language } from '@/contexts/LanguageContext';
 
 const Settings = () => {
   const { profile, refetchProfile } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [name, setName] = useState(profile?.name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [position, setPosition] = useState<UserPosition | ''>(profile?.position || '');
   const [additionalInfo, setAdditionalInfo] = useState(profile?.additional_info || '');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const positionLabels: Record<UserPosition, string> = {
+    director: t('director'),
+    manager: t('manager'),
+    developer: t('developer'),
+    designer: t('designer'),
+    analyst: t('analyst'),
+    accountant: t('accountant'),
+    hr: t('hr'),
+    other: t('other'),
+  };
 
   const handleSave = async () => {
     if (!profile || !name.trim()) return;
@@ -44,11 +57,11 @@ const Settings = () => {
 
       if (error) throw error;
 
-      toast({ title: 'Настройки сохранены' });
+      toast({ title: t('settingsSaved') });
       refetchProfile();
     } catch (error) {
       console.error('Error updating settings:', error);
-      toast({ title: 'Ошибка при сохранении', variant: 'destructive' });
+      toast({ title: t('errorSaving'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -66,15 +79,51 @@ const Settings = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Настройки</h1>
-        <p className="text-muted-foreground">Управление профилем и настройками аккаунта</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('settingsTitle')}</h1>
+        <p className="text-muted-foreground">{t('settingsDescription')}</p>
       </div>
 
+      {/* Language Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            {t('language')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Button
+              variant={language === 'ru' ? 'default' : 'outline'}
+              onClick={() => setLanguage('ru')}
+              className="flex-1"
+            >
+              🇷🇺 {t('russian')}
+            </Button>
+            <Button
+              variant={language === 'en' ? 'default' : 'outline'}
+              onClick={() => setLanguage('en')}
+              className="flex-1"
+            >
+              🇬🇧 {t('english')}
+            </Button>
+            <Button
+              variant={language === 'uk' ? 'default' : 'outline'}
+              onClick={() => setLanguage('uk')}
+              className="flex-1"
+            >
+              🇺🇦 {t('ukrainian')}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Профиль
+            {t('profile')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -85,24 +134,24 @@ const Settings = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium text-lg">{profile?.name || 'Пользователь'}</h3>
+              <h3 className="font-medium text-lg">{profile?.name || t('user')}</h3>
               <p className="text-sm text-muted-foreground">{profile?.email}</p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">ФИО *</Label>
+              <Label htmlFor="name">{t('fullName')} *</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Введите ваше имя"
+                placeholder={t('enterName')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -113,13 +162,13 @@ const Settings = () => {
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label>Должность</Label>
+              <Label>{t('position')}</Label>
               <Select value={position} onValueChange={(v) => setPosition(v as UserPosition)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите должность" />
+                  <SelectValue placeholder={t('selectPosition')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(POSITION_LABELS).map(([key, label]) => (
+                  {Object.entries(positionLabels).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       {label}
                     </SelectItem>
@@ -129,20 +178,20 @@ const Settings = () => {
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="additionalInfo">Дополнительная информация</Label>
+              <Label htmlFor="additionalInfo">{t('additionalInfo')}</Label>
               <Textarea
                 id="additionalInfo"
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
                 rows={4}
-                placeholder="Любая дополнительная информация о вас..."
+                placeholder={t('additionalInfoPlaceholder')}
               />
             </div>
           </div>
 
           <Button onClick={handleSave} disabled={loading || !name.trim()}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Сохранить изменения
+            {t('saveChanges')}
           </Button>
         </CardContent>
       </Card>

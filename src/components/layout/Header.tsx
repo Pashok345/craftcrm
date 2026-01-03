@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings, LogOut, User, Bell, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeaderProps {
   profile: Profile | null;
@@ -25,14 +25,17 @@ interface HeaderProps {
 export const Header = ({ profile, onSignOut }: HeaderProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
+      fetchUnreadMessagesCount();
       
-      const channel = supabase
+      const notifChannel = supabase
         .channel('notification-count')
         .on(
           'postgres_changes',
@@ -48,8 +51,24 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
         )
         .subscribe();
 
+      const msgChannel = supabase
+        .channel('messages-count')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+          },
+          () => {
+            fetchUnreadMessagesCount();
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(notifChannel);
+        supabase.removeChannel(msgChannel);
       };
     }
   }, [user]);
@@ -63,6 +82,35 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
       .eq('is_read', false);
     
     setUnreadCount(count || 0);
+  };
+
+  const fetchUnreadMessagesCount = async () => {
+    if (!user) return;
+    
+    // Get user's chats
+    const { data: memberData } = await supabase
+      .from('chat_members')
+      .select('chat_id, last_read_at')
+      .eq('user_id', user.id);
+    
+    if (!memberData || memberData.length === 0) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    let totalUnread = 0;
+    for (const member of memberData) {
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('chat_id', member.chat_id)
+        .neq('user_id', user.id)
+        .gt('created_at', member.last_read_at || '1970-01-01');
+      
+      totalUnread += count || 0;
+    }
+    
+    setUnreadMessagesCount(totalUnread);
   };
 
   const initials = profile?.name
@@ -85,6 +133,14 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
             className="relative"
           >
             <MessageSquare className="h-5 w-5" />
+            {unreadMessagesCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+              >
+                {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+              </Badge>
+            )}
           </Button>
           
           <Button 
@@ -113,23 +169,23 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium hidden sm:block">
-                  {profile?.name || 'Пользователь'}
+                  {profile?.name || t('user')}
                 </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <User className="mr-2 h-4 w-4" />
-                Профиль
+                {t('profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
-                Настройки
+                {t('settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onSignOut} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                Выйти
+                {t('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
