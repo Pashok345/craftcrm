@@ -34,12 +34,12 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     <aside
       className={cn(
         'h-screen bg-card border-r border-border flex flex-col transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64'
+        collapsed ? 'w-16' : 'w-52'
       )}
     >
-      <div className="p-4 flex items-center justify-between border-b border-border min-h-[65px]">
+      <div className="p-3 flex items-center justify-between border-b border-border min-h-[65px]">
         {!collapsed ? (
-          <img src={logo} alt="CraftCRM" className="h-12 object-contain" />
+          <img src={logo} alt="CraftCRM" className="h-10 w-full max-w-[160px] object-contain" />
         ) : (
           <Button
             variant="ghost"

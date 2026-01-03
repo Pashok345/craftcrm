@@ -172,12 +172,14 @@ const Tasks = () => {
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-4">
-          <KanbanBoard 
-            tasks={tasks} 
-            projects={projects} 
-            onTaskClick={handleTaskClick}
-            onTaskUpdate={fetchTasks}
-          />
+          <div className="overflow-x-auto pb-4">
+            <KanbanBoard 
+              tasks={tasks} 
+              projects={projects} 
+              onTaskClick={handleTaskClick}
+              onTaskUpdate={fetchTasks}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="gantt" className="mt-4">
