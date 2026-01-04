@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Calendar, List, BarChart3, Columns } from 'lucide-react';
 import { Task, Project } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
-import { TaskDetailDialog } from '@/components/tasks/TaskDetailDialog';
 import { GanttChart } from '@/components/tasks/GanttChart';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { format } from 'date-fns';
@@ -16,12 +16,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const Tasks = () => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -73,8 +72,7 @@ const Tasks = () => {
   };
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setDetailOpen(true);
+    navigate(`/tasks/${task.id}`);
   };
 
   if (loading) {
@@ -196,15 +194,6 @@ const Tasks = () => {
         onOpenChange={setDialogOpen}
         onSuccess={fetchTasks}
       />
-
-      {selectedTask && (
-        <TaskDetailDialog
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-          task={selectedTask}
-          onUpdate={fetchTasks}
-        />
-      )}
     </div>
   );
 };
