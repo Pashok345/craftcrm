@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,14 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2, ArrowLeft, Trash2 } from 'lucide-react';
+import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,9 +43,12 @@ const TaskDetail = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [assignees, setAssignees] = useState<{ user: Profile; role: string }[]>([]);
+  const [taskAttachments, setTaskAttachments] = useState<TaskAttachment[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -73,6 +78,7 @@ const TaskDetail = () => {
     if (task) {
       fetchComments();
       fetchAssignees();
+      fetchTaskAttachments();
     }
   }, [task?.id]);
 
@@ -146,6 +152,56 @@ const TaskDetail = () => {
         }
       }
       setAssignees(assigneesWithUsers);
+    }
+  };
+
+  const fetchTaskAttachments = async () => {
+    if (!task) return;
+    const { data } = await supabase
+      .from('task_attachments')
+      .select('*')
+      .eq('task_id', task.id)
+      .is('comment_id', null);
+    
+    if (data) {
+      setTaskAttachments(data as TaskAttachment[]);
+    }
+  };
+
+  const handleAddTaskFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !task) return;
+
+    setUploadingFile(true);
+    try {
+      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('task-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('task-attachments')
+        .getPublicUrl(fileName);
+
+      await supabase.from('task_attachments').insert({
+        task_id: task.id,
+        comment_id: null,
+        file_name: file.name,
+        file_url: publicUrl,
+        file_type: file.type,
+        uploaded_by: user.id,
+      });
+
+      fetchTaskAttachments();
+      toast({ title: t('fileUploaded') });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({ title: t('errorUploadingFile'), variant: 'destructive' });
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -242,24 +298,45 @@ const TaskDetail = () => {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate('/tasks')} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           {t('backToTasks')}
         </Button>
-        {user?.id === task.created_by && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t('edit')}
-            </Button>
-            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              {t('delete')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleAddTaskFile}
+          />
+          <Button 
+            variant="outline" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingFile}
+          >
+            {uploadingFile ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            {t('addFile')}
+          </Button>
+          {user?.id === task.created_by && (
+            <>
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t('edit')}
+              </Button>
+              <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                {t('delete')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -301,6 +378,34 @@ const TaskDetail = () => {
                     <Link2 className="h-3 w-3" />
                     {link.title}
                   </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {taskAttachments.length > 0 && (
+            <div className="space-y-2 mb-6">
+              <h4 className="text-sm font-medium">{t('attachments')}:</h4>
+              <div className="flex flex-wrap gap-3">
+                {taskAttachments.map((att) => (
+                  <Tooltip key={att.id}>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={att.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center gap-1 p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors min-w-[60px]"
+                      >
+                        <FileIcon fileName={att.file_name} className="h-8 w-8" />
+                        <span className="text-xs text-muted-foreground max-w-[60px] truncate">
+                          {att.file_name.length > 8 ? att.file_name.slice(0, 6) + '...' : att.file_name}
+                        </span>
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{att.file_name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ))}
               </div>
             </div>
@@ -440,6 +545,7 @@ const TaskDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 };
 
