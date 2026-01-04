@@ -194,6 +194,16 @@ export const translations: Translations = {
   usersWillAppear: { ru: 'Пользователи появятся после регистрации', en: 'Users will appear after registration', uk: 'Користувачі зʼявляться після реєстрації' },
   noName: { ru: 'Без имени', en: 'No name', uk: 'Без імені' },
   
+  // Profile form
+  fio: { ru: 'ФИО', en: 'Full name', uk: 'ПІБ' },
+  enterFio: { ru: 'Введите ФИО', en: 'Enter full name', uk: 'Введіть ПІБ' },
+  
+  // File attachments
+  addFile: { ru: 'Добавить файл', en: 'Add file', uk: 'Додати файл' },
+  attachments: { ru: 'Вложения', en: 'Attachments', uk: 'Вкладення' },
+  fileUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
+  errorUploadingFile: { ru: 'Ошибка загрузки файла', en: 'Error uploading file', uk: 'Помилка завантаження файлу' },
+  
   // Common
   loading: { ru: 'Загрузка...', en: 'Loading...', uk: 'Завантаження...' },
   save: { ru: 'Сохранить', en: 'Save', uk: 'Зберегти' },

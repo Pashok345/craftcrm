@@ -160,12 +160,12 @@ const Profile = () => {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">{t('fullName')} *</Label>
+              <Label htmlFor="name">{t('fio')} *</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={t('enterName')}
+                placeholder={t('enterFio')}
               />
             </div>
 
@@ -175,8 +175,31 @@ const Profile = () => {
                 id="phone"
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+7 (999) 123-45-67"
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^\d+]/g, '');
+                  // Auto-add +38 prefix
+                  if (val && !val.startsWith('+')) {
+                    val = '+38' + val;
+                  }
+                  if (val.startsWith('+') && !val.startsWith('+38')) {
+                    val = '+38' + val.slice(1);
+                  }
+                  // Format: +38 (0XX) XXX-XX-XX
+                  if (val.length > 3) {
+                    const digits = val.slice(3).replace(/\D/g, '');
+                    let formatted = '+38';
+                    if (digits.length > 0) {
+                      formatted += ' (' + digits.slice(0, 3);
+                      if (digits.length >= 3) formatted += ')';
+                      if (digits.length > 3) formatted += ' ' + digits.slice(3, 6);
+                      if (digits.length > 6) formatted += '-' + digits.slice(6, 8);
+                      if (digits.length > 8) formatted += '-' + digits.slice(8, 10);
+                    }
+                    val = formatted;
+                  }
+                  setPhone(val);
+                }}
+                placeholder="+38 (0XX) XXX-XX-XX"
               />
             </div>
 
