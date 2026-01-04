@@ -39,7 +39,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     >
       <div className="p-3 flex items-center justify-between border-b border-border min-h-[65px]">
         {!collapsed ? (
-          <img src={logo} alt="CraftCRM" className="h-10 w-full max-w-[160px] object-contain" />
+          <img src={logo} alt="CraftCRM" className="h-10 w-full object-contain" />
         ) : (
           <Button
             variant="ghost"

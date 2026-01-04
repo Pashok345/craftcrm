@@ -1,0 +1,446 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2, ArrowLeft, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/database';
+import { useAuth } from '@/hooks/useAuth';
+import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+interface CommentWithUser extends TaskComment {
+  profile?: Profile;
+  attachments?: TaskAttachment[];
+}
+
+const TaskDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const [task, setTask] = useState<Task | null>(null);
+  const [comments, setComments] = useState<CommentWithUser[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [assignees, setAssignees] = useState<{ user: Profile; role: string }[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  const statusLabels: Record<string, string> = {
+    todo: t('statusTodo'),
+    in_progress: t('statusInProgress'),
+    review: t('statusReview'),
+    done: t('statusDone'),
+  };
+
+  const STATUS_COLORS: Record<string, string> = {
+    todo: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-crm-warning/10 text-crm-warning',
+    review: 'bg-primary/10 text-primary',
+    done: 'bg-crm-success/10 text-crm-success',
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchTask();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (task) {
+      fetchComments();
+      fetchAssignees();
+    }
+  }, [task?.id]);
+
+  const fetchTask = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setTask(data as unknown as Task);
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      navigate('/tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    if (!task) return;
+    const { data: commentsData } = await supabase
+      .from('task_comments')
+      .select('*')
+      .eq('task_id', task.id)
+      .order('created_at', { ascending: true });
+
+    if (commentsData) {
+      const commentsWithUsers: CommentWithUser[] = [];
+      for (const comment of commentsData) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', comment.user_id)
+          .maybeSingle();
+        
+        const { data: attachments } = await supabase
+          .from('task_attachments')
+          .select('*')
+          .eq('comment_id', comment.id);
+
+        commentsWithUsers.push({
+          ...comment,
+          profile: profile as Profile,
+          attachments: attachments as TaskAttachment[],
+        } as CommentWithUser);
+      }
+      setComments(commentsWithUsers);
+    }
+  };
+
+  const fetchAssignees = async () => {
+    if (!task) return;
+    const { data } = await supabase
+      .from('task_assignees')
+      .select('*')
+      .eq('task_id', task.id);
+
+    if (data) {
+      const assigneesWithUsers: { user: Profile; role: string }[] = [];
+      for (const assignee of data) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', assignee.user_id)
+          .maybeSingle();
+        if (profile) {
+          assigneesWithUsers.push({ user: profile as Profile, role: assignee.role });
+        }
+      }
+      setAssignees(assigneesWithUsers);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !user || !task) return;
+
+    setSubmitting(true);
+    try {
+      const { data: comment, error } = await supabase
+        .from('task_comments')
+        .insert({
+          task_id: task.id,
+          user_id: user.id,
+          content: newComment,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      for (const file of files) {
+        const fileName = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('task-attachments')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          continue;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('task-attachments')
+          .getPublicUrl(fileName);
+
+        await supabase.from('task_attachments').insert({
+          task_id: task.id,
+          comment_id: comment.id,
+          file_name: file.name,
+          file_url: publicUrl,
+          file_type: file.type,
+          uploaded_by: user.id,
+        });
+      }
+
+      setNewComment('');
+      setFiles([]);
+      fetchComments();
+      toast({ title: t('commentAdded') });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({ title: t('errorAddingComment'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!task) return;
+    try {
+      const { error } = await supabase.from('tasks').delete().eq('id', task.id);
+      if (error) throw error;
+      toast({ title: t('taskDeleted') });
+      navigate('/tasks');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({ title: t('errorDeleting'), variant: 'destructive' });
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{t('taskNotFound')}</p>
+        <Button onClick={() => navigate('/tasks')} className="mt-4">
+          {t('backToTasks')}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={() => navigate('/tasks')} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          {t('backToTasks')}
+        </Button>
+        {user?.id === task.created_by && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              {t('edit')}
+            </Button>
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('delete')}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{task.title}</h1>
+              {task.description && (
+                <p className="text-muted-foreground mt-2">{task.description}</p>
+              )}
+            </div>
+            <Badge className={STATUS_COLORS[task.status]}>{statusLabels[task.status]}</Badge>
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-sm mb-6">
+            {task.deadline && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>{t('dueDate')}: {format(new Date(task.deadline), 'd MMMM yyyy', { locale: dateLocale })}</span>
+              </div>
+            )}
+          </div>
+
+          {task.links && (task.links as TaskLink[]).length > 0 && (
+            <div className="space-y-2 mb-6">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Link2 className="h-4 w-4" />
+                {t('links')}:
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {(task.links as TaskLink[]).map((link, i) => (
+                  <a
+                    key={i}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1 bg-muted px-2 py-1 rounded"
+                  >
+                    <Link2 className="h-3 w-3" />
+                    {link.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {assignees.length > 0 && (
+            <div className="space-y-2 mb-6">
+              <h4 className="text-sm font-medium">{t('participants')}:</h4>
+              <div className="flex flex-wrap gap-2">
+                {assignees.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-muted rounded-full px-3 py-1">
+                    <User className="h-3 w-3" />
+                    <span className="text-sm">{a.user.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({a.role === 'executor' ? t('executor') : t('observer')})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <h4 className="text-lg font-medium mb-4">{t('comments')}</h4>
+          <ScrollArea className="max-h-96 pr-4">
+            <div className="space-y-4">
+              {comments.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  {t('noComments')}
+                </p>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className="text-xs">
+                        {comment.profile?.name?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          {comment.profile?.name || t('user')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: dateLocale })}
+                        </span>
+                      </div>
+                      <p className="text-sm mt-1">{comment.content}</p>
+                      {comment.attachments && comment.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {comment.attachments.map((att) => (
+                            <a
+                              key={att.id}
+                              href={att.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                              <Paperclip className="h-3 w-3" />
+                              {att.file_name}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+
+          <div className="border-t pt-4 mt-4">
+            <div className="flex gap-2">
+              <Input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={t('writeComment')}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitComment()}
+              />
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                multiple
+                onChange={handleFileSelect}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()}>
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+            {files.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {files.map((f, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {f.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <TaskEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        task={task}
+        onSuccess={() => {
+          fetchTask();
+          setEditOpen(false);
+        }}
+      />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteTask')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteTaskConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default TaskDetail;

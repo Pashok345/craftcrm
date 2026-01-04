@@ -9,10 +9,12 @@ import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
+import TaskDetail from "./pages/TaskDetail";
 import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 
 const queryClient = new QueryClient();
@@ -29,10 +31,12 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
+            <Route path="/tasks/:id" element={<TaskDetail />} />
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
           </Route>
           <Route path="*" element={<NotFound />} />

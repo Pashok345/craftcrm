@@ -6,15 +6,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Calendar, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { Project, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, Task, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { Plus, Calendar, CheckCircle2, Clock, AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { Project, Task } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { TaskDetailDialog } from '@/components/tasks/TaskDetailDialog';
+import { ProjectEditDialog } from './ProjectEditDialog';
 import { format, parseISO } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface ProjectDetailDialogProps {
   project: Project | null;
@@ -24,10 +39,48 @@ interface ProjectDetailDialogProps {
 }
 
 export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: ProjectDetailDialogProps) => {
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  const statusLabels: Record<string, string> = {
+    todo: t('statusTodo'),
+    in_progress: t('statusInProgress'),
+    review: t('statusReview'),
+    done: t('statusDone'),
+  };
+
+  const STATUS_COLORS: Record<string, string> = {
+    todo: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-crm-warning/10 text-crm-warning',
+    review: 'bg-primary/10 text-primary',
+    done: 'bg-crm-success/10 text-crm-success',
+  };
+
+  const projectStatusLabels: Record<string, string> = {
+    planning: t('projectPlanning'),
+    active: t('projectActive'),
+    on_hold: t('projectOnHold'),
+    completed: t('projectCompleted'),
+    cancelled: t('projectCancelled'),
+  };
+
+  const PROJECT_STATUS_COLORS: Record<string, string> = {
+    planning: 'bg-muted text-muted-foreground',
+    active: 'bg-crm-success/10 text-crm-success',
+    on_hold: 'bg-crm-warning/10 text-crm-warning',
+    completed: 'bg-primary/10 text-primary',
+    cancelled: 'bg-destructive/10 text-destructive',
+  };
 
   useEffect(() => {
     if (open && project) {
@@ -54,6 +107,25 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
     }
   };
 
+  const handleDelete = async () => {
+    if (!project) return;
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', project.id);
+      if (error) throw error;
+      toast({ title: t('projectDeleted') });
+      onOpenChange(false);
+      onUpdate();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({ title: t('errorDeleting'), variant: 'destructive' });
+    }
+  };
+
+  const handleTaskClick = (task: Task) => {
+    navigate(`/tasks/${task.id}`);
+    onOpenChange(false);
+  };
+
   const getTaskStats = () => {
     const total = tasks.length;
     const done = tasks.filter(t => t.status === 'done').length;
@@ -76,23 +148,38 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
     );
   }
 
+  const isCreator = user?.id === project.created_by || user?.id === project.manager_id;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="flex-1">
                 <DialogTitle className="text-xl">{project.title}</DialogTitle>
                 {project.description && (
                   <p className="text-muted-foreground mt-1">{project.description}</p>
                 )}
               </div>
               <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                {PROJECT_STATUS_LABELS[project.status]}
+                {projectStatusLabels[project.status]}
               </Badge>
             </div>
           </DialogHeader>
+
+          {isCreator && (
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                {t('edit')}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                {t('delete')}
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-6">
             {/* Stats */}
@@ -100,25 +187,25 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
               <Card>
                 <CardContent className="p-3 text-center">
                   <div className="text-2xl font-bold">{stats.total}</div>
-                  <div className="text-xs text-muted-foreground">Всего</div>
+                  <div className="text-xs text-muted-foreground">{t('total')}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-3 text-center">
                   <div className="text-2xl font-bold text-green-600">{stats.done}</div>
-                  <div className="text-xs text-muted-foreground">Готово</div>
+                  <div className="text-xs text-muted-foreground">{t('statusDone')}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-3 text-center">
                   <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
-                  <div className="text-xs text-muted-foreground">В работе</div>
+                  <div className="text-xs text-muted-foreground">{t('statusInProgress')}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-3 text-center">
                   <div className="text-2xl font-bold text-blue-600">{stats.todo}</div>
-                  <div className="text-xs text-muted-foreground">К выполнению</div>
+                  <div className="text-xs text-muted-foreground">{t('statusTodo')}</div>
                 </CardContent>
               </Card>
             </div>
@@ -126,10 +213,10 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
             {/* Tasks */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium">Задачи проекта</h3>
+                <h3 className="font-medium">{t('projectTasks')}</h3>
                 <Button size="sm" onClick={() => setTaskDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
-                  Добавить
+                  {t('add')}
                 </Button>
               </div>
 
@@ -140,7 +227,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
               ) : tasks.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Нет задач в этом проекте</p>
+                  <p>{t('noTasksInProject')}</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -148,7 +235,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
                     <div
                       key={task.id}
                       className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => setSelectedTask(task)}
+                      onClick={() => handleTaskClick(task)}
                     >
                       <div className="flex items-center gap-3">
                         <div
@@ -160,13 +247,13 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
                           {task.deadline && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3" />
-                              {format(parseISO(task.deadline), 'd MMM yyyy', { locale: ru })}
+                              {format(parseISO(task.deadline), 'd MMM yyyy', { locale: dateLocale })}
                             </div>
                           )}
                         </div>
                       </div>
                       <Badge className={STATUS_COLORS[task.status]}>
-                        {STATUS_LABELS[task.status]}
+                        {statusLabels[task.status]}
                       </Badge>
                     </div>
                   ))}
@@ -187,15 +274,30 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
         defaultProjectId={project.id}
       />
 
-      <TaskDetailDialog
-        task={selectedTask}
-        open={!!selectedTask}
-        onOpenChange={(open) => !open && setSelectedTask(null)}
-        onUpdate={() => {
-          fetchTasks();
+      <ProjectEditDialog
+        project={project}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSuccess={() => {
           onUpdate();
+          setEditOpen(false);
         }}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProject')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteProjectConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
