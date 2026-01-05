@@ -356,7 +356,7 @@ const TaskDetail = () => {
                 <p className="text-muted-foreground mt-2">{task.description}</p>
               )}
             </div>
-            <Badge className={STATUS_COLORS[task.status]}>{statusLabels[task.status]}</Badge>
+            <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-6">
@@ -451,6 +451,7 @@ const TaskDetail = () => {
                 comments.map((comment) => (
                   <div key={comment.id} className="flex gap-3">
                     <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={comment.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
                         {comment.profile?.name?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>

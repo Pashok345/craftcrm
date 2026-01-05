@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2 } from 'lucide-react';
@@ -206,7 +206,7 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {task.title}
-              <Badge className={STATUS_COLORS[task.status]}>{STATUS_LABELS[task.status]}</Badge>
+              <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{STATUS_LABELS[task.status]}</Badge>
             </div>
             {user?.id === task.created_by && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
@@ -284,6 +284,7 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
                   comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3">
                       <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={comment.profile?.avatar_url || undefined} />
                         <AvatarFallback className="text-xs">
                           {comment.profile?.name?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>

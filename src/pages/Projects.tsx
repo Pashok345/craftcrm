@@ -63,9 +63,9 @@ const Projects = () => {
 
   const formatBudget = (budget?: number) => {
     if (!budget) return null;
-    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language === 'uk' ? 'uk-UA' : 'ru-RU', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: language === 'en' ? 'USD' : language === 'uk' ? 'UAH' : 'RUB',
+      currency: 'USD',
       maximumFractionDigits: 0,
     }).format(budget);
   };
