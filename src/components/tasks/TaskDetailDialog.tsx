@@ -122,7 +122,11 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
 
       // Upload files
       for (const file of files) {
-        const fileName = `${user.id}/${Date.now()}-${file.name}`;
+        // Sanitize file name - replace non-ASCII characters and spaces
+        const sanitizedName = file.name
+          .replace(/[^\w.-]/g, '_')
+          .replace(/__+/g, '_');
+        const fileName = `${task.id}/${Date.now()}-${sanitizedName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('task-attachments')
           .upload(fileName, file);

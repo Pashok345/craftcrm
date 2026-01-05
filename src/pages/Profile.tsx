@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,15 +22,26 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const Profile = () => {
   const { profile, user, refetchProfile } = useAuth();
   const { t } = useLanguage();
-  const [name, setName] = useState(profile?.name || '');
-  const [phone, setPhone] = useState(profile?.phone || '');
-  const [position, setPosition] = useState<UserPosition | ''>(profile?.position || '');
-  const [additionalInfo, setAdditionalInfo] = useState(profile?.additional_info || '');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [position, setPosition] = useState<UserPosition | ''>('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Sync state with profile when loaded
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name || '');
+      setPhone(profile.phone || '');
+      setPosition(profile.position || '');
+      setAdditionalInfo(profile.additional_info || '');
+      setAvatarUrl(profile.avatar_url || null);
+    }
+  }, [profile]);
 
   const positionLabels: Record<UserPosition, string> = {
     director: t('director'),
@@ -66,8 +77,17 @@ const Profile = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      setAvatarUrl(publicUrl + '?t=' + Date.now());
+      const newAvatarUrl = publicUrl + '?t=' + Date.now();
+      setAvatarUrl(newAvatarUrl);
+
+      // Save avatar URL to profile
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: newAvatarUrl })
+        .eq('user_id', user.id);
+
       toast({ title: t('avatarUploaded') });
+      refetchProfile();
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({ title: t('errorUploadingAvatar'), variant: 'destructive' });
@@ -89,7 +109,7 @@ const Profile = () => {
           position: position || null,
           additional_info: additionalInfo || null,
         })
-        .eq('id', profile.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 

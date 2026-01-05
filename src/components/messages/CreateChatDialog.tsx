@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -22,6 +22,7 @@ interface Profile {
   user_id: string;
   name: string;
   email: string;
+  avatar_url?: string;
 }
 
 interface ChatGroup {
@@ -65,7 +66,7 @@ export const CreateChatDialog = ({
   const fetchProfiles = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, user_id, name, email')
+      .select('id, user_id, name, email, avatar_url')
       .neq('user_id', user?.id);
 
     if (data) {
@@ -190,6 +191,7 @@ export const CreateChatDialog = ({
                       onCheckedChange={() => toggleMember(profile.user_id)}
                     />
                     <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
                         {getInitials(profile.name)}
                       </AvatarFallback>

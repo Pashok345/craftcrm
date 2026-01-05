@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Plus, 
   Send, 
@@ -57,6 +57,7 @@ interface Profile {
   id: string;
   user_id: string;
   name: string;
+  avatar_url?: string;
 }
 
 const Messages = () => {
@@ -116,7 +117,7 @@ const Messages = () => {
   };
 
   const fetchProfiles = async () => {
-    const { data } = await supabase.from('profiles').select('id, user_id, name');
+    const { data } = await supabase.from('profiles').select('id, user_id, name, avatar_url');
     if (data) {
       const profileMap: Record<string, Profile> = {};
       data.forEach((p) => {
@@ -352,6 +353,7 @@ const Messages = () => {
                       >
                         {!isOwn && (
                           <Avatar className="h-8 w-8">
+                            <AvatarImage src={profile?.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">
                               {profile ? getInitials(profile.name) : 'U'}
                             </AvatarFallback>

@@ -278,13 +278,12 @@ const Meetings = () => {
                 {hours.map((hour) => (
                   <div
                     key={hour}
-                    className="absolute w-full border-t border-border flex"
+                    className="absolute w-full border-t border-border"
                     style={{ top: `${(hour - 7) * 60}px` }}
                   >
-                    <div className="w-16 text-xs text-muted-foreground pr-2 -mt-2 text-right">
+                    <div className="absolute left-0 w-14 text-xs text-muted-foreground text-right pr-2" style={{ top: '-0.5rem' }}>
                       {String(hour).padStart(2, '0')}:00
                     </div>
-                    <div className="flex-1" />
                   </div>
                 ))}
 
