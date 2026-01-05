@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Profile, UserPosition, POSITION_LABELS } from '@/types/database';
@@ -89,6 +89,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
+              <AvatarImage src={user.avatar_url || undefined} />
               <AvatarFallback className="bg-primary text-primary-foreground text-xl">
                 {initials}
               </AvatarFallback>
@@ -118,7 +119,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+7 (999) 123-45-67"
+                  placeholder="+38 (0XX) XXX-XX-XX"
                 />
               </div>
 

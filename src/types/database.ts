@@ -55,6 +55,7 @@ export interface Profile {
   phone?: string;
   position?: UserPosition;
   additional_info?: string;
+  avatar_url?: string;
   created_at: string;
   updated_at: string;
 }

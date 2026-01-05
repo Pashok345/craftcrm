@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Phone, User, Plus } from 'lucide-react';
 import { Profile, UserPosition } from '@/types/database';
@@ -114,6 +114,7 @@ const Users = () => {
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <Avatar className="h-12 w-12 shrink-0">
+                      <AvatarImage src={user.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {initials}
                       </AvatarFallback>

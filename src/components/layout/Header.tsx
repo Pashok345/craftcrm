@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Profile } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
@@ -164,6 +164,7 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {initials}
                   </AvatarFallback>
