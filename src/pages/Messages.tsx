@@ -312,11 +312,11 @@ const Messages = () => {
             <TabsList className="w-full">
               <TabsTrigger value="chats" className="flex-1">
                 <MessageSquare className="h-4 w-4 mr-2" />
-                {t('chats') || 'Чаты'}
+                {t('chats')}
               </TabsTrigger>
               <TabsTrigger value="employees" className="flex-1">
                 <Users className="h-4 w-4 mr-2" />
-                {t('employees') || 'Сотрудники'}
+                {t('employees')}
               </TabsTrigger>
             </TabsList>
           </Tabs>

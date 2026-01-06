@@ -75,6 +75,13 @@ export const translations: Translations = {
   settingsMenu: { ru: 'Настройки', en: 'Settings', uk: 'Налаштування' },
   cancel: { ru: 'Отмена', en: 'Cancel', uk: 'Скасувати' },
   create: { ru: 'Создать', en: 'Create', uk: 'Створити' },
+  chats: { ru: 'Чаты', en: 'Chats', uk: 'Чати' },
+  employees: { ru: 'Сотрудники', en: 'Employees', uk: 'Співробітники' },
+  noEmployees: { ru: 'Нет сотрудников', en: 'No employees', uk: 'Немає співробітників' },
+  chatCreated: { ru: 'Чат создан', en: 'Chat created', uk: 'Чат створено' },
+  chatWith: { ru: 'Чат с', en: 'Chat with', uk: 'Чат з' },
+  error: { ru: 'Ошибка', en: 'Error', uk: 'Помилка' },
+  failedToCreateChat: { ru: 'Не удалось создать чат', en: 'Failed to create chat', uk: 'Не вдалося створити чат' },
   
   // Positions
   director: { ru: 'Директор', en: 'Director', uk: 'Директор' },

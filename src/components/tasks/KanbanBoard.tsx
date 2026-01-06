@@ -172,10 +172,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   const addColumn = () => {
     if (!newColumnName.trim()) return;
     
+    // Generate a unique custom status that doesn't match existing task statuses
+    const uniqueStatus = `custom_status_${Date.now()}` as TaskStatus;
+    
     const newColumn: Column = {
       id: `custom_${Date.now()}`,
       title: newColumnName.trim(),
-      status: 'todo' as TaskStatus,
+      status: uniqueStatus,
       color: DEFAULT_COLUMN_COLOR,
     };
     
