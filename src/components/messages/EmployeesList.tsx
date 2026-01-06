@@ -73,7 +73,7 @@ export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
     return (
       <div className="p-8 text-center text-muted-foreground">
         <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
-        <p className="text-sm">{t('noEmployees') || 'Нет сотрудников'}</p>
+        <p className="text-sm">{t('noEmployees')}</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
     <ScrollArea className="flex-1">
       <div className="p-2">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase px-2 py-2">
-          {t('employees') || 'Сотрудники'}
+          {t('employees')}
         </h3>
         {employees.map((employee) => (
           <div
