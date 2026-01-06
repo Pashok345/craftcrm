@@ -5,13 +5,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical } from 'lucide-react';
+import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical, Palette } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Task, TaskStatus, Project } from '@/types/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { format } from 'date-fns';
@@ -22,6 +24,7 @@ interface Column {
   id: string;
   title: string;
   status: TaskStatus;
+  color?: string;
 }
 
 interface KanbanBoardProps {
@@ -31,18 +34,39 @@ interface KanbanBoardProps {
   onTaskUpdate: () => void;
 }
 
+const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
+
+const COLUMN_COLORS = [
+  { name: 'Default', value: 'hsl(var(--muted))' },
+  { name: 'Blue', value: 'hsl(210, 100%, 95%)' },
+  { name: 'Green', value: 'hsl(142, 76%, 93%)' },
+  { name: 'Yellow', value: 'hsl(48, 100%, 93%)' },
+  { name: 'Orange', value: 'hsl(24, 100%, 93%)' },
+  { name: 'Purple', value: 'hsl(270, 76%, 95%)' },
+  { name: 'Pink', value: 'hsl(330, 80%, 95%)' },
+  { name: 'Red', value: 'hsl(0, 76%, 95%)' },
+];
+
 const DEFAULT_COLUMNS: Column[] = [
-  { id: 'todo', title: 'statusTodo', status: 'todo' },
-  { id: 'in_progress', title: 'statusInProgress', status: 'in_progress' },
-  { id: 'review', title: 'statusReview', status: 'review' },
-  { id: 'done', title: 'statusDone', status: 'done' },
+  { id: 'todo', title: 'statusTodo', status: 'todo', color: DEFAULT_COLUMN_COLOR },
+  { id: 'in_progress', title: 'statusInProgress', status: 'in_progress', color: DEFAULT_COLUMN_COLOR },
+  { id: 'review', title: 'statusReview', status: 'review', color: DEFAULT_COLUMN_COLOR },
+  { id: 'done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR },
 ];
 
 export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const [columns, setColumns] = useState<Column[]>(() => {
     const saved = localStorage.getItem('kanban-columns');
-    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Ensure all columns have color property
+      return parsed.map((col: Column) => ({
+        ...col,
+        color: col.color || DEFAULT_COLUMN_COLOR
+      }));
+    }
+    return DEFAULT_COLUMNS;
   });
   const [taskOrder, setTaskOrder] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem('kanban-task-order');
@@ -68,7 +92,6 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     if (!column) return [];
     const columnTasks = tasks.filter(task => task.status === column.status);
     
-    // Sort by saved order if exists
     const order = taskOrder[columnId];
     if (order) {
       return columnTasks.sort((a, b) => {
@@ -153,6 +176,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
       id: `custom_${Date.now()}`,
       title: newColumnName.trim(),
       status: 'todo' as TaskStatus,
+      color: DEFAULT_COLUMN_COLOR,
     };
     
     setColumns([...columns, newColumn]);
@@ -178,6 +202,12 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     ));
     setEditingColumn(null);
     setEditingName('');
+  };
+
+  const setColumnColor = (columnId: string, color: string) => {
+    setColumns(columns.map(c =>
+      c.id === columnId ? { ...c, color } : c
+    ));
   };
 
   const getColumnTitle = (column: Column) => {
@@ -207,7 +237,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                       snapshot.isDragging && "opacity-90"
                     )}
                   >
-                    <div className="bg-muted/50 rounded-lg p-4 h-full flex flex-col">
+                    <div 
+                      className="rounded-lg p-4 h-full flex flex-col border-2 border-border/50"
+                      style={{ backgroundColor: column.color || DEFAULT_COLUMN_COLOR }}
+                    >
                       {/* Column Header */}
                       <div 
                         {...provided.dragHandleProps}
@@ -219,7 +252,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                               value={editingName}
                               onChange={(e) => setEditingName(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && saveColumnEdit(column.id)}
-                              className="h-8"
+                              className="h-8 bg-background"
                               autoFocus
                             />
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => saveColumnEdit(column.id)}>
@@ -234,7 +267,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                             <div className="flex items-center gap-2">
                               <GripVertical className="h-4 w-4 text-muted-foreground" />
                               <h3 className="font-semibold text-foreground">{getColumnTitle(column)}</h3>
-                              <Badge variant="secondary" className="rounded-full">
+                              <Badge variant="secondary" className="rounded-full bg-background">
                                 {getTasksForColumn(column.id).length}
                               </Badge>
                             </div>
@@ -249,6 +282,30 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   {t('editColumn')}
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <div className="px-2 py-1.5">
+                                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                                    <Palette className="h-3 w-3" />
+                                    {t('columnColor') || 'Цвет колонки'}
+                                  </p>
+                                  <div className="grid grid-cols-4 gap-1">
+                                    {COLUMN_COLORS.map((colorOption) => (
+                                      <button
+                                        key={colorOption.value}
+                                        className={cn(
+                                          "w-6 h-6 rounded border-2 transition-all",
+                                          column.color === colorOption.value 
+                                            ? "border-primary ring-2 ring-primary/20" 
+                                            : "border-border hover:border-primary/50"
+                                        )}
+                                        style={{ backgroundColor: colorOption.value }}
+                                        onClick={() => setColumnColor(column.id, colorOption.value)}
+                                        title={colorOption.name}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   onClick={() => deleteColumn(column.id)}
                                   className="text-destructive"
@@ -269,8 +326,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                             ref={provided.innerRef}
                             {...provided.droppableProps}
                             className={cn(
-                              'flex-1 space-y-2 transition-colors rounded-lg p-1 min-h-[100px]',
-                              snapshot.isDraggingOver && 'bg-primary/5'
+                              'flex-1 space-y-2 transition-colors rounded-lg p-2 min-h-[150px]',
+                              snapshot.isDraggingOver && 'bg-primary/10 ring-2 ring-primary/30 ring-dashed'
                             )}
                           >
                             {getTasksForColumn(column.id).map((task, index) => (
@@ -281,7 +338,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
                                     className={cn(
-                                      'cursor-pointer hover:shadow-md transition-shadow',
+                                      'cursor-pointer hover:shadow-md transition-shadow bg-background',
                                       snapshot.isDragging && 'shadow-lg rotate-2'
                                     )}
                                     style={{
@@ -330,7 +387,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
             {/* Add Column */}
             <div className="flex-shrink-0 w-80">
               {isAddingColumn ? (
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
                   <Input
                     value={newColumnName}
                     onChange={(e) => setNewColumnName(e.target.value)}
@@ -353,7 +410,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
               ) : (
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-dashed"
+                  className="w-full h-12 border-dashed border-2"
                   onClick={() => setIsAddingColumn(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
