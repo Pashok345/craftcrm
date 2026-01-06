@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -14,6 +14,37 @@ import { useToast } from '@/hooks/use-toast';
 import { POSITION_LABELS, UserPosition } from '@/types/database';
 import { Loader2 } from 'lucide-react';
 
+// Phone mask utility for +38 format
+const formatPhoneNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, '');
+  
+  // Ensure it starts with 38
+  let formatted = digits;
+  if (!formatted.startsWith('38')) {
+    formatted = '38' + formatted.replace(/^38/, '');
+  }
+  
+  // Limit to 12 digits (38 + 10 digits)
+  formatted = formatted.slice(0, 12);
+  
+  // Format: +38 (0XX) XXX-XX-XX
+  let result = '+38';
+  if (formatted.length > 2) {
+    result += ' (' + formatted.slice(2, 5);
+  }
+  if (formatted.length > 5) {
+    result += ') ' + formatted.slice(5, 8);
+  }
+  if (formatted.length > 8) {
+    result += '-' + formatted.slice(8, 10);
+  }
+  if (formatted.length > 10) {
+    result += '-' + formatted.slice(10, 12);
+  }
+  
+  return result;
+};
+
 interface AddUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,9 +56,14 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState<UserPosition>('other');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+38');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhone(formatted);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +89,10 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
     setLoading(true);
 
     try {
-      // Create user via Supabase Auth
+      // Get current session to restore after creating user
+      const { data: currentSession } = await supabase.auth.getSession();
+      
+      // Create user via Supabase Auth admin (this won't log in as the new user)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -74,12 +113,20 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
           .update({
             name: name.trim(),
             position: position,
-            phone: phone.trim() || null,
+            phone: phone.trim() !== '+38' ? phone.trim() : null,
           })
           .eq('user_id', authData.user.id);
 
         if (profileError) {
           console.error('Profile update error:', profileError);
+        }
+        
+        // Sign out the newly created user and restore original session
+        if (currentSession?.session) {
+          await supabase.auth.setSession({
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token,
+          });
         }
       }
 
@@ -114,7 +161,7 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
     setEmail('');
     setPassword('');
     setPosition('other');
-    setPhone('');
+    setPhone('+38');
   };
 
   return (
@@ -182,8 +229,8 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
             <Input
               id="phone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+7 (999) 123-45-67"
+              onChange={handlePhoneChange}
+              placeholder="+38 (0XX) XXX-XX-XX"
             />
           </div>
 

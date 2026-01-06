@@ -19,13 +19,17 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { CreateChatDialog } from '@/components/messages/CreateChatDialog';
+import { EmployeesList } from '@/components/messages/EmployeesList';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { POSITION_LABELS, UserPosition } from '@/types/database';
 
 interface ChatGroup {
   id: string;
@@ -57,12 +61,15 @@ interface Profile {
   id: string;
   user_id: string;
   name: string;
-  avatar_url?: string;
+  email: string;
+  position: UserPosition | null;
+  avatar_url?: string | null;
 }
 
 const Messages = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const [chats, setChats] = useState<ChatGroup[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatGroup | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -71,6 +78,7 @@ const Messages = () => {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState<'chats' | 'employees'>('chats');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -117,13 +125,68 @@ const Messages = () => {
   };
 
   const fetchProfiles = async () => {
-    const { data } = await supabase.from('profiles').select('id, user_id, name, avatar_url');
+    const { data } = await supabase.from('profiles').select('id, user_id, name, email, position, avatar_url');
     if (data) {
       const profileMap: Record<string, Profile> = {};
       data.forEach((p) => {
-        profileMap[p.user_id] = p;
+        profileMap[p.user_id] = p as Profile;
       });
       setProfiles(profileMap);
+    }
+  };
+
+  const startDirectChat = async (profile: Profile) => {
+    if (!user) return;
+
+    // Check if direct chat already exists
+    const existingChat = chats.find(
+      (chat) => chat.type === 'direct' && chat.name.includes(profile.name)
+    );
+
+    if (existingChat) {
+      setSelectedChat(existingChat);
+      setSidebarTab('chats');
+      return;
+    }
+
+    // Create new direct chat
+    try {
+      const { data: chatData, error: chatError } = await supabase
+        .from('chat_groups')
+        .insert({
+          name: profile.name,
+          type: 'direct',
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (chatError) throw chatError;
+
+      // Add both users as members
+      const { error: membersError } = await supabase.from('chat_members').insert([
+        { chat_id: chatData.id, user_id: user.id, role: 'admin' },
+        { chat_id: chatData.id, user_id: profile.user_id, role: 'member' },
+      ]);
+
+      if (membersError) throw membersError;
+
+      const newChat = chatData as ChatGroup;
+      setChats((prev) => [newChat, ...prev]);
+      setSelectedChat(newChat);
+      setSidebarTab('chats');
+
+      toast({
+        title: t('chatCreated') || 'Чат создан',
+        description: `${t('chatWith') || 'Чат с'} ${profile.name}`,
+      });
+    } catch (error) {
+      console.error('Error creating direct chat:', error);
+      toast({
+        title: t('error') || 'Ошибка',
+        description: t('failedToCreateChat') || 'Не удалось создать чат',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -245,59 +308,79 @@ const Messages = () => {
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('searchChats')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          <Tabs value={sidebarTab} onValueChange={(v) => setSidebarTab(v as 'chats' | 'employees')}>
+            <TabsList className="w-full">
+              <TabsTrigger value="chats" className="flex-1">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {t('chats') || 'Чаты'}
+              </TabsTrigger>
+              <TabsTrigger value="employees" className="flex-1">
+                <Users className="h-4 w-4 mr-2" />
+                {t('employees') || 'Сотрудники'}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <ScrollArea className="flex-1">
-          {loading ? (
-            <div className="p-4 text-center text-muted-foreground">{t('loading')}</div>
-          ) : filteredChats.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">{t('noChats')}</p>
-              <Button
-                variant="link"
-                className="mt-2"
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                {t('createFirstChat')}
-              </Button>
-            </div>
-          ) : (
-            filteredChats.map((chat) => (
-              <div
-                key={chat.id}
-                className={cn(
-                  'p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50',
-                  selectedChat?.id === chat.id && 'bg-muted'
-                )}
-                onClick={() => setSelectedChat(chat)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    {getChatIcon(chat.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{chat.name}</p>
-                    {chat.description && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {chat.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
+        {sidebarTab === 'chats' ? (
+          <>
+            <div className="px-4 py-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('searchChats')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
               </div>
-            ))
-          )}
-        </ScrollArea>
+            </div>
+            <ScrollArea className="flex-1">
+              {loading ? (
+                <div className="p-4 text-center text-muted-foreground">{t('loading')}</div>
+              ) : filteredChats.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">{t('noChats')}</p>
+                  <Button
+                    variant="link"
+                    className="mt-2"
+                    onClick={() => setCreateDialogOpen(true)}
+                  >
+                    {t('createFirstChat')}
+                  </Button>
+                </div>
+              ) : (
+                filteredChats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    className={cn(
+                      'p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50',
+                      selectedChat?.id === chat.id && 'bg-muted'
+                    )}
+                    onClick={() => setSelectedChat(chat)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        {getChatIcon(chat.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{chat.name}</p>
+                        {chat.description && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {chat.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </ScrollArea>
+          </>
+        ) : (
+          <EmployeesList onStartChat={startDirectChat} />
+        )}
       </div>
 
       {/* Chat Area */}
