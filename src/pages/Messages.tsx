@@ -93,6 +93,7 @@ const Messages = () => {
   useEffect(() => {
     if (selectedChat) {
       fetchMessages(selectedChat.id);
+      markMessagesAsRead(selectedChat.id);
 
       const channel = supabase
         .channel(`chat-${selectedChat.id}`)
@@ -108,6 +109,8 @@ const Messages = () => {
             const newMsg = payload.new as Message;
             setMessages((prev) => [...prev, newMsg]);
             scrollToBottom();
+            // Mark as read immediately if we're viewing this chat
+            markMessagesAsRead(selectedChat.id);
           }
         )
         .subscribe();
@@ -117,6 +120,16 @@ const Messages = () => {
       };
     }
   }, [selectedChat]);
+
+  const markMessagesAsRead = async (chatId: string) => {
+    if (!user) return;
+    
+    await supabase
+      .from('chat_members')
+      .update({ last_read_at: new Date().toISOString() })
+      .eq('chat_id', chatId)
+      .eq('user_id', user.id);
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {

@@ -146,7 +146,9 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setNotificationOpen(true)}
+            onClick={() => {
+              setNotificationOpen(true);
+            }}
             className="relative"
           >
             <Bell className="h-5 w-5" />
@@ -193,7 +195,16 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
         </div>
       </header>
       
-      <NotificationPanel open={notificationOpen} onOpenChange={setNotificationOpen} />
+      <NotificationPanel 
+        open={notificationOpen} 
+        onOpenChange={(open) => {
+          setNotificationOpen(open);
+          if (!open) {
+            // Refresh unread count when panel closes
+            fetchUnreadCount();
+          }
+        }} 
+      />
     </>
   );
 };

@@ -9,12 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
+import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import {
@@ -48,6 +49,7 @@ const TaskDetail = () => {
   const [taskAttachments, setTaskAttachments] = useState<TaskAttachment[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [addAssigneeOpen, setAddAssigneeOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -255,6 +257,32 @@ const TaskDetail = () => {
         });
       }
 
+      // Send notifications to all assignees except the commenter
+      const { data: taskAssignees } = await supabase
+        .from('task_assignees')
+        .select('user_id')
+        .eq('task_id', task.id);
+
+      if (taskAssignees) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .single();
+        
+        for (const assignee of taskAssignees) {
+          if (assignee.user_id !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: assignee.user_id,
+              type: 'comment',
+              title: t('newCommentOnTask') || 'Новый комментарий к задаче',
+              message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
+              task_id: task.id,
+            });
+          }
+        }
+      }
+
       setNewComment('');
       setFiles([]);
       fetchComments();
@@ -419,22 +447,62 @@ const TaskDetail = () => {
             </div>
           )}
 
-          {assignees.length > 0 && (
-            <div className="space-y-2 mb-6">
-              <h4 className="text-sm font-medium">{t('participants')}:</h4>
-              <div className="flex flex-wrap gap-2">
-                {assignees.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-muted rounded-full px-3 py-1">
-                    <User className="h-3 w-3" />
-                    <span className="text-sm">{a.user.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ({a.role === 'executor' ? t('executor') : t('observer')})
-                    </span>
-                  </div>
+          <div className="space-y-2 mb-6">
+            <h4 className="text-sm font-medium">{t('participants')}:</h4>
+            <div className="flex items-center gap-1">
+              {/* Avatar stack */}
+              <div className="flex -space-x-2">
+                {assignees.slice(0, 5).map((a, i) => (
+                  <Tooltip key={i}>
+                    <TooltipTrigger asChild>
+                      <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
+                        <AvatarImage src={a.user.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                          {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{a.user.name} ({a.role === 'executor' ? t('executor') : t('observer')})</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ))}
+                {assignees.length > 5 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
+                        +{assignees.length - 5}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {assignees.slice(5).map((a, i) => (
+                        <p key={i}>{a.user.name}</p>
+                      ))}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
+              
+              {/* Add button */}
+              {user?.id === task.created_by && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full ml-2"
+                      onClick={() => setAddAssigneeOpen(true)}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('addParticipant')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
@@ -553,6 +621,15 @@ const TaskDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AddAssigneeDialog
+        open={addAssigneeOpen}
+        onOpenChange={setAddAssigneeOpen}
+        taskId={task.id}
+        taskTitle={task.title}
+        existingAssigneeIds={assignees.map((a) => a.user.user_id)}
+        onAssigneeAdded={fetchAssignees}
+      />
     </div>
     </TooltipProvider>
   );
