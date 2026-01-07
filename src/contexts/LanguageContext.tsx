@@ -219,6 +219,16 @@ export const translations: Translations = {
   close: { ru: 'Закрыть', en: 'Close', uk: 'Закрити' },
   add: { ru: 'Добавить', en: 'Add', uk: 'Додати' },
   search: { ru: 'Поиск', en: 'Search', uk: 'Пошук' },
+  
+  // Assignees
+  addParticipant: { ru: 'Добавить участника', en: 'Add participant', uk: 'Додати учасника' },
+  role: { ru: 'Роль', en: 'Role', uk: 'Роль' },
+  selectUser: { ru: 'Выберите пользователя', en: 'Select user', uk: 'Оберіть користувача' },
+  noAvailableUsers: { ru: 'Нет доступных пользователей', en: 'No available users', uk: 'Немає доступних користувачів' },
+  assigneeAdded: { ru: 'Участник добавлен', en: 'Participant added', uk: 'Учасника додано' },
+  newTaskAssigned: { ru: 'Вас добавили в задачу', en: 'You were added to a task', uk: 'Вас додали до завдання' },
+  youWereAddedToTask: { ru: 'Вы добавлены в задачу', en: 'You were added to task', uk: 'Вас додано до завдання' },
+  newCommentOnTask: { ru: 'Новый комментарий к задаче', en: 'New comment on task', uk: 'Новий коментар до завдання' },
 };
 
 interface LanguageContextType {
