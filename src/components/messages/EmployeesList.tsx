@@ -35,6 +35,7 @@ export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
     if (!user) return;
     setLoading(true);
 
+    // Fetch all profiles except current user (no self-DM)
     const { data, error } = await supabase
       .from('profiles')
       .select('id, user_id, name, email, position, avatar_url')

@@ -276,16 +276,37 @@ const Messages = () => {
       .slice(0, 2);
   };
 
-  const getChatIcon = (type: string) => {
+  // Generate a consistent color based on chat id
+  const getChatAccentColor = (chatId: string) => {
+    const colors = [
+      'hsl(210, 80%, 55%)', // Blue
+      'hsl(142, 70%, 45%)', // Green
+      'hsl(270, 70%, 60%)', // Purple
+      'hsl(340, 75%, 55%)', // Pink
+      'hsl(25, 90%, 55%)',  // Orange
+      'hsl(175, 70%, 40%)', // Teal
+      'hsl(45, 90%, 50%)',  // Yellow
+      'hsl(0, 70%, 55%)',   // Red
+    ];
+    let hash = 0;
+    for (let i = 0; i < chatId.length; i++) {
+      hash = chatId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const getChatIcon = (type: string, chatId?: string) => {
+    const color = chatId ? getChatAccentColor(chatId) : undefined;
+    const style = color ? { color } : {};
     switch (type) {
       case 'group':
-        return <Users className="h-4 w-4" />;
+        return <Users className="h-4 w-4" style={style} />;
       case 'direct':
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4" style={style} />;
       case 'task':
-        return <Hash className="h-4 w-4" />;
+        return <Hash className="h-4 w-4" style={style} />;
       default:
-        return <MessageSquare className="h-4 w-4" />;
+        return <MessageSquare className="h-4 w-4" style={style} />;
     }
   };
 
@@ -374,8 +395,11 @@ const Messages = () => {
                     onClick={() => setSelectedChat(chat)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        {getChatIcon(chat.type)}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: `${getChatAccentColor(chat.id)}20` }}
+                      >
+                        {getChatIcon(chat.type, chat.id)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{chat.name}</p>
@@ -403,8 +427,11 @@ const Messages = () => {
             {/* Chat Header */}
             <div className="h-16 border-b border-border px-4 flex items-center justify-between bg-card">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  {getChatIcon(selectedChat.type)}
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${getChatAccentColor(selectedChat.id)}20` }}
+                >
+                  {getChatIcon(selectedChat.type, selectedChat.id)}
                 </div>
                 <div>
                   <h3 className="font-semibold">{selectedChat.name}</h3>
@@ -457,10 +484,10 @@ const Messages = () => {
                         )}
                         <div
                           className={cn(
-                            'max-w-[70%] rounded-2xl px-4 py-2',
+                            'max-w-[70%] rounded-2xl px-4 py-2 shadow-sm',
                             isOwn
                               ? 'bg-primary text-primary-foreground rounded-br-md'
-                              : 'bg-muted rounded-bl-md'
+                              : 'bg-card border border-border rounded-bl-md'
                           )}
                         >
                           {!isOwn && profile && (
