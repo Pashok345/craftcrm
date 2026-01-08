@@ -387,8 +387,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
             ))}
             {provided.placeholder}
 
-            {/* Add Column */}
-            <div className="flex-shrink-0 w-80">
+            {/* Add Column - placed INSIDE the droppable area for proper drag detection */}
+            <div className="flex-shrink-0 w-80 min-h-[150px]">
               {isAddingColumn ? (
                 <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
                   <Input

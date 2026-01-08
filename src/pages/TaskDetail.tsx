@@ -257,30 +257,43 @@ const TaskDetail = () => {
         });
       }
 
-      // Send notifications to all assignees except the commenter
+      // Send notifications to all assignees AND task creator except the commenter
       const { data: taskAssignees } = await supabase
         .from('task_assignees')
         .select('user_id')
         .eq('task_id', task.id);
 
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+      
+      // Collect all users to notify (assignees + creator)
+      const usersToNotify = new Set<string>();
+      
+      // Add all assignees
       if (taskAssignees) {
-        const { data: myProfile } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('user_id', user.id)
-          .single();
-        
-        for (const assignee of taskAssignees) {
-          if (assignee.user_id !== user.id) {
-            await supabase.from('notifications').insert({
-              user_id: assignee.user_id,
-              type: 'comment',
-              title: t('newCommentOnTask') || 'Новый комментарий к задаче',
-              message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
-              task_id: task.id,
-            });
-          }
-        }
+        taskAssignees.forEach(a => usersToNotify.add(a.user_id));
+      }
+      
+      // Add task creator
+      if (task.created_by) {
+        usersToNotify.add(task.created_by);
+      }
+      
+      // Remove current user (commenter)
+      usersToNotify.delete(user.id);
+      
+      // Send notifications
+      for (const userId of usersToNotify) {
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'comment',
+          title: t('newCommentOnTask') || 'Новый комментарий к задаче',
+          message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
+          task_id: task.id,
+        });
       }
 
       setNewComment('');
