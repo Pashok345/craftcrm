@@ -148,6 +148,8 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
             size="icon" 
             onClick={() => {
               setNotificationOpen(true);
+              // Reset counter immediately when opening panel
+              setUnreadCount(0);
             }}
             className="relative"
           >
