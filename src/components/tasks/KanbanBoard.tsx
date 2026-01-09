@@ -169,6 +169,12 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     }
   };
 
+  const getRandomColor = () => {
+    // Skip the first "Default" color and pick a random one from the rest
+    const colorOptions = COLUMN_COLORS.slice(1);
+    return colorOptions[Math.floor(Math.random() * colorOptions.length)].value;
+  };
+
   const addColumn = () => {
     if (!newColumnName.trim()) return;
     
@@ -179,7 +185,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
       id: `custom_${Date.now()}`,
       title: newColumnName.trim(),
       status: uniqueStatus,
-      color: DEFAULT_COLUMN_COLOR,
+      color: getRandomColor(),
     };
     
     setColumns([...columns, newColumn]);
@@ -227,7 +233,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
           <div 
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className="flex gap-4 min-h-[calc(100vh-280px)]"
+            className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
+            style={{ minWidth: 'max-content' }}
           >
             {columns.map((column, columnIndex) => (
               <Draggable key={column.id} draggableId={`column-${column.id}`} index={columnIndex}>
@@ -386,44 +393,44 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
               </Draggable>
             ))}
             {provided.placeholder}
-
-            {/* Add Column - placed INSIDE the droppable area for proper drag detection */}
-            <div className="flex-shrink-0 w-80 min-h-[150px]">
-              {isAddingColumn ? (
-                <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
-                  <Input
-                    value={newColumnName}
-                    onChange={(e) => setNewColumnName(e.target.value)}
-                    placeholder={t('columnName')}
-                    onKeyDown={(e) => e.key === 'Enter' && addColumn()}
-                    autoFocus
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" onClick={addColumn}>
-                      {t('saveColumn')}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => {
-                      setIsAddingColumn(false);
-                      setNewColumnName('');
-                    }}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full h-12 border-dashed border-2"
-                  onClick={() => setIsAddingColumn(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('addColumn')}
-                </Button>
-              )}
-            </div>
           </div>
         )}
       </Droppable>
+
+      {/* Add Column - placed OUTSIDE the droppable area */}
+      <div className="flex-shrink-0 w-80 min-h-[150px]">
+        {isAddingColumn ? (
+          <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
+            <Input
+              value={newColumnName}
+              onChange={(e) => setNewColumnName(e.target.value)}
+              placeholder={t('columnName')}
+              onKeyDown={(e) => e.key === 'Enter' && addColumn()}
+              autoFocus
+            />
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" onClick={addColumn}>
+                {t('saveColumn')}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => {
+                setIsAddingColumn(false);
+                setNewColumnName('');
+              }}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full h-12 border-dashed border-2"
+            onClick={() => setIsAddingColumn(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('addColumn')}
+          </Button>
+        )}
+      </div>
     </DragDropContext>
   );
 };

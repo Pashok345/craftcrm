@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { user } = useAuth();
   const { language, t } = useLanguage();
+  const navigate = useNavigate();
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -226,7 +228,14 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
                     'p-4 hover:bg-muted/50 transition-colors cursor-pointer group',
                     !notification.is_read && 'bg-primary/5'
                   )}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => {
+                    markAsRead(notification.id);
+                    // Navigate to task if task_id exists
+                    if (notification.task_id) {
+                      onOpenChange(false);
+                      navigate(`/tasks/${notification.task_id}`);
+                    }
+                  }}
                 >
                   <div className="flex gap-3">
                     <span className="text-xl">{getTypeIcon(notification.type)}</span>
