@@ -7,7 +7,8 @@ import {
   Folder,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  GitBranch
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
     { icon: Folder, label: t('projects'), path: '/projects' },
     { icon: CheckSquare, label: t('tasks'), path: '/tasks' },
+    { icon: GitBranch, label: t('processes'), path: '/processes' },
     { icon: Calendar, label: t('meetings'), path: '/meetings' },
     { icon: Users, label: t('users'), path: '/users' },
   ];

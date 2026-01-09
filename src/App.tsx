@@ -16,6 +16,7 @@ import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
+import Processes from "./pages/Processes";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/processes" element={<Processes />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
