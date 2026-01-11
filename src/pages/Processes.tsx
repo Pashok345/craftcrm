@@ -185,7 +185,6 @@ const Processes = () => {
                   <Button 
                     size="sm" 
                     onClick={() => setRunDialogProcess(process)}
-                    className="flex-1"
                   >
                     <Play className="h-4 w-4 mr-1" />
                     {t('runProcess')}
