@@ -15,11 +15,34 @@ interface Profile {
   email: string;
   position: UserPosition | null;
   avatar_url: string | null;
+  avatar_color: string | null;
 }
 
 interface EmployeesListProps {
   onStartChat: (profile: Profile) => void;
 }
+
+// Default avatar colors based on user id hash
+const AVATAR_COLORS = [
+  'hsl(210, 70%, 50%)',
+  'hsl(150, 60%, 45%)',
+  'hsl(280, 65%, 55%)',
+  'hsl(340, 70%, 50%)',
+  'hsl(25, 80%, 55%)',
+  'hsl(180, 60%, 45%)',
+  'hsl(60, 70%, 45%)',
+  'hsl(0, 70%, 55%)',
+];
+
+export const getAvatarColor = (userId: string, customColor?: string | null) => {
+  if (customColor) return customColor;
+  // Generate consistent color based on user id
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
 
 export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
   const { user } = useAuth();
@@ -38,7 +61,7 @@ export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
     // Fetch all profiles except current user (no self-DM)
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, user_id, name, email, position, avatar_url')
+      .select('id, user_id, name, email, position, avatar_url, avatar_color')
       .neq('user_id', user.id)
       .order('name');
 
@@ -92,7 +115,12 @@ export const EmployeesList = ({ onStartChat }: EmployeesListProps) => {
           >
             <Avatar className="h-10 w-10">
               <AvatarImage src={employee.avatar_url || undefined} />
-              <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
+              <AvatarFallback 
+                className="text-white font-medium"
+                style={{ backgroundColor: getAvatarColor(employee.user_id, employee.avatar_color) }}
+              >
+                {getInitials(employee.name)}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{employee.name}</p>

@@ -269,6 +269,25 @@ export const translations: Translations = {
   runName: { ru: 'Название запуска', en: 'Run name', uk: 'Назва запуску' },
   enterRunName: { ru: 'Введите название', en: 'Enter name', uk: 'Введіть назву' },
   initiatorDepartment: { ru: 'Отдел-инициатор', en: 'Initiator department', uk: 'Відділ-ініціатор' },
+  processInfo: { ru: 'Информация о процессе', en: 'Process info', uk: 'Інформація про процес' },
+  processRunNotFound: { ru: 'Запуск процесса не найден', en: 'Process run not found', uk: 'Запуск процесу не знайдено' },
+  backToProcesses: { ru: 'Назад к процессам', en: 'Back to processes', uk: 'Назад до процесів' },
+  statusUpdated: { ru: 'Статус обновлён', en: 'Status updated', uk: 'Статус оновлено' },
+  takeToWork: { ru: 'Взять в работу', en: 'Take to work', uk: 'Взяти в роботу' },
+  markComplete: { ru: 'Завершить', en: 'Complete', uk: 'Завершити' },
+  info: { ru: 'Информация', en: 'Info', uk: 'Інформація' },
+  startedBy: { ru: 'Запустил', en: 'Started by', uk: 'Запустив' },
+  startedAt: { ru: 'Дата запуска', en: 'Started at', uk: 'Дата запуску' },
+  completedAt: { ru: 'Дата завершения', en: 'Completed at', uk: 'Дата завершення' },
+  untitled: { ru: 'Без названия', en: 'Untitled', uk: 'Без назви' },
+  status_pending: { ru: 'Ожидает', en: 'Pending', uk: 'Очікує' },
+  status_in_progress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
+  status_completed: { ru: 'Завершено', en: 'Completed', uk: 'Завершено' },
+  status_cancelled: { ru: 'Отменено', en: 'Cancelled', uk: 'Скасовано' },
+  
+  // Avatar color
+  avatarColor: { ru: 'Цвет аватарки', en: 'Avatar color', uk: 'Колір аватарки' },
+  avatarColorDescription: { ru: 'Выберите цвет для вашего инициала', en: 'Choose a color for your initials', uk: 'Оберіть колір для ваших ініціалів' },
   
   // Theme
   theme: { ru: 'Тема', en: 'Theme', uk: 'Тема' },

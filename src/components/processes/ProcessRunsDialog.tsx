@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
@@ -9,13 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronRight, Clock, Play, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 
 interface ProcessRun {
   id: string;
-  field_values: unknown;
+  field_values: Record<string, unknown>;
   status: string;
   started_by: string;
   started_at: string;
@@ -33,6 +34,7 @@ export const ProcessRunsDialog = ({
   onOpenChange,
   process,
 }: ProcessRunsDialogProps) => {
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [runs, setRuns] = useState<ProcessRun[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,21 +55,31 @@ export const ProcessRunsDialog = ({
       .eq('process_id', process.id)
       .order('started_at', { ascending: false });
     
-    if (data) setRuns(data);
+    if (data) {
+      setRuns(data.map(r => ({
+        ...r,
+        field_values: r.field_values as Record<string, unknown>
+      })));
+    }
     setLoading(false);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-500/10 text-green-600';
-      case 'pending':
-        return 'bg-yellow-500/10 text-yellow-600';
+        return { color: 'bg-green-500/10 text-green-600 border-green-500/30', icon: CheckCircle, label: t('status_completed') };
+      case 'in_progress':
+        return { color: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: Play, label: t('status_in_progress') };
       case 'cancelled':
-        return 'bg-red-500/10 text-red-600';
+        return { color: 'bg-red-500/10 text-red-600 border-red-500/30', icon: XCircle, label: t('status_cancelled') };
       default:
-        return 'bg-muted text-muted-foreground';
+        return { color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30', icon: Clock, label: t('status_pending') };
     }
+  };
+
+  const handleRunClick = (runId: string) => {
+    onOpenChange();
+    navigate(`/processes/runs/${runId}`);
   };
 
   return (
@@ -89,36 +101,34 @@ export const ProcessRunsDialog = ({
           </div>
         ) : (
           <ScrollArea className="max-h-[60vh]">
-            <div className="space-y-3">
-              {runs.map((run) => (
-                <div
-                  key={run.id}
-                  className="p-4 border rounded-lg space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(run.started_at), 'dd MMM yyyy, HH:mm', {
-                        locale: dateLocale,
-                      })}
-                    </span>
-                    <Badge className={getStatusColor(run.status)}>
-                      {t(`status_${run.status}`) || run.status}
-                    </Badge>
-                  </div>
-                  {run.field_values && typeof run.field_values === 'object' && Object.keys(run.field_values as Record<string, unknown>).length > 0 && (
-                    <div className="text-sm space-y-1">
-                      {Object.entries(run.field_values as Record<string, unknown>).map(([key, value]) => (
-                        <div key={key} className="flex gap-2">
-                          <span className="font-medium">{key}:</span>
-                          <span className="text-muted-foreground">
-                            {String(value)}
-                          </span>
-                        </div>
-                      ))}
+            <div className="space-y-2">
+              {runs.map((run) => {
+                const statusConfig = getStatusConfig(run.status);
+                const StatusIcon = statusConfig.icon;
+                const runName = run.field_values._run_name as string || t('untitled');
+                
+                return (
+                  <div
+                    key={run.id}
+                    className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-3"
+                    onClick={() => handleRunClick(run.id)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{runName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(run.started_at), 'dd MMM yyyy, HH:mm', {
+                          locale: dateLocale,
+                        })}
+                      </p>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <Badge className={`${statusConfig.color} border shrink-0`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {statusConfig.label}
+                    </Badge>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                );
+              })}
             </div>
           </ScrollArea>
         )}
