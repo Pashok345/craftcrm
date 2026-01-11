@@ -275,13 +275,14 @@ const Meetings = () => {
 
               <div className="relative" style={{ height: `${14 * 60}px` }}>
                 {/* Time grid */}
-                {hours.map((hour) => (
+                {hours.map((hour, index) => (
                   <div
                     key={hour}
                     className="absolute w-full border-t border-border"
                     style={{ top: `${(hour - 7) * 60}px` }}
                   >
-                    <div className="absolute left-0 w-14 text-xs text-muted-foreground text-right pr-2" style={{ top: '-0.5rem' }}>
+                    {/* Time label positioned between this line and the next one (centered in 60px) */}
+                    <div className="absolute left-0 w-14 text-xs text-muted-foreground text-right pr-2" style={{ top: '20px' }}>
                       {String(hour).padStart(2, '0')}:00
                     </div>
                   </div>

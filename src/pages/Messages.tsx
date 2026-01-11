@@ -276,7 +276,24 @@ const Messages = () => {
       .slice(0, 2);
   };
 
-  // Generate a consistent color based on chat id
+  // Generate a consistent color based on user id
+  const getUserAccentColor = (userId: string) => {
+    const colors = [
+      'hsl(210, 80%, 55%)', // Blue
+      'hsl(142, 70%, 45%)', // Green
+      'hsl(270, 70%, 60%)', // Purple
+      'hsl(340, 75%, 55%)', // Pink
+      'hsl(25, 90%, 55%)',  // Orange
+      'hsl(175, 70%, 40%)', // Teal
+      'hsl(45, 90%, 50%)',  // Yellow
+      'hsl(0, 70%, 55%)',   // Red
+    ];
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
   const getChatAccentColor = (chatId: string) => {
     const colors = [
       'hsl(210, 80%, 55%)', // Blue
@@ -293,6 +310,89 @@ const Messages = () => {
       hash = chatId.charCodeAt(i) + ((hash << 5) - hash);
     }
     return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Get chat members for displaying avatars
+  const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (chats.length > 0) {
+      fetchChatMembers();
+    }
+  }, [chats]);
+
+  const fetchChatMembers = async () => {
+    const memberMap: Record<string, string[]> = {};
+    for (const chat of chats) {
+      const { data } = await supabase
+        .from('chat_members')
+        .select('user_id')
+        .eq('chat_id', chat.id)
+        .limit(3);
+      if (data) {
+        memberMap[chat.id] = data.map(m => m.user_id);
+      }
+    }
+    setChatMembers(memberMap);
+  };
+
+  const renderChatAvatar = (chat: ChatGroup) => {
+    const members = chatMembers[chat.id] || [];
+    
+    if (chat.type === 'direct') {
+      // For direct chats, show the other person's avatar
+      const otherUserId = members.find(id => id !== user?.id) || members[0];
+      const profile = otherUserId ? profiles[otherUserId] : null;
+      const color = otherUserId ? getUserAccentColor(otherUserId) : getChatAccentColor(chat.id);
+      
+      return (
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={profile?.avatar_url || undefined} />
+          <AvatarFallback style={{ backgroundColor: color, color: 'white' }}>
+            {profile ? getInitials(profile.name) : chat.name.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      );
+    }
+
+    // For group chats, show stacked avatars
+    if (members.length >= 2) {
+      const visibleMembers = members.slice(0, 2);
+      return (
+        <div className="relative w-10 h-10">
+          {visibleMembers.map((memberId, index) => {
+            const profile = profiles[memberId];
+            const color = getUserAccentColor(memberId);
+            return (
+              <Avatar 
+                key={memberId} 
+                className="absolute h-7 w-7 border-2 border-card"
+                style={{ 
+                  top: index === 0 ? 0 : 12,
+                  left: index === 0 ? 0 : 12,
+                  zIndex: 2 - index
+                }}
+              >
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback style={{ backgroundColor: color, color: 'white', fontSize: '10px' }}>
+                  {profile ? getInitials(profile.name) : '?'}
+                </AvatarFallback>
+              </Avatar>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Fallback to single avatar
+    return (
+      <div 
+        className="w-10 h-10 rounded-full flex items-center justify-center"
+        style={{ backgroundColor: `${getChatAccentColor(chat.id)}20` }}
+      >
+        {getChatIcon(chat.type, chat.id)}
+      </div>
+    );
   };
 
   const getChatIcon = (type: string, chatId?: string) => {
@@ -395,12 +495,7 @@ const Messages = () => {
                     onClick={() => setSelectedChat(chat)}
                   >
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: `${getChatAccentColor(chat.id)}20` }}
-                      >
-                        {getChatIcon(chat.type, chat.id)}
-                      </div>
+                      {renderChatAvatar(chat)}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{chat.name}</p>
                         {chat.description && (

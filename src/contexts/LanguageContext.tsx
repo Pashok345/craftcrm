@@ -266,6 +266,15 @@ export const translations: Translations = {
   processUpdated: { ru: 'Процесс обновлён', en: 'Process updated', uk: 'Процес оновлено' },
   processStarted: { ru: 'Процесс запущен', en: 'Process started', uk: 'Процес запущено' },
   processDescriptionPlaceholder: { ru: 'Описание процесса...', en: 'Process description...', uk: 'Опис процесу...' },
+  runName: { ru: 'Название запуска', en: 'Run name', uk: 'Назва запуску' },
+  enterRunName: { ru: 'Введите название', en: 'Enter name', uk: 'Введіть назву' },
+  initiatorDepartment: { ru: 'Отдел-инициатор', en: 'Initiator department', uk: 'Відділ-ініціатор' },
+  
+  // Theme
+  theme: { ru: 'Тема', en: 'Theme', uk: 'Тема' },
+  lightTheme: { ru: 'Светлая', en: 'Light', uk: 'Світла' },
+  darkTheme: { ru: 'Тёмная', en: 'Dark', uk: 'Темна' },
+  systemTheme: { ru: 'Системная', en: 'System', uk: 'Системна' },
 };
 
 interface LanguageContextType {
