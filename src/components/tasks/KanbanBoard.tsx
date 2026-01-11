@@ -144,27 +144,29 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     }
 
     // Moving to a different column - update status
+    // First update task order to remove from source before DB update to prevent duplicates
+    const sourceTasks = getTasksForColumn(source.droppableId);
+    const destTasks = getTasksForColumn(destination.droppableId);
+    
+    // Create new orders - filter out the moved task from destination first to prevent duplicates
+    const newSourceOrder = sourceTasks.filter(t => t.id !== task.id).map(t => t.id);
+    const newDestOrder = destTasks.filter(t => t.id !== task.id).map(t => t.id);
+    newDestOrder.splice(destination.index, 0, task.id);
+    
+    // Update order immediately to prevent visual duplicates
+    setTaskOrder(prev => ({
+      ...prev,
+      [source.droppableId]: newSourceOrder,
+      [destination.droppableId]: newDestOrder
+    }));
+
+    // Then update DB
     const { error } = await supabase
       .from('tasks')
       .update({ status: destColumn.status })
       .eq('id', task.id);
 
     if (!error) {
-      // Update order in destination column
-      const destTasks = getTasksForColumn(destination.droppableId);
-      const newDestOrder = destTasks.map(t => t.id);
-      newDestOrder.splice(destination.index, 0, task.id);
-      
-      // Remove from source column order
-      const sourceTasks = getTasksForColumn(source.droppableId);
-      const newSourceOrder = sourceTasks.filter(t => t.id !== task.id).map(t => t.id);
-      
-      setTaskOrder(prev => ({
-        ...prev,
-        [source.droppableId]: newSourceOrder,
-        [destination.droppableId]: newDestOrder
-      }));
-      
       onTaskUpdate();
     }
   };
