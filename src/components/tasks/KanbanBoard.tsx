@@ -228,14 +228,14 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
-        {(provided) => (
-          <div 
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
-            style={{ minWidth: 'max-content' }}
-          >
+      <div className="flex gap-4 min-h-[calc(100vh-280px)] pb-4" style={{ minWidth: 'max-content' }}>
+        <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
+          {(provided) => (
+            <div 
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="flex gap-4"
+            >
             {columns.map((column, columnIndex) => (
               <Draggable key={column.id} draggableId={`column-${column.id}`} index={columnIndex}>
                 {(provided, snapshot) => (
@@ -392,44 +392,45 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                 )}
               </Draggable>
             ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-
-      {/* Add Column - placed OUTSIDE the droppable area */}
-      <div className="flex-shrink-0 w-80 min-h-[150px]">
-        {isAddingColumn ? (
-          <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
-            <Input
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-              placeholder={t('columnName')}
-              onKeyDown={(e) => e.key === 'Enter' && addColumn()}
-              autoFocus
-            />
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" onClick={addColumn}>
-                {t('saveColumn')}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => {
-                setIsAddingColumn(false);
-                setNewColumnName('');
-              }}>
-                <X className="h-4 w-4" />
-              </Button>
+              {provided.placeholder}
             </div>
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full h-12 border-dashed border-2"
-            onClick={() => setIsAddingColumn(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('addColumn')}
-          </Button>
-        )}
+          )}
+        </Droppable>
+
+        {/* Add Column - placed OUTSIDE the droppable but inside flex container */}
+        <div className="flex-shrink-0 w-80 min-h-[150px]">
+          {isAddingColumn ? (
+            <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
+              <Input
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                placeholder={t('columnName')}
+                onKeyDown={(e) => e.key === 'Enter' && addColumn()}
+                autoFocus
+              />
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" onClick={addColumn}>
+                  {t('saveColumn')}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => {
+                  setIsAddingColumn(false);
+                  setNewColumnName('');
+                }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full h-12 border-dashed border-2"
+              onClick={() => setIsAddingColumn(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('addColumn')}
+            </Button>
+          )}
+        </div>
       </div>
     </DragDropContext>
   );

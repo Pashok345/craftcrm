@@ -156,7 +156,7 @@ const Processes = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {processes.map((process) => (
             <Card key={process.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
