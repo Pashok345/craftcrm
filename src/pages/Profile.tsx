@@ -14,10 +14,25 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, User, Camera } from 'lucide-react';
+import { Loader2, User, Camera, Palette } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserPosition } from '@/types/database';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getAvatarColor } from '@/components/messages/EmployeesList';
+import { cn } from '@/lib/utils';
+
+const AVATAR_COLOR_OPTIONS = [
+  { name: 'Blue', value: 'hsl(210, 70%, 50%)' },
+  { name: 'Green', value: 'hsl(150, 60%, 45%)' },
+  { name: 'Purple', value: 'hsl(280, 65%, 55%)' },
+  { name: 'Pink', value: 'hsl(340, 70%, 50%)' },
+  { name: 'Orange', value: 'hsl(25, 80%, 55%)' },
+  { name: 'Teal', value: 'hsl(180, 60%, 45%)' },
+  { name: 'Yellow', value: 'hsl(60, 70%, 45%)' },
+  { name: 'Red', value: 'hsl(0, 70%, 55%)' },
+  { name: 'Indigo', value: 'hsl(240, 60%, 55%)' },
+  { name: 'Emerald', value: 'hsl(160, 60%, 40%)' },
+];
 
 const Profile = () => {
   const { profile, user, refetchProfile } = useAuth();
@@ -27,6 +42,7 @@ const Profile = () => {
   const [position, setPosition] = useState<UserPosition | ''>('');
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarColor, setAvatarColor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +56,8 @@ const Profile = () => {
       setPosition(profile.position || '');
       setAdditionalInfo(profile.additional_info || '');
       setAvatarUrl(profile.avatar_url || null);
+      // @ts-ignore - avatar_color might not be in types yet
+      setAvatarColor(profile.avatar_color || null);
     }
   }, [profile]);
 
@@ -96,6 +114,18 @@ const Profile = () => {
     }
   };
 
+  const handleColorChange = async (color: string) => {
+    if (!user) return;
+    setAvatarColor(color);
+    
+    await supabase
+      .from('profiles')
+      .update({ avatar_color: color })
+      .eq('user_id', user.id);
+    
+    refetchProfile();
+  };
+
   const handleSave = async () => {
     if (!profile || !name.trim()) return;
 
@@ -132,6 +162,8 @@ const Profile = () => {
         .slice(0, 2)
     : 'U';
 
+  const currentAvatarColor = user ? getAvatarColor(user.id, avatarColor) : 'hsl(210, 70%, 50%)';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div>
@@ -151,7 +183,10 @@ const Profile = () => {
             <div className="relative group">
               <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
                 <AvatarImage src={avatarUrl || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                <AvatarFallback 
+                  className="text-white text-2xl font-medium"
+                  style={{ backgroundColor: currentAvatarColor }}
+                >
                   {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : initials}
                 </AvatarFallback>
               </Avatar>
@@ -175,6 +210,31 @@ const Profile = () => {
               {profile?.position && (
                 <p className="text-sm text-muted-foreground">{positionLabels[profile.position]}</p>
               )}
+            </div>
+          </div>
+
+          {/* Avatar color picker */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              {t('avatarColor')}
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">{t('avatarColorDescription')}</p>
+            <div className="flex flex-wrap gap-2">
+              {AVATAR_COLOR_OPTIONS.map((colorOption) => (
+                <button
+                  key={colorOption.value}
+                  className={cn(
+                    "w-8 h-8 rounded-full border-2 transition-all",
+                    currentAvatarColor === colorOption.value 
+                      ? "border-foreground ring-2 ring-foreground/20 scale-110" 
+                      : "border-transparent hover:scale-105"
+                  )}
+                  style={{ backgroundColor: colorOption.value }}
+                  onClick={() => handleColorChange(colorOption.value)}
+                  title={colorOption.name}
+                />
+              ))}
             </div>
           </div>
 

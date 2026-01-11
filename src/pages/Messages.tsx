@@ -64,6 +64,7 @@ interface Profile {
   email: string;
   position: UserPosition | null;
   avatar_url?: string | null;
+  avatar_color?: string | null;
 }
 
 const Messages = () => {
@@ -138,7 +139,7 @@ const Messages = () => {
   };
 
   const fetchProfiles = async () => {
-    const { data } = await supabase.from('profiles').select('id, user_id, name, email, position, avatar_url');
+    const { data } = await supabase.from('profiles').select('id, user_id, name, email, position, avatar_url, avatar_color');
     if (data) {
       const profileMap: Record<string, Profile> = {};
       data.forEach((p) => {
@@ -276,8 +277,11 @@ const Messages = () => {
       .slice(0, 2);
   };
 
-  // Generate a consistent color based on user id
+  // Generate a consistent color based on user id or use custom color
   const getUserAccentColor = (userId: string) => {
+    const profile = profiles[userId];
+    if (profile?.avatar_color) return profile.avatar_color;
+    
     const colors = [
       'hsl(210, 80%, 55%)', // Blue
       'hsl(142, 70%, 45%)', // Green
