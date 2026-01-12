@@ -1,0 +1,201 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { ru, enUS, uk } from 'date-fns/locale';
+
+interface ProcessType {
+  id: string;
+  name: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
+}
+
+interface ProcessField {
+  id: string;
+  name: string;
+  field_type: string;
+  options: string[] | null;
+  sort_order: number;
+}
+
+interface ProcessRun {
+  id: string;
+  field_values: Record<string, unknown>;
+  status: string;
+  started_at: string;
+  started_by: string;
+}
+
+interface Process {
+  id: string;
+  title: string;
+  description: string | null;
+  type_id: string | null;
+  department_id: string | null;
+  status: string;
+  created_by: string;
+  created_at: string;
+  process_type?: ProcessType;
+  department?: Department;
+  process_fields?: ProcessField[];
+}
+
+interface ProcessCardProps {
+  process: Process;
+  onEdit: (process: Process) => void;
+}
+
+export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
+  const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const [runs, setRuns] = useState<ProcessRun[]>([]);
+  const [showAllRuns, setShowAllRuns] = useState(false);
+  const [loadingRuns, setLoadingRuns] = useState(true);
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  useEffect(() => {
+    fetchRuns();
+  }, [process.id]);
+
+  const fetchRuns = async () => {
+    setLoadingRuns(true);
+    const { data, error } = await supabase
+      .from('process_runs')
+      .select('id, field_values, status, started_at, started_by')
+      .eq('process_id', process.id)
+      .order('started_at', { ascending: false });
+
+    if (!error && data) {
+      setRuns(data.map(r => ({
+        ...r,
+        field_values: r.field_values as Record<string, unknown>,
+      })));
+    }
+    setLoadingRuns(false);
+  };
+
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return { color: 'bg-green-500/10 text-green-600 border-green-500/30', icon: CheckCircle };
+      case 'in_progress':
+        return { color: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: Play };
+      case 'cancelled':
+        return { color: 'bg-red-500/10 text-red-600 border-red-500/30', icon: XCircle };
+      default:
+        return { color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30', icon: Clock };
+    }
+  };
+
+  const displayedRuns = showAllRuns ? runs : runs.slice(0, 3);
+  const hasMoreRuns = runs.length > 3;
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg">{process.title}</CardTitle>
+            {process.department && (
+              <Badge variant="secondary" className="w-fit mt-2">{process.department.name}</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge variant="outline">{process.process_type?.name || t('noType')}</Badge>
+            <Button 
+              size="sm" 
+              onClick={() => navigate(`/processes/run/${process.id}`)}
+              className="w-auto"
+            >
+              <Play className="h-4 w-4 mr-1" />
+              {t('runProcess')}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => onEdit(process)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {process.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {process.description}
+          </p>
+        )}
+        
+        {process.process_fields && process.process_fields.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            {t('fields')}: {process.process_fields.length}
+          </div>
+        )}
+
+        {/* Process Runs Section */}
+        {runs.length > 0 && (
+          <div className="border-t pt-4 mt-4 space-y-2">
+            <p className="text-sm font-medium text-muted-foreground mb-3">
+              {t('processRuns') || 'Запущенные процессы'} ({runs.length})
+            </p>
+            <div className="space-y-2">
+              {displayedRuns.map((run) => {
+                const statusConfig = getStatusConfig(run.status);
+                const StatusIcon = statusConfig.icon;
+                const runName = run.field_values._run_name as string || t('untitled');
+                
+                return (
+                  <div 
+                    key={run.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
+                    onClick={() => navigate(`/processes/runs/${run.id}`)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <StatusIcon className={`h-4 w-4 flex-shrink-0 ${run.status === 'completed' ? 'text-green-600' : run.status === 'cancelled' ? 'text-red-600' : run.status === 'in_progress' ? 'text-blue-600' : 'text-yellow-600'}`} />
+                      <span className="text-sm font-medium truncate">{runName}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      {format(new Date(run.started_at), 'd MMM yyyy', { locale: dateLocale })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {hasMoreRuns && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2"
+                onClick={() => setShowAllRuns(!showAllRuns)}
+              >
+                {showAllRuns ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    {t('showLess') || 'Свернуть'}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    {t('showMore') || 'Показать ещё'} ({runs.length - 3})
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Folder, Calendar, DollarSign, User } from 'lucide-react';
 import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
-import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { ProjectDetailDialog } from '@/components/projects/ProjectDetailDialog';
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Projects = () => {
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
   const [managers, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -85,7 +85,7 @@ const Projects = () => {
           <h1 className="text-2xl font-bold text-foreground">{t('projectsTitle')}</h1>
           <p className="text-muted-foreground">{t('projectsDescription')}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => navigate('/projects/new')} className="gap-2">
           <Plus className="h-4 w-4" />
           {t('newProject')}
         </Button>
@@ -99,7 +99,7 @@ const Projects = () => {
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">{t('noProjects')}</h3>
             <p className="text-muted-foreground mb-4">{t('createFirstProject')}</p>
-            <Button onClick={() => setDialogOpen(true)}>{t('createProject')}</Button>
+            <Button onClick={() => navigate('/projects/new')}>{t('createProject')}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -160,12 +160,6 @@ const Projects = () => {
           ))}
         </div>
       )}
-
-      <ProjectDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchProjects}
-      />
 
       <ProjectDetailDialog
         project={selectedProject}

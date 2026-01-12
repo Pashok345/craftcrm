@@ -35,15 +35,16 @@ interface KanbanBoardProps {
 
 const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
 
+// Colors that work for both light and dark modes
 const COLUMN_COLORS = [
   { name: 'Default', value: 'hsl(var(--muted))' },
-  { name: 'Blue', value: 'hsl(210, 100%, 95%)' },
-  { name: 'Green', value: 'hsl(142, 76%, 93%)' },
-  { name: 'Yellow', value: 'hsl(48, 100%, 93%)' },
-  { name: 'Orange', value: 'hsl(24, 100%, 93%)' },
-  { name: 'Purple', value: 'hsl(270, 76%, 95%)' },
-  { name: 'Pink', value: 'hsl(330, 80%, 95%)' },
-  { name: 'Red', value: 'hsl(0, 76%, 95%)' },
+  { name: 'Blue', value: 'hsl(210 60% 85% / 0.5)' },
+  { name: 'Green', value: 'hsl(142 50% 80% / 0.5)' },
+  { name: 'Yellow', value: 'hsl(48 70% 80% / 0.5)' },
+  { name: 'Orange', value: 'hsl(24 70% 80% / 0.5)' },
+  { name: 'Purple', value: 'hsl(270 50% 80% / 0.5)' },
+  { name: 'Pink', value: 'hsl(330 60% 80% / 0.5)' },
+  { name: 'Red', value: 'hsl(0 60% 80% / 0.5)' },
 ];
 
 const DEFAULT_COLUMNS: Column[] = [

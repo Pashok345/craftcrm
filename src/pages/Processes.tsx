@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Play, Edit, List, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Loader2 } from 'lucide-react';
 import { ProcessDialog } from '@/components/processes/ProcessDialog';
-import { ProcessRunsDialog } from '@/components/processes/ProcessRunsDialog';
-import { RunProcessDialog } from '@/components/processes/RunProcessDialog';
+import { ProcessCard } from '@/components/processes/ProcessCard';
 import { toast } from '@/hooks/use-toast';
 
 interface ProcessType {
@@ -45,15 +42,12 @@ interface Process {
 
 const Processes = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
   const [processes, setProcesses] = useState<Process[]>([]);
   const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProcess, setEditingProcess] = useState<Process | null>(null);
-  const [runsDialogProcess, setRunsDialogProcess] = useState<Process | null>(null);
-  const [runDialogProcess, setRunDialogProcess] = useState<Process | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -158,54 +152,11 @@ const Processes = () => {
       ) : (
         <div className="space-y-4">
           {processes.map((process) => (
-            <Card key={process.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{process.title}</CardTitle>
-                  <Badge variant="outline">{process.process_type?.name || t('noType')}</Badge>
-                </div>
-                {process.department && (
-                  <Badge variant="secondary" className="w-fit">{process.department.name}</Badge>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {process.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {process.description}
-                  </p>
-                )}
-                
-                {process.process_fields && process.process_fields.length > 0 && (
-                  <div className="text-xs text-muted-foreground">
-                    {t('fields')}: {process.process_fields.length}
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    onClick={() => setRunDialogProcess(process)}
-                  >
-                    <Play className="h-4 w-4 mr-1" />
-                    {t('runProcess')}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleEdit(process)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => setRunsDialogProcess(process)}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProcessCard 
+              key={process.id} 
+              process={process} 
+              onEdit={handleEdit}
+            />
           ))}
         </div>
       )}
@@ -220,26 +171,6 @@ const Processes = () => {
         onTypesChange={fetchData}
         onDepartmentsChange={fetchData}
       />
-
-      {runsDialogProcess && (
-        <ProcessRunsDialog
-          open={!!runsDialogProcess}
-          onOpenChange={() => setRunsDialogProcess(null)}
-          process={runsDialogProcess}
-        />
-      )}
-
-      {runDialogProcess && (
-        <RunProcessDialog
-          open={!!runDialogProcess}
-          onOpenChange={() => setRunDialogProcess(null)}
-          process={runDialogProcess}
-          onRun={() => {
-            setRunDialogProcess(null);
-            toast({ title: t('processStarted') });
-          }}
-        />
-      )}
     </div>
   );
 };
