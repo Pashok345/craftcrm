@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
@@ -56,6 +56,14 @@ interface Comment {
   user_id: string;
   created_at: string;
   profile?: Profile;
+  attachments?: Attachment[];
+}
+
+interface Attachment {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_type: string | null;
 }
 
 const ProcessRunDetail = () => {
@@ -67,10 +75,14 @@ const ProcessRunDetail = () => {
   const [process, setProcess] = useState<Process | null>(null);
   const [starterProfile, setStarterProfile] = useState<Profile | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -80,14 +92,67 @@ const ProcessRunDetail = () => {
     }
   }, [id]);
 
+  // Subscribe to realtime comments
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`process-run-comments-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'process_run_comments',
+          filter: `process_run_id=eq.${id}`,
+        },
+        async (payload) => {
+          const newComment = payload.new as Comment;
+          // Fetch profile for new comment
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, user_id, name, avatar_url, avatar_color')
+            .eq('user_id', newComment.user_id)
+            .maybeSingle();
+          
+          // Fetch attachments for the new comment
+          const { data: attachmentsData } = await supabase
+            .from('process_run_attachments')
+            .select('id, file_name, file_url, file_type')
+            .eq('comment_id', newComment.id);
+
+          setComments(prev => [...prev, {
+            ...newComment,
+            profile: profileData || undefined,
+            attachments: attachmentsData || [],
+          }]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
   const fetchData = async () => {
     if (!id) return;
     setLoading(true);
 
-    const [runRes, deptsRes] = await Promise.all([
+    const [runRes, deptsRes, profilesRes] = await Promise.all([
       supabase.from('process_runs').select('*').eq('id', id).maybeSingle(),
       supabase.from('departments').select('*'),
+      supabase.from('profiles').select('id, user_id, name, avatar_url, avatar_color'),
     ]);
+
+    // Build profiles map
+    if (profilesRes.data) {
+      const map: Record<string, Profile> = {};
+      profilesRes.data.forEach(p => {
+        map[p.user_id] = p;
+      });
+      setProfiles(map);
+    }
 
     if (runRes.data) {
       const runData = {
@@ -111,6 +176,39 @@ const ProcessRunDetail = () => {
         .eq('user_id', runData.started_by)
         .maybeSingle();
       if (profileData) setStarterProfile(profileData);
+
+      // Fetch comments with profiles and attachments
+      const { data: commentsData } = await supabase
+        .from('process_run_comments')
+        .select('*')
+        .eq('process_run_id', id)
+        .order('created_at', { ascending: true });
+
+      if (commentsData) {
+        // Fetch attachments for all comments
+        const commentIds = commentsData.map(c => c.id);
+        const { data: attachmentsData } = await supabase
+          .from('process_run_attachments')
+          .select('*')
+          .in('comment_id', commentIds);
+
+        const attachmentsByComment: Record<string, Attachment[]> = {};
+        attachmentsData?.forEach(att => {
+          if (att.comment_id) {
+            if (!attachmentsByComment[att.comment_id]) {
+              attachmentsByComment[att.comment_id] = [];
+            }
+            attachmentsByComment[att.comment_id].push(att);
+          }
+        });
+
+        const commentsWithProfiles = commentsData.map(comment => ({
+          ...comment,
+          profile: profilesRes.data?.find(p => p.user_id === comment.user_id),
+          attachments: attachmentsByComment[comment.id] || [],
+        }));
+        setComments(commentsWithProfiles);
+      }
     }
 
     if (deptsRes.data) setDepartments(deptsRes.data);
@@ -135,6 +233,153 @@ const ProcessRunDetail = () => {
     if (!error) {
       setRun({ ...run, ...updateData });
       toast({ title: t('statusUpdated') });
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async (commentId: string): Promise<Attachment[]> => {
+    if (!user || selectedFiles.length === 0) return [];
+    
+    const uploadedAttachments: Attachment[] = [];
+
+    for (const file of selectedFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('process-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('process-attachments')
+        .getPublicUrl(fileName);
+
+      const { data: attachmentData, error: attachmentError } = await supabase
+        .from('process_run_attachments')
+        .insert({
+          process_run_id: id,
+          comment_id: commentId,
+          file_name: file.name,
+          file_url: urlData.publicUrl,
+          file_type: file.type,
+          uploaded_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (!attachmentError && attachmentData) {
+        uploadedAttachments.push(attachmentData);
+      }
+    }
+
+    return uploadedAttachments;
+  };
+
+  const sendNotifications = async (commentId: string) => {
+    if (!run || !user || !process) return;
+
+    // Get all users who commented on this process run (excluding current user)
+    const { data: commenters } = await supabase
+      .from('process_run_comments')
+      .select('user_id')
+      .eq('process_run_id', run.id)
+      .neq('user_id', user.id);
+
+    // Get the process starter
+    const usersToNotify = new Set<string>();
+    
+    if (run.started_by !== user.id) {
+      usersToNotify.add(run.started_by);
+    }
+
+    commenters?.forEach(c => {
+      if (c.user_id !== user.id) {
+        usersToNotify.add(c.user_id);
+      }
+    });
+
+    // Send notifications
+    const notifications = Array.from(usersToNotify).map(userId => ({
+      user_id: userId,
+      type: 'process_comment',
+      title: t('newCommentOnProcess') || 'Новый комментарий к процессу',
+      message: `${profiles[user.id]?.name || user.email}: ${newComment.substring(0, 100)}`,
+      created_by: user.id,
+    }));
+
+    if (notifications.length > 0) {
+      await supabase.from('notifications').insert(notifications);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() && selectedFiles.length === 0) return;
+    if (!user || !id) return;
+
+    setSubmitting(true);
+    setUploading(selectedFiles.length > 0);
+
+    try {
+      // Create comment
+      const { data: commentData, error } = await supabase
+        .from('process_run_comments')
+        .insert({
+          process_run_id: id,
+          user_id: user.id,
+          content: newComment.trim() || (selectedFiles.length > 0 ? '📎 Файлы' : ''),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Upload files if any
+      let attachments: Attachment[] = [];
+      if (selectedFiles.length > 0 && commentData) {
+        attachments = await uploadFiles(commentData.id);
+      }
+
+      // Send notifications
+      await sendNotifications(commentData.id);
+
+      // Note: Comment will be added via realtime subscription, but we add it manually
+      // in case the subscription is slow
+      const newCommentWithProfile: Comment = {
+        ...commentData,
+        profile: profiles[user.id],
+        attachments,
+      };
+
+      // Check if comment already exists (from realtime)
+      setComments(prev => {
+        if (prev.find(c => c.id === commentData.id)) {
+          return prev;
+        }
+        return [...prev, newCommentWithProfile];
+      });
+
+      setNewComment('');
+      setSelectedFiles([]);
+      toast({ title: t('commentAdded') });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({ title: t('errorAddingComment'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+      setUploading(false);
     }
   };
 
@@ -251,14 +496,133 @@ const ProcessRunDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Comments section - placeholder for future */}
+          {/* Comments section */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">{t('comments')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">{t('noComments') || 'Комментариев пока нет'}</p>
+            <CardContent className="space-y-4">
+              {/* Comments list */}
+              {comments.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">{t('noComments')}</p>
+                </div>
+              ) : (
+                <ScrollArea className="max-h-80">
+                  <div className="space-y-4 pr-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={comment.profile?.avatar_url || undefined} />
+                          <AvatarFallback
+                            className="text-xs"
+                            style={{ backgroundColor: comment.profile?.avatar_color || undefined }}
+                          >
+                            {comment.profile ? getInitials(comment.profile.name) : '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {comment.profile?.name || t('user')}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.created_at), 'dd MMM, HH:mm', { locale: dateLocale })}
+                            </span>
+                          </div>
+                          {comment.content && (
+                            <p className="text-sm text-foreground">{comment.content}</p>
+                          )}
+                          {/* Attachments */}
+                          {comment.attachments && comment.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {comment.attachments.map((att) => (
+                                <a
+                                  key={att.id}
+                                  href={att.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded hover:bg-muted/80"
+                                >
+                                  <FileIcon className="h-3 w-3" />
+                                  {att.file_name}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+
+              {/* New comment form */}
+              <div className="border-t pt-4 space-y-3">
+                <Textarea
+                  placeholder={t('writeComment')}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={2}
+                  disabled={submitting}
+                />
+
+                {/* Selected files preview */}
+                {selectedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs"
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        <span className="max-w-[150px] truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeSelectedFile(index)}
+                          className="hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    multiple
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={submitting}
+                  >
+                    <Paperclip className="h-4 w-4 mr-1" />
+                    {t('addFile')}
+                  </Button>
+                  <div className="flex-1" />
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={submitting || (!newComment.trim() && selectedFiles.length === 0)}
+                    size="sm"
+                  >
+                    {submitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-1" />
+                        {t('send') || 'Отправить'}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
