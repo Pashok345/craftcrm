@@ -306,6 +306,89 @@ export type Database = {
           },
         ]
       }
+      process_run_attachments: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          process_run_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          process_run_id: string
+          uploaded_by: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          process_run_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_run_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "process_run_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_run_attachments_process_run_id_fkey"
+            columns: ["process_run_id"]
+            isOneToOne: false
+            referencedRelation: "process_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_run_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          process_run_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          process_run_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          process_run_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_run_comments_process_run_id_fkey"
+            columns: ["process_run_id"]
+            isOneToOne: false
+            referencedRelation: "process_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_runs: {
         Row: {
           completed_at: string | null
@@ -461,6 +544,38 @@ export type Database = {
         }
         Relationships: []
       }
+      project_members: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget: number | null
@@ -470,6 +585,7 @@ export type Database = {
           end_date: string | null
           id: string
           manager_id: string | null
+          reviewer_id: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
           title: string
@@ -483,6 +599,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           manager_id?: string | null
+          reviewer_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title: string
@@ -496,6 +613,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           manager_id?: string | null
+          reviewer_id?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title?: string

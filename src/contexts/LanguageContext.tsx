@@ -294,6 +294,18 @@ export const translations: Translations = {
   lightTheme: { ru: 'Светлая', en: 'Light', uk: 'Світла' },
   darkTheme: { ru: 'Тёмная', en: 'Dark', uk: 'Темна' },
   systemTheme: { ru: 'Системная', en: 'System', uk: 'Системна' },
+
+  // Project additions
+  reviewer: { ru: 'Проверяющий', en: 'Reviewer', uk: 'Перевіряючий' },
+  selectReviewer: { ru: 'Выберите проверяющего', en: 'Select reviewer', uk: 'Оберіть перевіряючого' },
+  projectCreated: { ru: 'Проект создан', en: 'Project created', uk: 'Проект створено' },
+  projectCreatedDescription: { ru: 'Новый проект успешно добавлен', en: 'New project added successfully', uk: 'Новий проект успішно додано' },
+  errorCreating: { ru: 'Ошибка при создании', en: 'Error creating', uk: 'Помилка створення' },
+  select: { ru: 'Выберите', en: 'Select', uk: 'Оберіть' },
+
+  // Process comments
+  newCommentOnProcess: { ru: 'Новый комментарий к процессу', en: 'New comment on process', uk: 'Новий коментар до процесу' },
+  send: { ru: 'Отправить', en: 'Send', uk: 'Надіслати' },
 };
 
 interface LanguageContextType {
