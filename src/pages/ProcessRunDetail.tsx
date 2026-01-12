@@ -108,24 +108,41 @@ const ProcessRunDetail = () => {
         },
         async (payload) => {
           const newComment = payload.new as Comment;
-          // Fetch profile for new comment
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, user_id, name, avatar_url, avatar_color')
-            .eq('user_id', newComment.user_id)
-            .maybeSingle();
           
-          // Fetch attachments for the new comment
-          const { data: attachmentsData } = await supabase
-            .from('process_run_attachments')
-            .select('id, file_name, file_url, file_type')
-            .eq('comment_id', newComment.id);
+          // Check if comment already exists (avoid duplicates)
+          setComments(prev => {
+            if (prev.find(c => c.id === newComment.id)) {
+              return prev;
+            }
+            
+            // If not found, fetch profile and attachments then add
+            (async () => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id, user_id, name, avatar_url, avatar_color')
+                .eq('user_id', newComment.user_id)
+                .maybeSingle();
+              
+              const { data: attachmentsData } = await supabase
+                .from('process_run_attachments')
+                .select('id, file_name, file_url, file_type')
+                .eq('comment_id', newComment.id);
 
-          setComments(prev => [...prev, {
-            ...newComment,
-            profile: profileData || undefined,
-            attachments: attachmentsData || [],
-          }]);
+              setComments(prevInner => {
+                // Double-check to avoid duplicates
+                if (prevInner.find(c => c.id === newComment.id)) {
+                  return prevInner;
+                }
+                return [...prevInner, {
+                  ...newComment,
+                  profile: profileData || undefined,
+                  attachments: attachmentsData || [],
+                }];
+              });
+            })();
+            
+            return prev;
+          });
         }
       )
       .subscribe();

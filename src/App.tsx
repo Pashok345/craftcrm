@@ -13,10 +13,12 @@ import TaskDetail from "./pages/TaskDetail";
 import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
+import CreateProject from "./pages/CreateProject";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import Processes from "./pages/Processes";
+import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 
 const queryClient = new QueryClient();
@@ -37,7 +39,9 @@ const App = () => (
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/new" element={<CreateProject />} />
             <Route path="/processes" element={<Processes />} />
+            <Route path="/processes/run/:id" element={<RunProcess />} />
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
