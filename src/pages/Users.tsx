@@ -71,10 +71,12 @@ const Users = () => {
           <h1 className="text-2xl font-bold text-foreground">{t('usersTitle')}</h1>
           <p className="text-muted-foreground">{t('usersDescription')}</p>
         </div>
-        <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('addUser')}
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('addUser')}
+          </Button>
+        )}
       </div>
 
       {users.length === 0 ? (
@@ -85,7 +87,7 @@ const Users = () => {
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">{t('noUsers')}</h3>
             <p className="text-muted-foreground mb-4">{t('usersWillAppear')}</p>
-            <Button onClick={() => setAddDialogOpen(true)}>{t('addUser')}</Button>
+            {isAdmin && <Button onClick={() => setAddDialogOpen(true)}>{t('addUser')}</Button>}
           </CardContent>
         </Card>
       ) : (
