@@ -121,6 +121,7 @@ export const translations: Translations = {
   dueDate: { ru: 'Срок', en: 'Due date', uk: 'Термін' },
   links: { ru: 'Ссылки', en: 'Links', uk: 'Посилання' },
   executor: { ru: 'исполнитель', en: 'executor', uk: 'виконавець' },
+  executors: { ru: 'Исполнители', en: 'Executors', uk: 'Виконавці' },
   observer: { ru: 'наблюдатель', en: 'observer', uk: 'спостерігач' },
   comments: { ru: 'Комментарии', en: 'Comments', uk: 'Коментарі' },
   noComments: { ru: 'Нет комментариев', en: 'No comments', uk: 'Немає коментарів' },
@@ -306,6 +307,17 @@ export const translations: Translations = {
   // Process comments
   newCommentOnProcess: { ru: 'Новый комментарий к процессу', en: 'New comment on process', uk: 'Новий коментар до процесу' },
   send: { ru: 'Отправить', en: 'Send', uk: 'Надіслати' },
+
+  // Process run statuses
+  completed: { ru: 'Завершен', en: 'Completed', uk: 'Завершено' },
+  cancelled: { ru: 'Отменен', en: 'Cancelled', uk: 'Скасовано' },
+  inProgress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
+  pending: { ru: 'Ожидает', en: 'Pending', uk: 'Очікує' },
+  showMore: { ru: 'Показать ещё', en: 'Show more', uk: 'Показати ще' },
+  showLess: { ru: 'Свернуть', en: 'Show less', uk: 'Згорнути' },
+
+  // Message attachments
+  failedToSendMessage: { ru: 'Не удалось отправить сообщение', en: 'Failed to send message', uk: 'Не вдалося надіслати повідомлення' },
 };
 
 interface LanguageContextType {
