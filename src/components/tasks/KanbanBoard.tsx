@@ -115,26 +115,32 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     return map;
   }, [tasks]);
 
-  // Get tasks for a column, sorted by saved order
+  // Get tasks for a column, sorted by saved order (new tasks at the beginning)
   const getTasksForColumn = useCallback((column: Column): Task[] => {
     const columnTasks = tasksByStatus[column.status] || [];
     const order = taskOrderMap[column.id];
     
     if (!order || order.length === 0) {
-      return columnTasks;
+      // No saved order - sort by created_at descending (newest first)
+      return [...columnTasks].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     }
 
     // Sort tasks by their position in the order array
+    // New tasks (not in order) go to the BEGINNING
     const sortedTasks = [...columnTasks].sort((a, b) => {
       const indexA = order.indexOf(a.id);
       const indexB = order.indexOf(b.id);
       
-      // If neither is in order, maintain original order
-      if (indexA === -1 && indexB === -1) return 0;
-      // If only a is not in order, put it at the end
-      if (indexA === -1) return 1;
-      // If only b is not in order, put it at the end
-      if (indexB === -1) return -1;
+      // If neither is in order, sort by created_at (newest first)
+      if (indexA === -1 && indexB === -1) {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      // If only a is not in order, put it at the BEGINNING
+      if (indexA === -1) return -1;
+      // If only b is not in order, put it at the BEGINNING
+      if (indexB === -1) return 1;
       
       return indexA - indexB;
     });

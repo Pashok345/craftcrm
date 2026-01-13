@@ -25,15 +25,22 @@ interface MeetingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedDate: Date | null;
+  defaultStartTime?: string;
   onSuccess: () => void;
 }
 
-export const MeetingDialog = ({ open, onOpenChange, selectedDate, onSuccess }: MeetingDialogProps) => {
+export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTime, onSuccess }: MeetingDialogProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
+  const [startTime, setStartTime] = useState(defaultStartTime || '09:00');
+  const [endTime, setEndTime] = useState(() => {
+    if (defaultStartTime) {
+      const [h, m] = defaultStartTime.split(':').map(Number);
+      return `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    return '10:00';
+  });
   const [users, setUsers] = useState<Profile[]>([]);
   const [participants, setParticipants] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +52,14 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, onSuccess }: M
       setDate(selectedDate);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (defaultStartTime) {
+      setStartTime(defaultStartTime);
+      const [h, m] = defaultStartTime.split(':').map(Number);
+      setEndTime(`${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }, [defaultStartTime]);
 
   useEffect(() => {
     if (open) {

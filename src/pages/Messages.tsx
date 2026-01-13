@@ -13,7 +13,11 @@ import {
   Search,
   MoreVertical,
   Hash,
-  User
+  User,
+  Paperclip,
+  Loader2,
+  X,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -30,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { POSITION_LABELS, UserPosition } from '@/types/database';
+import { Badge } from '@/components/ui/badge';
 
 interface ChatGroup {
   id: string;
@@ -80,6 +85,9 @@ const Messages = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'employees'>('chats');
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -248,17 +256,84 @@ const Messages = () => {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedChat || !user) return;
+    if ((!newMessage.trim() && files.length === 0) || !selectedChat || !user) return;
 
-    const { error } = await supabase.from('messages').insert({
-      chat_id: selectedChat.id,
-      user_id: user.id,
-      content: newMessage.trim(),
-    });
+    setUploadingFiles(true);
+    try {
+      let messageContent = newMessage.trim();
+      
+      // Upload files first if any
+      const uploadedFiles: { name: string; url: string; type: string }[] = [];
+      for (const file of files) {
+        const sanitizedName = file.name
+          .replace(/[^\w.-]/g, '_')
+          .replace(/__+/g, '_');
+        const fileName = `${selectedChat.id}/${Date.now()}-${sanitizedName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('chat-attachments')
+          .upload(fileName, file);
 
-    if (!error) {
-      setNewMessage('');
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          continue;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(fileName);
+
+        uploadedFiles.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type,
+        });
+      }
+
+      // Add file info to message content if files were uploaded
+      if (uploadedFiles.length > 0) {
+        const filesInfo = uploadedFiles.map(f => `[📎 ${f.name}](${f.url})`).join('\n');
+        messageContent = messageContent ? `${messageContent}\n\n${filesInfo}` : filesInfo;
+      }
+
+      if (!messageContent) {
+        setUploadingFiles(false);
+        return;
+      }
+
+      const { error } = await supabase.from('messages').insert({
+        chat_id: selectedChat.id,
+        user_id: user.id,
+        content: messageContent,
+      });
+
+      if (!error) {
+        setNewMessage('');
+        setFiles([]);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: t('error') || 'Ошибка',
+        description: t('failedToSendMessage') || 'Не удалось отправить сообщение',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingFiles(false);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -614,16 +689,57 @@ const Messages = () => {
 
             {/* Message Input */}
             <div className="p-4 border-t border-border bg-card">
+              {files.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {files.map((file, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      <span className="max-w-[150px] truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFiles}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Input
                   placeholder={t('typeMessage')}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   className="flex-1"
+                  disabled={uploadingFiles}
                 />
-                <Button onClick={sendMessage} disabled={!newMessage.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={(!newMessage.trim() && files.length === 0) || uploadingFiles}
+                >
+                  {uploadingFiles ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
