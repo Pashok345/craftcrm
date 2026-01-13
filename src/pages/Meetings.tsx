@@ -41,6 +41,7 @@ const Meetings = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('calendar');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [defaultStartTime, setDefaultStartTime] = useState<string | undefined>(undefined);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingWithParticipants | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -136,6 +137,23 @@ const Meetings = () => {
   const handleMeetingClick = (meeting: MeetingWithParticipants) => {
     setSelectedMeeting(meeting);
     setDetailOpen(true);
+  };
+
+  const handleTimeSlotClick = (hour: number, e: React.MouseEvent) => {
+    // Check if clicked directly on the time slot area (not on a meeting)
+    const target = e.target as HTMLElement;
+    if (target.closest('.meeting-item')) return;
+    
+    // Check if the time slot is in the past
+    const now = new Date();
+    const slotTime = new Date(selectedDay);
+    slotTime.setHours(hour, 0, 0, 0);
+    
+    if (slotTime < now) return; // Don't allow creating meetings in the past
+    
+    // Open meeting dialog with pre-filled time
+    setDefaultStartTime(`${String(hour).padStart(2, '0')}:00`);
+    setCreateDialogOpen(true);
   };
 
   if (loading) {
@@ -274,28 +292,39 @@ const Meetings = () => {
               </div>
 
               <div className="relative" style={{ height: `${14 * 60}px` }}>
-                {/* Time grid */}
-                {hours.map((hour, index) => (
-                  <div
-                    key={hour}
-                    className="absolute w-full border-t border-border"
-                    style={{ top: `${(hour - 7) * 60}px` }}
-                  >
-                    {/* Time label positioned between this line and the next one (centered in 60px) */}
-                    <div className="absolute left-0 w-14 text-xs text-muted-foreground text-right pr-2" style={{ top: '20px' }}>
-                      {String(hour).padStart(2, '0')}:00
+                {/* Time grid - clickable slots */}
+                {hours.map((hour, index) => {
+                  const now = new Date();
+                  const slotTime = new Date(selectedDay);
+                  slotTime.setHours(hour, 0, 0, 0);
+                  const isPast = slotTime < now;
+                  
+                  return (
+                    <div
+                      key={hour}
+                      className={cn(
+                        "absolute w-full border-t border-border",
+                        !isPast && "cursor-pointer hover:bg-primary/5 transition-colors"
+                      )}
+                      style={{ top: `${(hour - 7) * 60}px`, height: '60px' }}
+                      onClick={(e) => handleTimeSlotClick(hour, e)}
+                    >
+                      {/* Time label positioned between this line and the next one (centered in 60px) */}
+                      <div className="absolute left-0 w-14 text-xs text-muted-foreground text-right pr-2" style={{ top: '20px' }}>
+                        {String(hour).padStart(2, '0')}:00
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {/* Meetings */}
-                <div className="absolute left-16 right-0 top-0 bottom-0">
+                <div className="absolute left-16 right-0 top-0 bottom-0 pointer-events-none">
                   {dayMeetings.map((meeting) => {
                     const { top, height } = getMeetingPosition(meeting);
                     return (
                       <div
                         key={meeting.id}
-                        className="absolute left-1 right-1 bg-primary/10 border-l-4 border-primary rounded-r px-2 py-1 cursor-pointer hover:bg-primary/20 transition-colors overflow-hidden"
+                        className="meeting-item absolute left-1 right-1 bg-primary/10 border-l-4 border-primary rounded-r px-2 py-1 cursor-pointer hover:bg-primary/20 transition-colors overflow-hidden pointer-events-auto"
                         style={{ top: `${top}px`, height: `${height}px` }}
                         onClick={() => handleMeetingClick(meeting)}
                       >
@@ -340,11 +369,16 @@ const Meetings = () => {
 
       <MeetingDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        selectedDate={new Date()}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) setDefaultStartTime(undefined);
+        }}
+        selectedDate={activeTab === 'day' ? selectedDay : new Date()}
+        defaultStartTime={defaultStartTime}
         onSuccess={() => {
           fetchMeetings();
           fetchDayMeetings();
+          setDefaultStartTime(undefined);
         }}
       />
 

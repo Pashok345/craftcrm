@@ -65,11 +65,22 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess, defaultProjectId }: 
     if (open) {
       fetchUsers();
       fetchProjects();
+      // Set default project if provided
       if (defaultProjectId) {
         setProjectId(defaultProjectId);
       }
+    } else {
+      // Reset form when dialog closes
+      resetForm();
     }
   }, [open, defaultProjectId]);
+
+  // Always update projectId when defaultProjectId changes
+  useEffect(() => {
+    if (defaultProjectId) {
+      setProjectId(defaultProjectId);
+    }
+  }, [defaultProjectId]);
 
   const fetchUsers = async () => {
     const { data } = await supabase.from('profiles').select('*');

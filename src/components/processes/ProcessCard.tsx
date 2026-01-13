@@ -150,10 +150,18 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
               {t('processRuns') || 'Запущенные процессы'} ({runs.length})
             </p>
             <div className="space-y-2">
-              {displayedRuns.map((run) => {
+                {displayedRuns.map((run) => {
                 const statusConfig = getStatusConfig(run.status);
                 const StatusIcon = statusConfig.icon;
                 const runName = run.field_values._run_name as string || t('untitled');
+                
+                const statusLabel = run.status === 'completed' 
+                  ? (t('completed') || 'Завершен')
+                  : run.status === 'cancelled' 
+                  ? (t('cancelled') || 'Отменен')
+                  : run.status === 'in_progress'
+                  ? (t('inProgress') || 'В работе')
+                  : (t('pending') || 'Ожидает');
                 
                 return (
                   <div 
@@ -165,9 +173,14 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
                       <StatusIcon className={`h-4 w-4 flex-shrink-0 ${run.status === 'completed' ? 'text-green-600' : run.status === 'cancelled' ? 'text-red-600' : run.status === 'in_progress' ? 'text-blue-600' : 'text-yellow-600'}`} />
                       <span className="text-sm font-medium truncate">{runName}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                      {format(new Date(run.started_at), 'd MMM yyyy', { locale: dateLocale })}
-                    </span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <Badge variant="outline" className={statusConfig.color}>
+                        {statusLabel}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(run.started_at), 'd MMM yyyy', { locale: dateLocale })}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

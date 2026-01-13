@@ -460,62 +460,102 @@ const TaskDetail = () => {
             </div>
           )}
 
-          <div className="space-y-2 mb-6">
-            <h4 className="text-sm font-medium">{t('participants')}:</h4>
-            <div className="flex items-center gap-1">
-              {/* Avatar stack */}
-              <div className="flex -space-x-2">
-                {assignees.slice(0, 5).map((a, i) => (
-                  <Tooltip key={i}>
-                    <TooltipTrigger asChild>
-                      <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
-                        <AvatarImage src={a.user.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                          {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{a.user.name} ({a.role === 'executor' ? t('executor') : t('observer')})</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-                {assignees.length > 5 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
-                        +{assignees.length - 5}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {assignees.slice(5).map((a, i) => (
-                        <p key={i}>{a.user.name}</p>
-                      ))}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+          <div className="flex flex-wrap gap-6 mb-6">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">{t('participants')}:</h4>
+              <div className="flex items-center gap-1">
+                <div className="flex -space-x-2">
+                  {assignees.filter(a => a.role === 'observer').slice(0, 5).map((a, i) => (
+                    <Tooltip key={i}>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
+                          <AvatarImage src={a.user.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                            {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{a.user.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {assignees.filter(a => a.role === 'observer').length > 5 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
+                          +{assignees.filter(a => a.role === 'observer').length - 5}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {assignees.filter(a => a.role === 'observer').slice(5).map((a, i) => (
+                          <p key={i}>{a.user.name}</p>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
-              
-              {/* Add button */}
-              {user?.id === task.created_by && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 rounded-full ml-2"
-                      onClick={() => setAddAssigneeOpen(true)}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('addParticipant')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">{t('executors')}:</h4>
+              <div className="flex items-center gap-1">
+                <div className="flex -space-x-2">
+                  {assignees.filter(a => a.role === 'executor').slice(0, 5).map((a, i) => (
+                    <Tooltip key={i}>
+                      <TooltipTrigger asChild>
+                        <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
+                          <AvatarImage src={a.user.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs bg-crm-warning text-white">
+                            {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{a.user.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {assignees.filter(a => a.role === 'executor').length > 5 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
+                          +{assignees.filter(a => a.role === 'executor').length - 5}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {assignees.filter(a => a.role === 'executor').slice(5).map((a, i) => (
+                          <p key={i}>{a.user.name}</p>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Add participant button */}
+          {user?.id === task.created_by && (
+            <div className="mb-6">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() => setAddAssigneeOpen(true)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('addParticipant')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </CardContent>
       </Card>
 
