@@ -584,14 +584,50 @@ const ProcessRunDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{runName}</h1>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editRunName}
+                onChange={(e) => setEditRunName(e.target.value)}
+                className="max-w-xs"
+              />
+              <Button size="sm" onClick={handleEditRun}>{t('save')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
+            </div>
+          ) : (
+            <h1 className="text-2xl font-bold">{runName}</h1>
+          )}
           <p className="text-muted-foreground">{process.title}</p>
         </div>
-        <Badge className={`${statusConfig.color} border`}>
-          <StatusIcon className="h-3.5 w-3.5 mr-1" />
-          {statusConfig.label}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => { setEditRunName(runName); setIsEditing(true); }}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+          <Badge className={`${statusConfig.color} border`}>
+            <StatusIcon className="h-3.5 w-3.5 mr-1" />
+            {statusConfig.label}
+          </Badge>
+        </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProcessRun')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteProcessRunConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRun} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main info */}
