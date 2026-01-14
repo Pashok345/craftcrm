@@ -82,7 +82,10 @@ const ProcessRunDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [directAttachments, setDirectAttachments] = useState<Attachment[]>([]);
+  const [uploadingDirect, setUploadingDirect] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
