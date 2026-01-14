@@ -320,6 +320,55 @@ const ProcessRunDetail = () => {
     }
   };
 
+  const handleDeleteRun = async () => {
+    if (!run || !id) return;
+    
+    // Delete attachments first
+    await supabase
+      .from('process_run_attachments')
+      .delete()
+      .eq('process_run_id', id);
+    
+    // Delete comments
+    await supabase
+      .from('process_run_comments')
+      .delete()
+      .eq('process_run_id', id);
+    
+    // Delete the run
+    const { error } = await supabase
+      .from('process_runs')
+      .delete()
+      .eq('id', id);
+    
+    if (!error) {
+      toast({ title: t('processRunDeleted') });
+      navigate('/processes');
+    } else {
+      toast({ title: t('errorDeleting'), variant: 'destructive' });
+    }
+  };
+
+  const handleEditRun = async () => {
+    if (!run || !editRunName.trim()) return;
+    
+    const newFieldValues = {
+      ...run.field_values,
+      _run_name: editRunName.trim(),
+    };
+    
+    const { error } = await supabase
+      .from('process_runs')
+      .update({ field_values: newFieldValues })
+      .eq('id', run.id);
+    
+    if (!error) {
+      setRun({ ...run, field_values: newFieldValues });
+      setIsEditing(false);
+      toast({ title: t('processRunUpdated') });
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setSelectedFiles(prev => [...prev, ...files]);
