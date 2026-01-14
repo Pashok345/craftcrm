@@ -334,7 +334,7 @@ const TaskDetail = () => {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: "todo" | "in_progress" | "review" | "done") => {
     if (!task || !user) return;
     const { error } = await supabase
       .from('tasks')
@@ -342,7 +342,7 @@ const TaskDetail = () => {
       .eq('id', task.id);
     
     if (!error) {
-      setTask({ ...task, status: newStatus as Task['status'] });
+      setTask({ ...task, status: newStatus });
       toast({ title: t('statusUpdated') });
     }
   };
