@@ -31,6 +31,37 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
+// Collapsible description component
+const CollapsibleDescription = ({ description }: { description: string }) => {
+  const { t } = useLanguage();
+  const [expanded, setExpanded] = useState(false);
+  const lines = description.split('\n');
+  const hasMoreThanSevenLines = description.length > 350 || lines.length > 7;
+  
+  // Approximate 7 lines worth of text (about 350 characters or 7 actual lines)
+  const truncatedText = hasMoreThanSevenLines && !expanded
+    ? description.slice(0, 350) + '...'
+    : description;
+
+  return (
+    <div className="mt-1">
+      <p className="text-muted-foreground whitespace-pre-wrap">
+        {truncatedText}
+      </p>
+      {hasMoreThanSevenLines && (
+        <Button
+          variant="link"
+          size="sm"
+          className="p-0 h-auto text-primary"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? t('showLess') : t('showMore')}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 interface ProjectDetailDialogProps {
   project: Project | null;
   open: boolean;
@@ -159,7 +190,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
               <div className="flex-1">
                 <DialogTitle className="text-xl">{project.title}</DialogTitle>
                 {project.description && (
-                  <p className="text-muted-foreground mt-1">{project.description}</p>
+                  <CollapsibleDescription description={project.description} />
                 )}
               </div>
               <Badge className={PROJECT_STATUS_COLORS[project.status]}>

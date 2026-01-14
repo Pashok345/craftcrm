@@ -9,7 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/database';
@@ -327,6 +334,25 @@ const TaskDetail = () => {
     }
   };
 
+  const handleStatusChange = async (newStatus: "todo" | "in_progress" | "review" | "done") => {
+    if (!task || !user) return;
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', task.id);
+    
+    if (!error) {
+      setTask({ ...task, status: newStatus });
+      toast({ title: t('statusUpdated') });
+    }
+  };
+
+  const handleStatusToggle = async () => {
+    if (!task) return;
+    const newStatus = task.status === 'done' ? 'todo' : 'done';
+    await handleStatusChange(newStatus);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -397,7 +423,29 @@ const TaskDetail = () => {
                 <p className="text-muted-foreground mt-2">{task.description}</p>
               )}
             </div>
-            <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleStatusToggle}
+                className="p-1 hover:bg-muted rounded transition-colors"
+                title={t('changeStatus')}
+              >
+                <CheckSquare className={`h-6 w-6 ${task.status === 'done' ? 'text-crm-success' : 'text-muted-foreground'}`} />
+              </button>
+              <Select
+                value={task.status}
+                onValueChange={(val) => handleStatusChange(val as "todo" | "in_progress" | "review" | "done")}
+              >
+                <SelectTrigger className="w-auto min-w-[140px] border-0 bg-transparent">
+                  <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">{statusLabels.todo}</SelectItem>
+                  <SelectItem value="in_progress">{statusLabels.in_progress}</SelectItem>
+                  <SelectItem value="review">{statusLabels.review}</SelectItem>
+                  <SelectItem value="done">{statusLabels.done}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-6">

@@ -82,7 +82,10 @@ const ProcessRunDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [directAttachments, setDirectAttachments] = useState<Attachment[]>([]);
+  const [uploadingDirect, setUploadingDirect] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -229,7 +232,59 @@ const ProcessRunDetail = () => {
     }
 
     if (deptsRes.data) setDepartments(deptsRes.data);
+    
+    // Fetch direct attachments
+    const { data: directAtts } = await supabase
+      .from('process_run_attachments')
+      .select('id, file_name, file_url, file_type')
+      .eq('process_run_id', id)
+      .is('comment_id', null);
+    if (directAtts) setDirectAttachments(directAtts);
+    
     setLoading(false);
+  };
+
+  const handleDirectFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !user || !id) return;
+    
+    setUploadingDirect(true);
+    
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('process-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) continue;
+
+      const { data: urlData } = supabase.storage
+        .from('process-attachments')
+        .getPublicUrl(fileName);
+
+      await supabase.from('process_run_attachments').insert({
+        process_run_id: id,
+        comment_id: null,
+        file_name: file.name,
+        file_url: urlData.publicUrl,
+        file_type: file.type,
+        uploaded_by: user.id,
+      });
+    }
+    
+    // Refetch attachments
+    const { data: directAtts } = await supabase
+      .from('process_run_attachments')
+      .select('id, file_name, file_url, file_type')
+      .eq('process_run_id', id)
+      .is('comment_id', null);
+    if (directAtts) setDirectAttachments(directAtts);
+    
+    setUploadingDirect(false);
+    if (directFileInputRef.current) directFileInputRef.current.value = '';
+    toast({ title: t('fileUploaded') });
   };
 
   const updateStatus = async (newStatus: string) => {
@@ -510,6 +565,57 @@ const ProcessRunDetail = () => {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Attachments section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('attachments')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <input
+                type="file"
+                ref={directFileInputRef}
+                onChange={handleDirectFileUpload}
+                multiple
+                className="hidden"
+              />
+              
+              {directAttachments.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">{t('noAttachments')}</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {directAttachments.map((att) => (
+                    <a
+                      key={att.id}
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg hover:bg-muted/80 transition-colors"
+                    >
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm max-w-[200px] truncate">{att.file_name}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => directFileInputRef.current?.click()}
+                disabled={uploadingDirect}
+              >
+                {uploadingDirect ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Paperclip className="h-4 w-4 mr-2" />
+                )}
+                {t('addFile')}
+              </Button>
             </CardContent>
           </Card>
 
