@@ -6,8 +6,9 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Restricted CORS - only allow requests from our own domain
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": supabaseUrl,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -18,6 +19,21 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authorization - only accept requests with service role key (from cron jobs)
+    const authHeader = req.headers.get("Authorization");
+    const expectedAuth = `Bearer ${supabaseServiceKey}`;
+    
+    if (!authHeader || authHeader !== expectedAuth) {
+      console.log("Unauthorized request attempted");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get current time and time 15 minutes from now
@@ -29,11 +45,17 @@ serve(async (req) => {
     const currentMinute = now.getUTCMinutes().toString().padStart(2, '0');
     const currentTime = `${currentHour}:${currentMinute}`;
     
-    // Calculate time 15 minutes from now
+    // Calculate time 15 minutes from now using proper date arithmetic
     const reminderTime = new Date(now.getTime() + 15 * 60 * 1000);
     const reminderHour = reminderTime.getUTCHours().toString().padStart(2, '0');
     const reminderMinute = reminderTime.getUTCMinutes().toString().padStart(2, '0');
     const targetTime = `${reminderHour}:${reminderMinute}`;
+    
+    // Calculate the end of the 2-minute window properly
+    const windowEndTime = new Date(reminderTime.getTime() + 2 * 60 * 1000);
+    const windowEndHour = windowEndTime.getUTCHours().toString().padStart(2, '0');
+    const windowEndMinute = windowEndTime.getUTCMinutes().toString().padStart(2, '0');
+    const windowEndTimeStr = `${windowEndHour}:${windowEndMinute}`;
 
     console.log(`Checking meetings at ${currentTime} for reminders at ${targetTime} on ${today}`);
 
@@ -43,7 +65,7 @@ serve(async (req) => {
       .select('*')
       .eq('meeting_date', today)
       .gte('start_time', targetTime + ':00')
-      .lte('start_time', `${reminderHour}:${(parseInt(reminderMinute) + 2).toString().padStart(2, '0')}:00`);
+      .lte('start_time', windowEndTimeStr + ':00');
 
     if (meetingsError) {
       console.error('Error fetching meetings:', meetingsError);
