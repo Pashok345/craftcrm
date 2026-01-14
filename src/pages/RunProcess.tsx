@@ -211,6 +211,7 @@ const RunProcess = () => {
       {process.description && (
         <Card>
           <CardContent className="pt-4">
+            <h3 className="text-sm font-medium text-foreground mb-2">{t('processDescription')}</h3>
             <p className="text-sm text-muted-foreground">{process.description}</p>
           </CardContent>
         </Card>
