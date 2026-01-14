@@ -423,7 +423,29 @@ const TaskDetail = () => {
                 <p className="text-muted-foreground mt-2">{task.description}</p>
               )}
             </div>
-            <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleStatusToggle}
+                className="p-1 hover:bg-muted rounded transition-colors"
+                title={t('changeStatus')}
+              >
+                <CheckSquare className={`h-6 w-6 ${task.status === 'done' ? 'text-crm-success' : 'text-muted-foreground'}`} />
+              </button>
+              <Select
+                value={task.status}
+                onValueChange={(val) => handleStatusChange(val as "todo" | "in_progress" | "review" | "done")}
+              >
+                <SelectTrigger className="w-auto min-w-[140px] border-0 bg-transparent">
+                  <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">{statusLabels.todo}</SelectItem>
+                  <SelectItem value="in_progress">{statusLabels.in_progress}</SelectItem>
+                  <SelectItem value="review">{statusLabels.review}</SelectItem>
+                  <SelectItem value="done">{statusLabels.done}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-6">
