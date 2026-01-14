@@ -16,7 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
@@ -84,6 +96,9 @@ const ProcessRunDetail = () => {
   const [uploading, setUploading] = useState(false);
   const [directAttachments, setDirectAttachments] = useState<Attachment[]>([]);
   const [uploadingDirect, setUploadingDirect] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRunName, setEditRunName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const directFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -308,6 +323,55 @@ const ProcessRunDetail = () => {
     }
   };
 
+  const handleDeleteRun = async () => {
+    if (!run || !id) return;
+    
+    // Delete attachments first
+    await supabase
+      .from('process_run_attachments')
+      .delete()
+      .eq('process_run_id', id);
+    
+    // Delete comments
+    await supabase
+      .from('process_run_comments')
+      .delete()
+      .eq('process_run_id', id);
+    
+    // Delete the run
+    const { error } = await supabase
+      .from('process_runs')
+      .delete()
+      .eq('id', id);
+    
+    if (!error) {
+      toast({ title: t('processRunDeleted') });
+      navigate('/processes');
+    } else {
+      toast({ title: t('errorDeleting'), variant: 'destructive' });
+    }
+  };
+
+  const handleEditRun = async () => {
+    if (!run || !editRunName.trim()) return;
+    
+    const newFieldValues = {
+      ...run.field_values,
+      _run_name: editRunName.trim(),
+    };
+    
+    const { error } = await supabase
+      .from('process_runs')
+      .update({ field_values: newFieldValues })
+      .eq('id', run.id);
+    
+    if (!error) {
+      setRun({ ...run, field_values: newFieldValues });
+      setIsEditing(false);
+      toast({ title: t('processRunUpdated') });
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setSelectedFiles(prev => [...prev, ...files]);
@@ -520,14 +584,50 @@ const ProcessRunDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{runName}</h1>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editRunName}
+                onChange={(e) => setEditRunName(e.target.value)}
+                className="max-w-xs"
+              />
+              <Button size="sm" onClick={handleEditRun}>{t('save')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
+            </div>
+          ) : (
+            <h1 className="text-2xl font-bold">{runName}</h1>
+          )}
           <p className="text-muted-foreground">{process.title}</p>
         </div>
-        <Badge className={`${statusConfig.color} border`}>
-          <StatusIcon className="h-3.5 w-3.5 mr-1" />
-          {statusConfig.label}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => { setEditRunName(runName); setIsEditing(true); }}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+          <Badge className={`${statusConfig.color} border`}>
+            <StatusIcon className="h-3.5 w-3.5 mr-1" />
+            {statusConfig.label}
+          </Badge>
+        </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProcessRun')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteProcessRunConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRun} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main info */}

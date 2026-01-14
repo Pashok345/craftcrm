@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckSquare, MessageSquare, Users, FolderKanban, PlayCircle, Bell, ListChecks, Clock } from 'lucide-react';
+import { CheckSquare, Users, FolderKanban, PlayCircle, Bell, ListChecks } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface Analytics {
   totalTasks: number;
@@ -14,6 +13,10 @@ interface Analytics {
   todoTasks: number;
   totalProjects: number;
   completedProjects: number;
+  planningProjects: number;
+  activeProjects: number;
+  onHoldProjects: number;
+  cancelledProjects: number;
   totalProcesses: number;
   totalNotifications: number;
   totalUsers: number;
@@ -29,6 +32,10 @@ const Dashboard = () => {
     todoTasks: 0,
     totalProjects: 0,
     completedProjects: 0,
+    planningProjects: 0,
+    activeProjects: 0,
+    onHoldProjects: 0,
+    cancelledProjects: 0,
     totalProcesses: 0,
     totalNotifications: 0,
     totalUsers: 0,
@@ -49,6 +56,10 @@ const Dashboard = () => {
         todoTasksRes,
         projectsRes,
         completedProjectsRes,
+        planningProjectsRes,
+        activeProjectsRes,
+        onHoldProjectsRes,
+        cancelledProjectsRes,
         processesRes,
         notificationsRes,
         usersRes
@@ -60,6 +71,10 @@ const Dashboard = () => {
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'todo'),
         supabase.from('projects').select('id', { count: 'exact', head: true }),
         supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'planning'),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'on_hold'),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'cancelled'),
         supabase.from('process_runs').select('id', { count: 'exact', head: true }),
         supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -73,6 +88,10 @@ const Dashboard = () => {
         todoTasks: todoTasksRes.count || 0,
         totalProjects: projectsRes.count || 0,
         completedProjects: completedProjectsRes.count || 0,
+        planningProjects: planningProjectsRes.count || 0,
+        activeProjects: activeProjectsRes.count || 0,
+        onHoldProjects: onHoldProjectsRes.count || 0,
+        cancelledProjects: cancelledProjectsRes.count || 0,
         totalProcesses: processesRes.count || 0,
         totalNotifications: notificationsRes.count || 0,
         totalUsers: usersRes.count || 0,
@@ -137,30 +156,14 @@ const Dashboard = () => {
     { name: t('statusDone'), value: analytics.completedTasks, color: 'hsl(var(--crm-success))' },
   ].filter(d => d.value > 0);
 
-  // Overview bar chart data
-  const overviewData = [
-    {
-      name: t('tasks'),
-      total: analytics.totalTasks,
-      completed: analytics.completedTasks,
-    },
-    {
-      name: t('projects'),
-      total: analytics.totalProjects,
-      completed: analytics.completedProjects,
-    },
-  ];
-
-  const chartConfig = {
-    total: {
-      label: t('total'),
-      color: 'hsl(var(--primary))',
-    },
-    completed: {
-      label: t('completed'),
-      color: 'hsl(var(--crm-success))',
-    },
-  };
+  // Project status pie chart data
+  const projectStatusData = [
+    { name: t('planning'), value: analytics.planningProjects, color: 'hsl(var(--muted-foreground))' },
+    { name: t('active'), value: analytics.activeProjects, color: 'hsl(var(--crm-warning))' },
+    { name: t('onHold'), value: analytics.onHoldProjects, color: 'hsl(var(--primary))' },
+    { name: t('completedProjects'), value: analytics.completedProjects, color: 'hsl(var(--crm-success))' },
+    { name: t('cancelled'), value: analytics.cancelledProjects, color: 'hsl(var(--destructive))' },
+  ].filter(d => d.value > 0);
 
   if (loading) {
     return (
@@ -182,10 +185,10 @@ const Dashboard = () => {
         {stats.map((stat, index) => (
           <Card key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground truncate pr-2">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.color}`}>
+              <div className={`p-2 rounded-lg shrink-0 ${stat.color}`}>
                 <stat.icon className="h-4 w-4" />
               </div>
             </CardHeader>
@@ -199,54 +202,54 @@ const Dashboard = () => {
       {/* Charts */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Task Status Pie Chart */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <CheckSquare className="h-5 w-5 text-muted-foreground" />
-              {t('tasksByStatus')}
+              <CheckSquare className="h-5 w-5 text-muted-foreground shrink-0" />
+              <span className="truncate">{t('tasksByStatus')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {taskStatusData.length > 0 ? (
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={taskStatusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                      labelLine={false}
-                    >
-                      {taskStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      content={({ payload }) => {
-                        if (payload && payload.length > 0) {
-                          const data = payload[0].payload;
-                          return (
-                            <div className="bg-popover border rounded-lg p-2 shadow-lg">
-                              <p className="font-medium">{data.name}</p>
-                              <p className="text-muted-foreground">{data.value} {t('tasks').toLowerCase()}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap gap-4 justify-center mt-4">
+              <div className="flex flex-col">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={taskStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {taskStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={({ payload }) => {
+                          if (payload && payload.length > 0) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-popover border rounded-lg p-2 shadow-lg">
+                                <p className="font-medium">{data.name}</p>
+                                <p className="text-muted-foreground">{data.value} {t('tasks').toLowerCase()}</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
                   {taskStatusData.map((entry, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <div 
-                        className="w-3 h-3 rounded-full" 
+                        className="w-3 h-3 rounded-full shrink-0" 
                         style={{ backgroundColor: entry.color }}
                       />
                       <span className="text-sm text-muted-foreground">{entry.name}</span>
@@ -262,40 +265,67 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Overview Bar Chart */}
-        <Card>
+        {/* Project Status Pie Chart */}
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              {t('overviewComparison')}
+              <FolderKanban className="h-5 w-5 text-muted-foreground shrink-0" />
+              <span className="truncate">{t('projectsByStatus')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px]">
-              <BarChart data={overviewData} layout="vertical">
-                <XAxis type="number" hide />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  width={80}
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar 
-                  dataKey="total" 
-                  fill="hsl(var(--primary))" 
-                  radius={[0, 4, 4, 0]}
-                  name={t('total')}
-                />
-                <Bar 
-                  dataKey="completed" 
-                  fill="hsl(var(--crm-success))" 
-                  radius={[0, 4, 4, 0]}
-                  name={t('completed')}
-                />
-                <Legend />
-              </BarChart>
-            </ChartContainer>
+            {projectStatusData.length > 0 ? (
+              <div className="flex flex-col">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={projectStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {projectStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={({ payload }) => {
+                          if (payload && payload.length > 0) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-popover border rounded-lg p-2 shadow-lg">
+                                <p className="font-medium">{data.name}</p>
+                                <p className="text-muted-foreground">{data.value} {t('projects').toLowerCase()}</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-3 justify-center pt-4 border-t">
+                  {projectStatusData.map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full shrink-0" 
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="text-sm text-muted-foreground truncate max-w-[100px]">{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                {t('noData')}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
