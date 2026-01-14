@@ -96,6 +96,9 @@ const ProcessRunDetail = () => {
   const [uploading, setUploading] = useState(false);
   const [directAttachments, setDirectAttachments] = useState<Attachment[]>([]);
   const [uploadingDirect, setUploadingDirect] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRunName, setEditRunName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const directFileInputRef = useRef<HTMLInputElement>(null);
 
