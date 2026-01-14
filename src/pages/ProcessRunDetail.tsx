@@ -232,7 +232,59 @@ const ProcessRunDetail = () => {
     }
 
     if (deptsRes.data) setDepartments(deptsRes.data);
+    
+    // Fetch direct attachments
+    const { data: directAtts } = await supabase
+      .from('process_run_attachments')
+      .select('id, file_name, file_url, file_type')
+      .eq('process_run_id', id)
+      .is('comment_id', null);
+    if (directAtts) setDirectAttachments(directAtts);
+    
     setLoading(false);
+  };
+
+  const handleDirectFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !user || !id) return;
+    
+    setUploadingDirect(true);
+    
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('process-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) continue;
+
+      const { data: urlData } = supabase.storage
+        .from('process-attachments')
+        .getPublicUrl(fileName);
+
+      await supabase.from('process_run_attachments').insert({
+        process_run_id: id,
+        comment_id: null,
+        file_name: file.name,
+        file_url: urlData.publicUrl,
+        file_type: file.type,
+        uploaded_by: user.id,
+      });
+    }
+    
+    // Refetch attachments
+    const { data: directAtts } = await supabase
+      .from('process_run_attachments')
+      .select('id, file_name, file_url, file_type')
+      .eq('process_run_id', id)
+      .is('comment_id', null);
+    if (directAtts) setDirectAttachments(directAtts);
+    
+    setUploadingDirect(false);
+    if (directFileInputRef.current) directFileInputRef.current.value = '';
+    toast({ title: t('fileUploaded') });
   };
 
   const updateStatus = async (newStatus: string) => {
