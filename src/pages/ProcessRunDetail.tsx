@@ -516,6 +516,57 @@ const ProcessRunDetail = () => {
             </CardContent>
           </Card>
 
+          {/* Attachments section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t('attachments')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <input
+                type="file"
+                ref={directFileInputRef}
+                onChange={handleDirectFileUpload}
+                multiple
+                className="hidden"
+              />
+              
+              {directAttachments.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">{t('noAttachments')}</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {directAttachments.map((att) => (
+                    <a
+                      key={att.id}
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg hover:bg-muted/80 transition-colors"
+                    >
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm max-w-[200px] truncate">{att.file_name}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => directFileInputRef.current?.click()}
+                disabled={uploadingDirect}
+              >
+                {uploadingDirect ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Paperclip className="h-4 w-4 mr-2" />
+                )}
+                {t('addFile')}
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Comments section */}
           <Card>
             <CardHeader>

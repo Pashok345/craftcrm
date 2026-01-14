@@ -316,6 +316,21 @@ export const translations: Translations = {
   showMore: { ru: 'Показать ещё', en: 'Show more', uk: 'Показати ще' },
   showLess: { ru: 'Свернуть', en: 'Show less', uk: 'Згорнути' },
 
+  // Dashboard
+  totalProjects: { ru: 'Всего проектов', en: 'Total Projects', uk: 'Всього проектів' },
+  completedProjects: { ru: 'Завершено проектов', en: 'Completed Projects', uk: 'Завершено проектів' },
+  totalProcesses: { ru: 'Всего процессов', en: 'Total Processes', uk: 'Всього процесів' },
+  unreadNotifications: { ru: 'Непрочитанных', en: 'Unread', uk: 'Непрочитаних' },
+  tasksByStatus: { ru: 'Задачи по статусам', en: 'Tasks by Status', uk: 'Задачі за статусами' },
+  overviewComparison: { ru: 'Общий обзор', en: 'Overview Comparison', uk: 'Загальний огляд' },
+  noData: { ru: 'Нет данных', en: 'No data', uk: 'Немає даних' },
+  
+  // Process description
+  processDescription: { ru: 'Описание процесса', en: 'Process Description', uk: 'Опис процесу' },
+  noAttachments: { ru: 'Нет вложений', en: 'No attachments', uk: 'Немає вкладень' },
+  changeStatus: { ru: 'Изменить статус', en: 'Change status', uk: 'Змінити статус' },
+  statusUpdated: { ru: 'Статус обновлен', en: 'Status updated', uk: 'Статус оновлено' },
+
   // Message attachments
   failedToSendMessage: { ru: 'Не удалось отправить сообщение', en: 'Failed to send message', uk: 'Не вдалося надіслати повідомлення' },
 };
