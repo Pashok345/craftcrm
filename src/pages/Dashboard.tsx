@@ -246,40 +246,67 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Overview Bar Chart */}
+        {/* Project Status Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              {t('overviewComparison')}
+              <FolderKanban className="h-5 w-5 text-muted-foreground" />
+              {t('projectsByStatus')}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px]">
-              <BarChart data={overviewData} layout="vertical">
-                <XAxis type="number" hide />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  width={80}
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar 
-                  dataKey="total" 
-                  fill="hsl(var(--primary))" 
-                  radius={[0, 4, 4, 0]}
-                  name={t('total')}
-                />
-                <Bar 
-                  dataKey="completed" 
-                  fill="hsl(var(--crm-success))" 
-                  radius={[0, 4, 4, 0]}
-                  name={t('completed')}
-                />
-                <Legend />
-              </BarChart>
-            </ChartContainer>
+            {projectStatusData.length > 0 ? (
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={projectStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={false}
+                    >
+                      {projectStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      content={({ payload }) => {
+                        if (payload && payload.length > 0) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-popover border rounded-lg p-2 shadow-lg">
+                              <p className="font-medium">{data.name}</p>
+                              <p className="text-muted-foreground">{data.value} {t('projects').toLowerCase()}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-4 justify-center mt-4">
+                  {projectStatusData.map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="text-sm text-muted-foreground truncate max-w-[100px]">{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                {t('noData')}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
