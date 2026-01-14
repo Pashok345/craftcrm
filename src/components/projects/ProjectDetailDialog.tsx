@@ -159,7 +159,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
               <div className="flex-1">
                 <DialogTitle className="text-xl">{project.title}</DialogTitle>
                 {project.description && (
-                  <p className="text-muted-foreground mt-1">{project.description}</p>
+                  <CollapsibleDescription description={project.description} />
                 )}
               </div>
               <Badge className={PROJECT_STATUS_COLORS[project.status]}>

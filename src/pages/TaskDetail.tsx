@@ -334,6 +334,25 @@ const TaskDetail = () => {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (!task || !user) return;
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', task.id);
+    
+    if (!error) {
+      setTask({ ...task, status: newStatus as Task['status'] });
+      toast({ title: t('statusUpdated') });
+    }
+  };
+
+  const handleStatusToggle = async () => {
+    if (!task) return;
+    const newStatus = task.status === 'done' ? 'todo' : 'done';
+    await handleStatusChange(newStatus);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
