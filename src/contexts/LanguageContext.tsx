@@ -332,6 +332,19 @@ export const translations: Translations = {
 
   // Message attachments
   failedToSendMessage: { ru: 'Не удалось отправить сообщение', en: 'Failed to send message', uk: 'Не вдалося надіслати повідомлення' },
+
+  // Dashboard project statuses
+  projectsByStatus: { ru: 'Проекты по статусам', en: 'Projects by Status', uk: 'Проекти за статусами' },
+  planning: { ru: 'Планирование', en: 'Planning', uk: 'Планування' },
+  active: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+  onHold: { ru: 'Приостановлен', en: 'On Hold', uk: 'Призупинено' },
+  
+  // Process run actions
+  editProcessRun: { ru: 'Редактировать запуск', en: 'Edit run', uk: 'Редагувати запуск' },
+  deleteProcessRun: { ru: 'Удалить запуск', en: 'Delete run', uk: 'Видалити запуск' },
+  deleteProcessRunConfirm: { ru: 'Вы уверены, что хотите удалить этот запуск процесса?', en: 'Are you sure you want to delete this process run?', uk: 'Ви впевнені, що хочете видалити цей запуск процесу?' },
+  processRunDeleted: { ru: 'Запуск удалён', en: 'Run deleted', uk: 'Запуск видалено' },
+  processRunUpdated: { ru: 'Запуск обновлён', en: 'Run updated', uk: 'Запуск оновлено' },
 };
 
 interface LanguageContextType {

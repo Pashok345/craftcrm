@@ -16,7 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
