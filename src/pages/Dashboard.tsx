@@ -137,30 +137,14 @@ const Dashboard = () => {
     { name: t('statusDone'), value: analytics.completedTasks, color: 'hsl(var(--crm-success))' },
   ].filter(d => d.value > 0);
 
-  // Overview bar chart data
-  const overviewData = [
-    {
-      name: t('tasks'),
-      total: analytics.totalTasks,
-      completed: analytics.completedTasks,
-    },
-    {
-      name: t('projects'),
-      total: analytics.totalProjects,
-      completed: analytics.completedProjects,
-    },
-  ];
-
-  const chartConfig = {
-    total: {
-      label: t('total'),
-      color: 'hsl(var(--primary))',
-    },
-    completed: {
-      label: t('completed'),
-      color: 'hsl(var(--crm-success))',
-    },
-  };
+  // Project status pie chart data
+  const projectStatusData = [
+    { name: t('planning'), value: analytics.planningProjects, color: 'hsl(var(--muted-foreground))' },
+    { name: t('active'), value: analytics.activeProjects, color: 'hsl(var(--crm-warning))' },
+    { name: t('onHold'), value: analytics.onHoldProjects, color: 'hsl(var(--primary))' },
+    { name: t('completedProjects'), value: analytics.completedProjects, color: 'hsl(var(--crm-success))' },
+    { name: t('cancelled'), value: analytics.cancelledProjects, color: 'hsl(var(--destructive))' },
+  ].filter(d => d.value > 0);
 
   if (loading) {
     return (
