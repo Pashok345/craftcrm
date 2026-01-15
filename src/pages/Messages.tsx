@@ -279,13 +279,19 @@ const Messages = () => {
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        // Use signed URL with 7-day expiry for private bucket access
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('chat-attachments')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days expiry
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          console.error('Signed URL error:', signedUrlError);
+          continue;
+        }
 
         uploadedFiles.push({
           name: file.name,
-          url: publicUrl,
+          url: signedUrlData.signedUrl,
           type: file.type,
         });
       }
