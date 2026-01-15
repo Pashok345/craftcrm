@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { Building2 } from "lucide-react";
 
-type AuthView = "login" | "register" | "forgot-password";
+type AuthView = "login" | "forgot-password";
 
 const Auth = () => {
   const [view, setView] = useState<AuthView>("login");
@@ -41,16 +40,11 @@ const Auth = () => {
           <span className="text-2xl font-bold text-foreground">CRM Pro</span>
         </div>
 
-        {/* Forms */}
+        {/* Forms - Registration removed for internal system security */}
         {view === "login" && (
           <LoginForm
-            onSwitchToRegister={() => setView("register")}
             onSwitchToForgotPassword={() => setView("forgot-password")}
           />
-        )}
-        
-        {view === "register" && (
-          <RegisterForm onSwitchToLogin={() => setView("login")} />
         )}
         
         {view === "forgot-password" && (

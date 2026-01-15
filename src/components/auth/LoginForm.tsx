@@ -13,7 +13,7 @@ const loginSchema = z.object({
 });
 
 interface LoginFormProps {
-  onSwitchToRegister: () => void;
+  onSwitchToRegister?: () => void;
   onSwitchToForgotPassword: () => void;
 }
 
@@ -136,14 +136,16 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-muted-foreground">
-          Нет аккаунта?{" "}
-          <button onClick={onSwitchToRegister} className="link-primary">
-            Зарегистрироваться
-          </button>
-        </p>
-      </div>
+      {onSwitchToRegister && (
+        <div className="mt-6 text-center">
+          <p className="text-muted-foreground">
+            Нет аккаунта?{" "}
+            <button onClick={onSwitchToRegister} className="link-primary">
+              Зарегистрироваться
+            </button>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
