@@ -115,6 +115,34 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     return map;
   }, [tasks]);
 
+  // Automatically add new tasks to the beginning of saved orders
+  useEffect(() => {
+    const newOrderMap = { ...taskOrderMap };
+    let updated = false;
+
+    columns.forEach(column => {
+      const columnTasks = tasksByStatus[column.status] || [];
+      const currentOrder = newOrderMap[column.id] || [];
+      
+      // Find tasks not in the current order
+      const newTasks = columnTasks.filter(task => !currentOrder.includes(task.id));
+      
+      if (newTasks.length > 0) {
+        // Sort new tasks by created_at descending and prepend to order
+        const sortedNewTaskIds = newTasks
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .map(t => t.id);
+        
+        newOrderMap[column.id] = [...sortedNewTaskIds, ...currentOrder];
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      setTaskOrderMap(newOrderMap);
+    }
+  }, [tasks, columns]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Get tasks for a column, sorted by saved order (new tasks at the beginning)
   const getTasksForColumn = useCallback((column: Column): Task[] => {
     const columnTasks = tasksByStatus[column.status] || [];
@@ -128,7 +156,6 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     }
 
     // Sort tasks by their position in the order array
-    // New tasks (not in order) go to the BEGINNING
     const sortedTasks = [...columnTasks].sort((a, b) => {
       const indexA = order.indexOf(a.id);
       const indexB = order.indexOf(b.id);

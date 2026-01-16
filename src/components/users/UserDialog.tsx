@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -17,11 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import { Profile, UserPosition, POSITION_LABELS } from '@/types/database';
+import { Loader2, ShieldCheck } from 'lucide-react';
+import { Profile, UserPosition, POSITION_LABELS, AppRole } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface UserDialogProps {
   open: boolean;
@@ -37,10 +40,71 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
   const [additionalInfo, setAdditionalInfo] = useState(user.additional_info || '');
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [userRole, setUserRole] = useState<AppRole>('user');
+  const [roleLoading, setRoleLoading] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { isAdmin } = useUserRole();
 
   const isOwnProfile = currentUser?.id === user.user_id;
+
+  useEffect(() => {
+    if (open) {
+      fetchUserRole();
+    }
+  }, [open, user.user_id]);
+
+  const fetchUserRole = async () => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user_id)
+      .maybeSingle();
+    
+    setUserRole((data?.role as AppRole) || 'user');
+  };
+
+  const handleRoleToggle = async (makeAdmin: boolean) => {
+    if (!isAdmin || isOwnProfile) return;
+    
+    setRoleLoading(true);
+    try {
+      const newRole: AppRole = makeAdmin ? 'admin' : 'user';
+      
+      // Check if role record exists
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', user.user_id)
+        .maybeSingle();
+
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from('user_roles')
+          .update({ role: newRole })
+          .eq('user_id', user.user_id);
+        
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.user_id, role: newRole });
+        
+        if (error) throw error;
+      }
+
+      setUserRole(newRole);
+      toast({ title: makeAdmin ? 'Права админа выданы' : 'Права админа отозваны' });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({ title: 'Ошибка изменения прав', variant: 'destructive' });
+    } finally {
+      setRoleLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -167,6 +231,14 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Role badge */}
+              {userRole === 'admin' && (
+                <Badge className="bg-primary/10 text-primary gap-1">
+                  <ShieldCheck className="h-3 w-3" />
+                  Администратор
+                </Badge>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Почта</p>
@@ -192,6 +264,21 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                 <div>
                   <p className="text-sm text-muted-foreground">Дополнительно</p>
                   <p className="font-medium">{user.additional_info}</p>
+                </div>
+              )}
+
+              {/* Admin role toggle - only for admins viewing other users */}
+              {isAdmin && !isOwnProfile && (
+                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Права администратора</span>
+                  </div>
+                  <Switch
+                    checked={userRole === 'admin'}
+                    onCheckedChange={handleRoleToggle}
+                    disabled={roleLoading}
+                  />
                 </div>
               )}
 

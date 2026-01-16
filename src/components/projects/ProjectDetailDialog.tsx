@@ -16,11 +16,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Calendar, CheckCircle2, Clock, AlertCircle, Pencil, Trash2 } from 'lucide-react';
-import { Project, Task } from '@/types/database';
+import { Plus, Calendar, CheckCircle2, Clock, AlertCircle, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Project, Task, ProjectStatus } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { TaskDetailDialog } from '@/components/tasks/TaskDetailDialog';
 import { ProjectEditDialog } from './ProjectEditDialog';
@@ -30,6 +36,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 // Collapsible description component
 const CollapsibleDescription = ({ description }: { description: string }) => {
@@ -181,6 +188,24 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
 
   const isCreator = user?.id === project.created_by || user?.id === project.manager_id;
 
+  const handleStatusChange = async (newStatus: ProjectStatus) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: newStatus })
+        .eq('id', project.id);
+      
+      if (error) throw error;
+      toast({ title: t('statusUpdated') || 'Статус обновлён' });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({ title: t('errorUpdatingStatus') || 'Ошибка обновления статуса', variant: 'destructive' });
+    }
+  };
+
+  const statuses: ProjectStatus[] = ['planning', 'active', 'on_hold', 'completed', 'cancelled'];
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,9 +218,42 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
                   <CollapsibleDescription description={project.description} />
                 )}
               </div>
-              <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                {projectStatusLabels[project.status]}
-              </Badge>
+              {isCreator ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity",
+                      PROJECT_STATUS_COLORS[project.status]
+                    )}>
+                      {projectStatusLabels[project.status]}
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {statuses.map((s) => (
+                      <DropdownMenuItem 
+                        key={s} 
+                        onClick={() => handleStatusChange(s)}
+                        className={cn(s === project.status && "bg-accent")}
+                      >
+                        <span className={cn(
+                          "inline-block w-2 h-2 rounded-full mr-2",
+                          s === 'planning' && "bg-muted-foreground",
+                          s === 'active' && "bg-crm-success",
+                          s === 'on_hold' && "bg-crm-warning",
+                          s === 'completed' && "bg-primary",
+                          s === 'cancelled' && "bg-destructive"
+                        )} />
+                        {projectStatusLabels[s]}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Badge className={PROJECT_STATUS_COLORS[project.status]}>
+                  {projectStatusLabels[project.status]}
+                </Badge>
+              )}
             </div>
           </DialogHeader>
 
