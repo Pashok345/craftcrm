@@ -185,6 +185,7 @@ export const MeetingDayDialog = ({
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         selectedDate={selectedDate}
+        defaultStartTime="09:00"
         onSuccess={handleCreateSuccess}
       />
 

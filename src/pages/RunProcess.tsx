@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Play, Plus, ArrowLeft } from 'lucide-react';
+import { Loader2, Play, Plus, ArrowLeft, Paperclip, X, FileIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ProcessField {
@@ -37,11 +37,30 @@ interface Process {
   description: string | null;
 }
 
+interface UploadedFile {
+  file: File;
+  name: string;
+}
+
+// IBAN mask utility
+const formatIBAN = (value: string): string => {
+  // Remove all non-alphanumeric characters
+  const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  
+  // IBAN max length is 34 characters
+  const limited = cleaned.slice(0, 34);
+  
+  // Format in groups of 4
+  const groups = limited.match(/.{1,4}/g) || [];
+  return groups.join(' ');
+};
+
 const RunProcess = () => {
   const { id: processId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [process, setProcess] = useState<Process | null>(null);
   const [runName, setRunName] = useState('');
@@ -53,6 +72,7 @@ const RunProcess = () => {
   const [submitting, setSubmitting] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
   const [isAddingDept, setIsAddingDept] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   useEffect(() => {
     if (processId) {
@@ -105,34 +125,91 @@ const RunProcess = () => {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newFiles: UploadedFile[] = Array.from(files).map(file => ({
+      file,
+      name: file.name,
+    }));
+    
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !runName.trim() || !selectedDepartment) return;
     setSubmitting(true);
 
-    const { data, error } = await supabase.from('process_runs').insert({
-      process_id: processId,
-      field_values: {
-        _run_name: runName.trim(),
-        _initiator_department: selectedDepartment,
-        ...fieldValues,
-      },
-      started_by: user.id,
-      status: 'pending',
-    }).select().single();
+    try {
+      const { data, error } = await supabase.from('process_runs').insert({
+        process_id: processId,
+        field_values: {
+          _run_name: runName.trim(),
+          _initiator_department: selectedDepartment,
+          ...fieldValues,
+        },
+        started_by: user.id,
+        status: 'pending',
+      }).select().single();
 
-    setSubmitting(false);
+      if (error) throw error;
 
-    if (!error && data) {
+      // Upload files if any
+      if (uploadedFiles.length > 0 && data) {
+        for (const uploadedFile of uploadedFiles) {
+          const filePath = `${data.id}/${Date.now()}-${uploadedFile.name}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('process-attachments')
+            .upload(filePath, uploadedFile.file);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('process-attachments')
+              .getPublicUrl(filePath);
+
+            await supabase.from('process_run_attachments').insert({
+              process_run_id: data.id,
+              file_name: uploadedFile.name,
+              file_url: urlData.publicUrl,
+              file_type: uploadedFile.file.type,
+              uploaded_by: user.id,
+            });
+          }
+        }
+      }
+
       toast({ title: t('processStarted') });
       navigate(`/processes/runs/${data.id}`);
-    } else {
+    } catch (error) {
+      console.error('Error:', error);
       toast({ title: t('error'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const updateFieldValue = (fieldName: string, value: string) => {
     setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleIBANChange = (fieldName: string, value: string) => {
+    const formatted = formatIBAN(value);
+    updateFieldValue(fieldName, formatted);
+  };
+
+  const isIBANField = (fieldName: string) => {
+    const lowerName = fieldName.toLowerCase();
+    return lowerName.includes('iban') || lowerName.includes('ібан') || lowerName.includes('счет') || lowerName.includes('рахунок');
   };
 
   const renderField = (field: ProcessField) => {
@@ -165,6 +242,17 @@ const RunProcess = () => {
           </Select>
         );
       default:
+        // Check if field is IBAN type
+        if (isIBANField(field.name)) {
+          return (
+            <Input
+              value={fieldValues[field.name] || ''}
+              onChange={(e) => handleIBANChange(field.name, e.target.value)}
+              placeholder="UA00 0000 0000 0000 0000 0000 0000 0"
+              className="font-mono"
+            />
+          );
+        }
         return (
           <Input
             value={fieldValues[field.name] || ''}
@@ -280,6 +368,49 @@ const RunProcess = () => {
                 {renderField(field)}
               </div>
             ))}
+
+            {/* File attachments */}
+            <div className="space-y-2">
+              <Label>{t('attachments') || 'Вложения'}</Label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  multiple
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full"
+                >
+                  <Paperclip className="h-4 w-4 mr-2" />
+                  {t('addFile') || 'Добавить файл'}
+                </Button>
+                
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                        <FileIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="flex-1 text-sm truncate">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate('/processes')}>
