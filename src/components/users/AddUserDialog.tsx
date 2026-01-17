@@ -54,7 +54,6 @@ interface AddUserDialogProps {
 export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [position, setPosition] = useState<UserPosition>('other');
   const [phone, setPhone] = useState('+38');
   const [loading, setLoading] = useState(false);
@@ -68,19 +67,10 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim()) {
       toast({
         title: 'Ошибка',
         description: 'Заполните все обязательные поля',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: 'Ошибка',
-        description: 'Пароль должен быть не менее 6 символов',
         variant: 'destructive',
       });
       return;
@@ -92,12 +82,15 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
       // Get current session to restore after creating user
       const { data: currentSession } = await supabase.auth.getSession();
       
-      // Create user via Supabase Auth admin (this won't log in as the new user)
+      // Generate a secure random password (user will use password reset)
+      const randomPassword = crypto.randomUUID() + crypto.randomUUID().slice(0, 8);
+      
+      // Create user via Supabase Auth (this won't log in as the new user)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
-        password: password,
+        password: randomPassword,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: {
             name: name.trim(),
           },
@@ -128,12 +121,17 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
             refresh_token: currentSession.session.refresh_token,
           });
         }
+        
+        // Trigger password reset for the new user
+        await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/auth`
+        });
       }
 
-      // Send welcome email with credentials
+      // Send welcome email (without password)
       try {
         await supabase.functions.invoke('send-welcome-email', {
-          body: { email: email.trim(), name: name.trim(), password: password }
+          body: { email: email.trim(), name: name.trim() }
         });
       } catch (emailError) {
         console.error('Error sending welcome email:', emailError);
@@ -141,7 +139,7 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
 
       toast({
         title: 'Пользователь создан',
-        description: `Аккаунт для ${email} успешно создан`,
+        description: `Аккаунт для ${email} успешно создан. Ссылка для установки пароля отправлена на email.`,
       });
 
       resetForm();
@@ -168,7 +166,6 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
   const resetForm = () => {
     setName('');
     setEmail('');
-    setPassword('');
     setPosition('other');
     setPhone('+38');
   };
@@ -201,19 +198,6 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ivan@company.com"
               required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Временный пароль *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Минимум 6 символов"
-              required
-              minLength={6}
             />
           </div>
 
