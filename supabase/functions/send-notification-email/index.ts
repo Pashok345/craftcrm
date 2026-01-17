@@ -5,6 +5,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,34 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Verify JWT authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Invalid token:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const currentUserId = user.id;
+    
+    // Use service role for database operations
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { user_id, type, title, message, task_id }: NotificationEmailRequest = await req.json();
 
     if (!user_id) {
@@ -36,8 +64,62 @@ serve(async (req) => {
       );
     }
 
+    // Authorization check: user can send notifications related to their tasks
+    // or must be admin to send arbitrary notifications
+    if (task_id) {
+      // Check if current user is related to the task (creator or assignee)
+      const { data: taskRelation } = await adminClient
+        .from('tasks')
+        .select('id, created_by')
+        .eq('id', task_id)
+        .single();
+      
+      const { data: assigneeRelation } = await adminClient
+        .from('task_assignees')
+        .select('id')
+        .eq('task_id', task_id)
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      
+      const isTaskRelated = taskRelation?.created_by === currentUserId || !!assigneeRelation;
+      
+      if (!isTaskRelated) {
+        // Check if admin
+        const { data: roleData } = await adminClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUserId)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        if (!roleData) {
+          console.error('User not authorized to send this notification');
+          return new Response(
+            JSON.stringify({ error: 'Insufficient permissions' }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    } else {
+      // For non-task notifications, require admin role
+      const { data: roleData } = await adminClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUserId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (!roleData) {
+        console.error('User is not admin:', currentUserId);
+        return new Response(
+          JSON.stringify({ error: 'Insufficient permissions' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Get user email
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('email, name')
       .eq('user_id', user_id)
