@@ -220,6 +220,14 @@ export const translations: Translations = {
   close: { ru: 'Закрыть', en: 'Close', uk: 'Закрити' },
   add: { ru: 'Добавить', en: 'Add', uk: 'Додати' },
   search: { ru: 'Поиск', en: 'Search', uk: 'Пошук' },
+  searchPlaceholder: { ru: 'Поиск...', en: 'Search...', uk: 'Пошук...' },
+  sortBy: { ru: 'Сортировка', en: 'Sort by', uk: 'Сортування' },
+  sortByDate: { ru: 'По дате', en: 'By date', uk: 'За датою' },
+  sortByStatus: { ru: 'По статусу', en: 'By status', uk: 'За статусом' },
+  sortByName: { ru: 'По названию', en: 'By name', uk: 'За назвою' },
+  createdBy: { ru: 'Создал', en: 'Created by', uk: 'Створив' },
+  newest: { ru: 'Сначала новые', en: 'Newest first', uk: 'Спочатку нові' },
+  oldest: { ru: 'Сначала старые', en: 'Oldest first', uk: 'Спочатку старі' },
   
   // Assignees
   addParticipant: { ru: 'Добавить участника', en: 'Add participant', uk: 'Додати учасника' },
