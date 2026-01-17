@@ -173,14 +173,14 @@ const RunProcess = () => {
             .upload(filePath, uploadedFile.file);
 
           if (!uploadError) {
-            const { data: urlData } = supabase.storage
+            const { data: signedUrlData } = await supabase.storage
               .from('process-attachments')
-              .getPublicUrl(filePath);
+              .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days
 
             await supabase.from('process_run_attachments').insert({
               process_run_id: data.id,
               file_name: uploadedFile.name,
-              file_url: urlData.publicUrl,
+              file_url: signedUrlData?.signedUrl || filePath,
               file_type: uploadedFile.file.type,
               uploaded_by: user.id,
             });

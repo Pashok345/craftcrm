@@ -160,14 +160,14 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: signedUrlData } = await supabase.storage
           .from('task-attachments')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
         await supabase.from('task_attachments').insert({
           task_id: task.id,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: signedUrlData?.signedUrl || fileName,
           file_type: file.type,
           uploaded_by: user.id,
         });

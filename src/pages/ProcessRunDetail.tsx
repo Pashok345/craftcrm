@@ -275,15 +275,15 @@ const ProcessRunDetail = () => {
 
       if (uploadError) continue;
 
-      const { data: urlData } = supabase.storage
+      const { data: signedUrlData } = await supabase.storage
         .from('process-attachments')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
       await supabase.from('process_run_attachments').insert({
         process_run_id: id,
         comment_id: null,
         file_name: file.name,
-        file_url: urlData.publicUrl,
+        file_url: signedUrlData?.signedUrl || fileName,
         file_type: file.type,
         uploaded_by: user.id,
       });
@@ -399,9 +399,9 @@ const ProcessRunDetail = () => {
         continue;
       }
 
-      const { data: urlData } = supabase.storage
+      const { data: signedUrlData } = await supabase.storage
         .from('process-attachments')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
       const { data: attachmentData, error: attachmentError } = await supabase
         .from('process_run_attachments')
@@ -409,7 +409,7 @@ const ProcessRunDetail = () => {
           process_run_id: id,
           comment_id: commentId,
           file_name: file.name,
-          file_url: urlData.publicUrl,
+          file_url: signedUrlData?.signedUrl || fileName,
           file_type: file.type,
           uploaded_by: user.id,
         })
