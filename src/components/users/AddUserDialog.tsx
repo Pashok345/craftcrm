@@ -79,53 +79,20 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
     setLoading(true);
 
     try {
-      // Get current session to restore after creating user
-      const { data: currentSession } = await supabase.auth.getSession();
-      
-      // Generate a secure random password (user will use password reset)
-      const randomPassword = crypto.randomUUID() + crypto.randomUUID().slice(0, 8);
-      
-      // Create user via Supabase Auth (this won't log in as the new user)
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: randomPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: {
-            name: name.trim(),
-          },
-        },
+      // Call the secure server-side edge function to create user
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { 
+          email: email.trim(), 
+          name: name.trim(),
+          position: position,
+          phone: phone.trim() !== '+38' ? phone.trim() : null,
+        }
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Update the profile with additional info
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            name: name.trim(),
-            position: position,
-            phone: phone.trim() !== '+38' ? phone.trim() : null,
-          })
-          .eq('user_id', authData.user.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-        }
-        
-        // Sign out the newly created user and restore original session
-        if (currentSession?.session) {
-          await supabase.auth.setSession({
-            access_token: currentSession.session.access_token,
-            refresh_token: currentSession.session.refresh_token,
-          });
-        }
-        
-        // Trigger password reset for the new user
-        await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/auth`
-        });
+      if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       // Send welcome email (without password)
@@ -148,8 +115,8 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
     } catch (error: any) {
       console.error('Error creating user:', error);
       
-      let errorMessage = 'Не удалось создать пользователя';
-      if (error.message?.includes('already registered')) {
+      let errorMessage = error.message || 'Не удалось создать пользователя';
+      if (errorMessage.includes('already') || errorMessage.includes('exists')) {
         errorMessage = 'Пользователь с таким email уже существует';
       }
       

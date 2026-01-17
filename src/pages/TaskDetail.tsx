@@ -206,15 +206,15 @@ const TaskDetail = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedUrlData } = await supabase.storage
         .from('task-attachments')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
       await supabase.from('task_attachments').insert({
         task_id: task.id,
         comment_id: null,
         file_name: file.name,
-        file_url: publicUrl,
+        file_url: signedUrlData?.signedUrl || fileName,
         file_type: file.type,
         uploaded_by: user.id,
       });
@@ -262,15 +262,15 @@ const TaskDetail = () => {
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: signedUrlData } = await supabase.storage
           .from('task-attachments')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
         await supabase.from('task_attachments').insert({
           task_id: task.id,
           comment_id: comment.id,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: signedUrlData?.signedUrl || fileName,
           file_type: file.type,
           uploaded_by: user.id,
         });
