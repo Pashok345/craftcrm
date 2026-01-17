@@ -57,6 +57,7 @@ const TaskDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addAssigneeOpen, setAddAssigneeOpen] = useState(false);
+  const [creator, setCreator] = useState<Profile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -88,8 +89,19 @@ const TaskDetail = () => {
       fetchComments();
       fetchAssignees();
       fetchTaskAttachments();
+      fetchCreator();
     }
   }, [task?.id]);
+
+  const fetchCreator = async () => {
+    if (!task?.created_by) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', task.created_by)
+      .maybeSingle();
+    if (data) setCreator(data as Profile);
+  };
 
   const fetchTask = async () => {
     try {
@@ -449,6 +461,12 @@ const TaskDetail = () => {
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-6">
+            {creator && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="font-medium">{t('createdBy')}:</span>
+                <span>{creator.name}</span>
+              </div>
+            )}
             {task.deadline && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4" />

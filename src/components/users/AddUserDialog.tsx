@@ -130,6 +130,15 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
         }
       }
 
+      // Send welcome email with credentials
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: { email: email.trim(), name: name.trim(), password: password }
+        });
+      } catch (emailError) {
+        console.error('Error sending welcome email:', emailError);
+      }
+
       toast({
         title: 'Пользователь создан',
         description: `Аккаунт для ${email} успешно создан`,

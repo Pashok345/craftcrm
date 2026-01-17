@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, List, BarChart3, Columns } from 'lucide-react';
-import { Task, Project } from '@/types/database';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Calendar, List, BarChart3, Columns, Search, User } from 'lucide-react';
+import { Task, Project, Profile } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { GanttChart } from '@/components/tasks/GanttChart';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
@@ -14,14 +16,19 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name';
+
 const Tasks = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
+  const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('date_desc');
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -39,9 +46,17 @@ const Tasks = () => {
     done: 'bg-crm-success/10 text-crm-success',
   };
 
+  const STATUS_ORDER: Record<string, number> = {
+    todo: 0,
+    in_progress: 1,
+    review: 2,
+    done: 3,
+  };
+
   useEffect(() => {
     fetchTasks();
     fetchProjects();
+    fetchCreators();
   }, []);
 
   const fetchTasks = async () => {
@@ -60,6 +75,17 @@ const Tasks = () => {
     }
   };
 
+  const fetchCreators = async () => {
+    const { data, error } = await supabase.from('profiles').select('*');
+    if (!error && data) {
+      const map: Record<string, Profile> = {};
+      (data as Profile[]).forEach((p) => {
+        map[p.user_id] = p;
+      });
+      setCreators(map);
+    }
+  };
+
   const fetchProjects = async () => {
     const { data, error } = await supabase.from('projects').select('*');
     if (!error && data) {
@@ -74,6 +100,35 @@ const Tasks = () => {
   const handleTaskClick = (task: Task) => {
     navigate(`/tasks/${task.id}`);
   };
+
+  const filteredAndSortedTasks = useMemo(() => {
+    let filtered = tasks;
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort tasks
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'date_asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'date_desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'status':
+          return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+        case 'name':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+  }, [tasks, searchQuery, sortBy]);
 
   if (loading) {
     return (
@@ -96,6 +151,29 @@ const Tasks = () => {
         </Button>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="pl-9"
+          />
+        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={t('sortBy')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="date_desc">{t('newest')}</SelectItem>
+            <SelectItem value="date_asc">{t('oldest')}</SelectItem>
+            <SelectItem value="status">{t('sortByStatus')}</SelectItem>
+            <SelectItem value="name">{t('sortByName')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="list" className="gap-2">
@@ -113,7 +191,7 @@ const Tasks = () => {
         </TabsList>
 
         <TabsContent value="list" className="mt-4">
-          {tasks.length === 0 ? (
+          {filteredAndSortedTasks.length === 0 ? (
             <Card className="py-12">
               <CardContent className="text-center">
                 <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -126,7 +204,7 @@ const Tasks = () => {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {tasks.map((task, index) => (
+              {filteredAndSortedTasks.map((task, index) => (
                 <Card
                   key={task.id}
                   className="cursor-pointer hover:shadow-md transition-shadow animate-slide-up"
@@ -156,6 +234,12 @@ const Tasks = () => {
                               {format(new Date(task.deadline), 'd MMM yyyy', { locale: dateLocale })}
                             </div>
                           )}
+                          {task.created_by && creators[task.created_by] && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <User className="h-4 w-4" />
+                              <span>{t('createdBy')}: {creators[task.created_by].name}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Badge className={STATUS_COLORS[task.status]}>
@@ -172,7 +256,7 @@ const Tasks = () => {
         <TabsContent value="kanban" className="mt-4">
           <div className="overflow-x-auto pb-4">
             <KanbanBoard 
-              tasks={tasks} 
+              tasks={filteredAndSortedTasks} 
               projects={projects} 
               onTaskClick={handleTaskClick}
               onTaskUpdate={fetchTasks}
@@ -183,7 +267,7 @@ const Tasks = () => {
         <TabsContent value="gantt" className="mt-4">
           <Card>
             <CardContent className="p-4">
-              <GanttChart tasks={tasks} onTaskClick={handleTaskClick} />
+              <GanttChart tasks={filteredAndSortedTasks} onTaskClick={handleTaskClick} />
             </CardContent>
           </Card>
         </TabsContent>
