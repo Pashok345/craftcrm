@@ -14,6 +14,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name';
+type StatusFilter = 'all' | 'active' | 'completed';
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const Projects = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -89,6 +91,17 @@ const Projects = () => {
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = projects;
     
+    // Filter by status
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(project => 
+        ['planning', 'active', 'on_hold'].includes(project.status)
+      );
+    } else if (statusFilter === 'completed') {
+      filtered = filtered.filter(project => 
+        ['completed', 'cancelled'].includes(project.status)
+      );
+    }
+    
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -113,7 +126,7 @@ const Projects = () => {
           return 0;
       }
     });
-  }, [projects, searchQuery, sortBy]);
+  }, [projects, searchQuery, sortBy, statusFilter]);
 
   if (loading) {
     return (
@@ -146,6 +159,16 @@ const Projects = () => {
             className="pl-9"
           />
         </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={t('filterByStatus')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allProjects')}</SelectItem>
+            <SelectItem value="active">{t('activeProjects')}</SelectItem>
+            <SelectItem value="completed">{t('completedProjectsFilter')}</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('sortBy')} />

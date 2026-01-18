@@ -347,6 +347,12 @@ export const translations: Translations = {
   active: { ru: 'Активный', en: 'Active', uk: 'Активний' },
   onHold: { ru: 'Приостановлен', en: 'On Hold', uk: 'Призупинено' },
   
+  // Project filtering
+  filterByStatus: { ru: 'Фильтр по статусу', en: 'Filter by status', uk: 'Фільтр за статусом' },
+  allProjects: { ru: 'Все проекты', en: 'All projects', uk: 'Всі проекти' },
+  activeProjects: { ru: 'Активные', en: 'Active', uk: 'Активні' },
+  completedProjectsFilter: { ru: 'Завершённые', en: 'Completed', uk: 'Завершені' },
+  
   // Process run actions
   editProcessRun: { ru: 'Редактировать запуск', en: 'Edit run', uk: 'Редагувати запуск' },
   deleteProcessRun: { ru: 'Удалить запуск', en: 'Delete run', uk: 'Видалити запуск' },
