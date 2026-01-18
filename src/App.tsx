@@ -20,6 +20,7 @@ import Messages from "./pages/Messages";
 import Processes from "./pages/Processes";
 import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/processes" element={<Processes />} />
             <Route path="/processes/run/:id" element={<RunProcess />} />
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
