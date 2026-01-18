@@ -23,6 +23,8 @@ import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/da
 import { useAuth } from '@/hooks/useAuth';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
+import { TimeTracker } from '@/components/tasks/TimeTracker';
+import { TagsManager } from '@/components/tasks/TagsManager';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import {
@@ -622,8 +624,20 @@ const TaskDetail = () => {
               </Tooltip>
             </div>
           )}
+
+          {/* Tags */}
+          {user && (
+            <div className="mb-6">
+              <TagsManager taskId={task.id} userId={user.id} />
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Time Tracker */}
+      {user && (
+        <TimeTracker taskId={task.id} userId={user.id} />
+      )}
 
       <Card>
         <CardContent className="p-6">

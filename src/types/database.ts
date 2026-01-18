@@ -187,3 +187,29 @@ export interface Message {
   created_at: string;
   updated_at: string;
 }
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface TaskTag {
+  id: string;
+  task_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  task_id: string;
+  user_id: string;
+  start_time: string;
+  end_time?: string;
+  duration_minutes?: number;
+  description?: string;
+  created_at: string;
+}

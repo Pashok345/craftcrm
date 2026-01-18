@@ -359,6 +359,48 @@ export const translations: Translations = {
   deleteProcessRunConfirm: { ru: 'Вы уверены, что хотите удалить этот запуск процесса?', en: 'Are you sure you want to delete this process run?', uk: 'Ви впевнені, що хочете видалити цей запуск процесу?' },
   processRunDeleted: { ru: 'Запуск удалён', en: 'Run deleted', uk: 'Запуск видалено' },
   processRunUpdated: { ru: 'Запуск обновлён', en: 'Run updated', uk: 'Запуск оновлено' },
+
+  // Analytics
+  analytics: { ru: 'Аналитика', en: 'Analytics', uk: 'Аналітика' },
+  analyticsTitle: { ru: 'Отчёты и аналитика', en: 'Reports & Analytics', uk: 'Звіти та аналітика' },
+  analyticsDescription: { ru: 'Статистика и отчёты по проектам и задачам', en: 'Statistics and reports for projects and tasks', uk: 'Статистика та звіти по проектах та задачах' },
+  thisWeek: { ru: 'Эта неделя', en: 'This week', uk: 'Цей тиждень' },
+  thisMonth: { ru: 'Этот месяц', en: 'This month', uk: 'Цей місяць' },
+  allTime: { ru: 'Всё время', en: 'All time', uk: 'Весь час' },
+  timeTracked: { ru: 'Отслежено времени', en: 'Time tracked', uk: 'Відстежено часу' },
+  activeProjectsCount: { ru: 'Активных проектов', en: 'Active projects', uk: 'Активних проектів' },
+  tagsUsed: { ru: 'Используется тегов', en: 'Tags used', uk: 'Використано тегів' },
+  timeByEmployee: { ru: 'Время по сотрудникам', en: 'Time by employee', uk: 'Час за співробітниками' },
+  popularTags: { ru: 'Популярные теги', en: 'Popular tags', uk: 'Популярні теги' },
+  noTimeEntries: { ru: 'Нет записей времени', en: 'No time entries', uk: 'Немає записів часу' },
+  startTrackingTime: { ru: 'Начните отслеживать время в задачах', en: 'Start tracking time in tasks', uk: 'Почніть відстежувати час у задачах' },
+  noTags: { ru: 'Нет тегов', en: 'No tags', uk: 'Немає тегів' },
+  createTagsHint: { ru: 'Создайте теги для организации задач', en: 'Create tags to organize tasks', uk: 'Створіть теги для організації задач' },
+  hours: { ru: 'ч', en: 'h', uk: 'г' },
+  minutes: { ru: 'м', en: 'm', uk: 'хв' },
+  hoursShort: { ru: 'ч', en: 'h', uk: 'г' },
+  minutesShort: { ru: 'м', en: 'm', uk: 'хв' },
+
+  // Time tracking
+  timeTracking: { ru: 'Учёт времени', en: 'Time tracking', uk: 'Облік часу' },
+  timerStarted: { ru: 'Таймер запущен', en: 'Timer started', uk: 'Таймер запущено' },
+  timerStopped: { ru: 'Таймер остановлен', en: 'Timer stopped', uk: 'Таймер зупинено' },
+  start: { ru: 'Старт', en: 'Start', uk: 'Старт' },
+  stop: { ru: 'Стоп', en: 'Stop', uk: 'Стоп' },
+  whatAreYouWorkingOn: { ru: 'Над чем работаете?', en: 'What are you working on?', uk: 'Над чим працюєте?' },
+  durationMinutes: { ru: 'Минуты', en: 'Minutes', uk: 'Хвилини' },
+  timeAdded: { ru: 'Время добавлено', en: 'Time added', uk: 'Час додано' },
+  timeEntryDeleted: { ru: 'Запись удалена', en: 'Entry deleted', uk: 'Запис видалено' },
+  invalidDuration: { ru: 'Некорректная длительность', en: 'Invalid duration', uk: 'Невірна тривалість' },
+  timerInProgress: { ru: 'В процессе', en: 'In progress', uk: 'В процесі' },
+
+  // Tags
+  tagsAndLabels: { ru: 'Теги и метки', en: 'Tags & Labels', uk: 'Теги та мітки' },
+  addTag: { ru: 'Добавить тег', en: 'Add tag', uk: 'Додати тег' },
+  selectTag: { ru: 'Выберите тег', en: 'Select tag', uk: 'Оберіть тег' },
+  tagName: { ru: 'Название тега', en: 'Tag name', uk: 'Назва тегу' },
+  tagCreated: { ru: 'Тег создан', en: 'Tag created', uk: 'Тег створено' },
+  createNewTag: { ru: 'Создать новый тег', en: 'Create new tag', uk: 'Створити новий тег' },
 };
 
 interface LanguageContextType {
