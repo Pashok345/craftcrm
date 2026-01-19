@@ -56,6 +56,7 @@ export interface Profile {
   position?: UserPosition;
   additional_info?: string;
   avatar_url?: string;
+  avatar_color?: string;
   created_at: string;
   updated_at: string;
 }
@@ -150,6 +151,7 @@ export interface Project {
   description?: string;
   status: ProjectStatus;
   manager_id?: string;
+  reviewer_id?: string;
   budget?: number;
   start_date?: string;
   end_date?: string;
