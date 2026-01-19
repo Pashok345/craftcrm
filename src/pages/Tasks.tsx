@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Calendar, List, BarChart3, Columns, Search, User } from 'lucide-react';
-import { Task, Project, Profile } from '@/types/database';
+import { Task, Project, Profile, Tag } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { GanttChart } from '@/components/tasks/GanttChart';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
@@ -18,12 +20,25 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name';
 
+interface TaskTagJoin {
+  tag_id: string;
+  tags: Tag;
+}
+
+interface TaskAssignee {
+  task_id: string;
+  user_id: string;
+  profiles: Profile;
+}
+
 const Tasks = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
   const [creators, setCreators] = useState<Record<string, Profile>>({});
+  const [taskTags, setTaskTags] = useState<Record<string, Tag[]>>({});
+  const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
@@ -57,6 +72,8 @@ const Tasks = () => {
     fetchTasks();
     fetchProjects();
     fetchCreators();
+    fetchTaskTags();
+    fetchTaskAssignees();
   }, []);
 
   const fetchTasks = async () => {
@@ -95,6 +112,53 @@ const Tasks = () => {
       });
       setProjects(map);
     }
+  };
+
+  const fetchTaskTags = async () => {
+    const { data, error } = await supabase
+      .from('task_tags')
+      .select('task_id, tag_id, tags(*)');
+    
+    if (!error && data) {
+      const map: Record<string, Tag[]> = {};
+      (data as unknown as (TaskTagJoin & { task_id: string })[]).forEach((item) => {
+        if (!map[item.task_id]) {
+          map[item.task_id] = [];
+        }
+        if (item.tags) {
+          map[item.task_id].push(item.tags);
+        }
+      });
+      setTaskTags(map);
+    }
+  };
+
+  const fetchTaskAssignees = async () => {
+    const { data, error } = await supabase
+      .from('task_assignees')
+      .select('task_id, user_id, profiles(*)');
+    
+    if (!error && data) {
+      const map: Record<string, Profile[]> = {};
+      (data as unknown as TaskAssignee[]).forEach((item) => {
+        if (!map[item.task_id]) {
+          map[item.task_id] = [];
+        }
+        if (item.profiles) {
+          map[item.task_id].push(item.profiles);
+        }
+      });
+      setTaskAssignees(map);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const handleTaskClick = (task: Task) => {
@@ -241,10 +305,68 @@ const Tasks = () => {
                             </div>
                           )}
                         </div>
+                        {/* Tags */}
+                        {taskTags[task.id] && taskTags[task.id].length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-3">
+                            {taskTags[task.id].map((tag) => (
+                              <Badge
+                                key={tag.id}
+                                variant="secondary"
+                                style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}
+                                className="text-xs border"
+                              >
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <Badge className={STATUS_COLORS[task.status]}>
-                        {statusLabels[task.status]}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge className={STATUS_COLORS[task.status]}>
+                          {statusLabels[task.status]}
+                        </Badge>
+                        {/* Assignees */}
+                        {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
+                          <TooltipProvider>
+                            <div className="flex -space-x-2">
+                              {taskAssignees[task.id].slice(0, 3).map((assignee) => (
+                                <Tooltip key={assignee.user_id}>
+                                  <TooltipTrigger asChild>
+                                    <Avatar className="h-8 w-8 border-2 border-background">
+                                      {assignee.avatar_url ? (
+                                        <AvatarImage src={assignee.avatar_url} alt={assignee.name} />
+                                      ) : null}
+                                      <AvatarFallback 
+                                        style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
+                                        className="text-white text-xs"
+                                      >
+                                        {getInitials(assignee.name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{assignee.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                              {taskAssignees[task.id].length > 3 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Avatar className="h-8 w-8 border-2 border-background">
+                                      <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                                        +{taskAssignees[task.id].length - 3}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{taskAssignees[task.id].slice(3).map(a => a.name).join(', ')}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
