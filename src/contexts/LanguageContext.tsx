@@ -380,6 +380,22 @@ export const translations: Translations = {
   minutes: { ru: 'м', en: 'm', uk: 'хв' },
   hoursShort: { ru: 'ч', en: 'h', uk: 'г' },
   minutesShort: { ru: 'м', en: 'm', uk: 'хв' },
+  
+  // User analytics
+  selectEmployee: { ru: 'Выберите сотрудника', en: 'Select employee', uk: 'Оберіть співробітника' },
+  allEmployees: { ru: 'Все сотрудники', en: 'All employees', uk: 'Всі співробітники' },
+  projectsCount: { ru: 'Проектов', en: 'Projects', uk: 'Проектів' },
+  commentsCount: { ru: 'Комментариев', en: 'Comments', uk: 'Коментарів' },
+  meetingsCount: { ru: 'Совещаний', en: 'Meetings', uk: 'Нарад' },
+  tagsCreated: { ru: 'Создано тегов', en: 'Tags created', uk: 'Створено тегів' },
+  avgCompletionDays: { ru: 'Среднее время выполнения', en: 'Avg completion time', uk: 'Середній час виконання' },
+  days: { ru: 'дн.', en: 'days', uk: 'дн.' },
+  overviewTab: { ru: 'Обзор', en: 'Overview', uk: 'Огляд' },
+  tasksPerProject: { ru: 'Задачи по проектам', en: 'Tasks per project', uk: 'Задачі по проектах' },
+  taskStatistics: { ru: 'Статистика задач', en: 'Task statistics', uk: 'Статистика задач' },
+  totalTimeTracked: { ru: 'Всего отслежено времени', en: 'Total time tracked', uk: 'Всього відстежено часу' },
+  timeEntriesCount: { ru: 'Записей времени', en: 'Time entries', uk: 'Записів часу' },
+  avgEntryDuration: { ru: 'Средняя длительность записи', en: 'Avg entry duration', uk: 'Середня тривалість запису' },
 
   // Time tracking
   timeTracking: { ru: 'Учёт времени', en: 'Time tracking', uk: 'Облік часу' },
