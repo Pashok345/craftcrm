@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.create-user]
 verify_jwt = false
+
+[functions.send-deadline-reminders]
+verify_jwt = false
+
+[functions.send-comment-email]
+verify_jwt = false
+
+[functions.send-status-change-email]
+verify_jwt = false

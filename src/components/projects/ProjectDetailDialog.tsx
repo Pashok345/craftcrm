@@ -189,6 +189,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
   const isCreator = user?.id === project.created_by || user?.id === project.manager_id;
 
   const handleStatusChange = async (newStatus: ProjectStatus) => {
+    const oldStatus = project.status;
     try {
       const { error } = await supabase
         .from('projects')
@@ -198,6 +199,40 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
       if (error) throw error;
       toast({ title: t('statusUpdated') || 'Статус обновлён' });
       onUpdate();
+
+      // Send email notifications about status change
+      const { data: projectMembers } = await supabase
+        .from('project_members')
+        .select('user_id')
+        .eq('project_id', project.id);
+
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('user_id', user?.id)
+        .single();
+
+      const usersToNotify = new Set<string>();
+      if (projectMembers) {
+        projectMembers.forEach(m => usersToNotify.add(m.user_id));
+      }
+      if (project.created_by) usersToNotify.add(project.created_by);
+      if (project.manager_id) usersToNotify.add(project.manager_id);
+      if (user?.id) usersToNotify.delete(user.id);
+
+      if (usersToNotify.size > 0) {
+        await supabase.functions.invoke('send-status-change-email', {
+          body: {
+            entity_type: 'project',
+            entity_id: project.id,
+            entity_title: project.title,
+            old_status: oldStatus,
+            new_status: newStatus,
+            changed_by_name: myProfile?.name || 'Пользователь',
+            recipient_user_ids: Array.from(usersToNotify),
+          },
+        });
+      }
     } catch (error) {
       console.error('Error updating status:', error);
       toast({ title: t('errorUpdatingStatus') || 'Ошибка обновления статуса', variant: 'destructive' });
