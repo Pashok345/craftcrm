@@ -306,7 +306,7 @@ const TaskDetail = () => {
       // Remove current user (commenter)
       usersToNotify.delete(user.id);
       
-      // Send notifications
+      // Send in-app notifications
       for (const userId of usersToNotify) {
         await supabase.from('notifications').insert({
           user_id: userId,
@@ -315,6 +315,23 @@ const TaskDetail = () => {
           message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
           task_id: task.id,
         });
+      }
+
+      // Send email notifications to all users
+      if (usersToNotify.size > 0) {
+        try {
+          await supabase.functions.invoke('send-comment-email', {
+            body: {
+              task_id: task.id,
+              task_title: task.title,
+              comment_text: newComment,
+              commenter_name: myProfile?.name || t('user'),
+              recipient_user_ids: Array.from(usersToNotify),
+            },
+          });
+        } catch (emailError) {
+          console.error('Error sending comment email:', emailError);
+        }
       }
 
       setNewComment('');
@@ -350,6 +367,7 @@ const TaskDetail = () => {
 
   const handleStatusChange = async (newStatus: "todo" | "in_progress" | "review" | "done") => {
     if (!task || !user) return;
+    const oldStatus = task.status;
     const { error } = await supabase
       .from('tasks')
       .update({ status: newStatus })
@@ -358,6 +376,47 @@ const TaskDetail = () => {
     if (!error) {
       setTask({ ...task, status: newStatus });
       toast({ title: t('statusUpdated') });
+
+      // Send email notifications about status change
+      try {
+        // Get assignees
+        const { data: taskAssignees } = await supabase
+          .from('task_assignees')
+          .select('user_id')
+          .eq('task_id', task.id);
+
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .single();
+
+        // Collect all users to notify
+        const usersToNotify = new Set<string>();
+        if (taskAssignees) {
+          taskAssignees.forEach(a => usersToNotify.add(a.user_id));
+        }
+        if (task.created_by) {
+          usersToNotify.add(task.created_by);
+        }
+        usersToNotify.delete(user.id);
+
+        if (usersToNotify.size > 0) {
+          await supabase.functions.invoke('send-status-change-email', {
+            body: {
+              entity_type: 'task',
+              entity_id: task.id,
+              entity_title: task.title,
+              old_status: oldStatus,
+              new_status: newStatus,
+              changed_by_name: myProfile?.name || t('user'),
+              recipient_user_ids: Array.from(usersToNotify),
+            },
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending status change email:', emailError);
+      }
     }
   };
 
