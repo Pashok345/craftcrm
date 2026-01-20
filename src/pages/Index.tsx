@@ -48,7 +48,12 @@ const Index = () => {
             </div>
             <span className="text-xl font-bold text-foreground">CRM Pro</span>
           </div>
-          <Button onClick={() => navigate("/auth")} className="btn-primary px-6">
+          <Button 
+            onClick={() => navigate("/auth")} 
+            variant="outline"
+            size="sm"
+            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+          >
             Войти
           </Button>
         </div>
