@@ -1,33 +1,50 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Building2 } from "lucide-react";
 
-type AuthView = "login" | "forgot-password";
+type AuthView = "login" | "register" | "forgot-password" | "reset-password";
 
 const Auth = () => {
   const [view, setView] = useState<AuthView>("login");
+  const [isRecoverySession, setIsRecoverySession] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // Check for recovery token in URL hash or search params
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type') || searchParams.get('type');
+    
+    if (type === 'recovery') {
+      setIsRecoverySession(true);
+      setView("reset-password");
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (session?.user) {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsRecoverySession(true);
+          setView("reset-password");
+        } else if (session?.user && !isRecoverySession) {
           navigate("/");
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      // Don't redirect if we're in recovery mode
+      if (session?.user && !isRecoverySession && view !== "reset-password") {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isRecoverySession, view, searchParams]);
 
   return (
     <div className="auth-container">
@@ -40,15 +57,24 @@ const Auth = () => {
           <span className="text-2xl font-bold text-foreground">CRM Pro</span>
         </div>
 
-        {/* Forms - Registration removed for internal system security */}
+        {/* Forms */}
         {view === "login" && (
           <LoginForm
+            onSwitchToRegister={() => setView("register")}
             onSwitchToForgotPassword={() => setView("forgot-password")}
           />
+        )}
+
+        {view === "register" && (
+          <RegisterForm onSwitchToLogin={() => setView("login")} />
         )}
         
         {view === "forgot-password" && (
           <ForgotPasswordForm onSwitchToLogin={() => setView("login")} />
+        )}
+
+        {view === "reset-password" && (
+          <ResetPasswordForm />
         )}
       </div>
     </div>

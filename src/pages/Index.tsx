@@ -52,9 +52,9 @@ const Index = () => {
             onClick={() => navigate("/auth")} 
             variant="outline"
             size="sm"
-            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground w-auto"
           >
-            Войти
+            Увійти
           </Button>
         </div>
       </header>
@@ -62,23 +62,23 @@ const Index = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto text-center animate-slide-up">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            Управляйте проектами <span className="text-primary">эффективно</span>
+            Керуйте проектами <span className="text-primary">ефективно</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            CRM система для ведения проектов. Отслеживайте этапы, управляйте командой и достигайте результатов.
+            CRM система для ведення проектів. Відстежуйте етапи, керуйте командою та досягайте результатів.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={() => navigate("/auth")} className="btn-primary px-8 py-3">
-              Начать бесплатно
+              Почати безкоштовно
             </Button>
           </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mt-20">
           {[
-            { icon: FolderKanban, title: "Управление задачами", description: "Создавайте задачи и отслеживайте их на каждом этапе" },
-            { icon: Users, title: "Командная работа", description: "Приглашайте коллег и распределяйте задачи" },
-            { icon: BarChart3, title: "Аналитика", description: "Отслеживайте прогресс и анализируйте результаты" },
+            { icon: FolderKanban, title: "Керування завданнями", description: "Створюйте завдання та відстежуйте їх на кожному етапі" },
+            { icon: Users, title: "Командна робота", description: "Запрошуйте колег та розподіляйте завдання" },
+            { icon: BarChart3, title: "Аналітика", description: "Відстежуйте прогрес та аналізуйте результати" },
           ].map((feature, index) => (
             <div
               key={index}
