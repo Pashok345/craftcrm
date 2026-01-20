@@ -52,7 +52,15 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+    // Clear local state regardless of server response
+    setUser(null);
+    setSession(null);
+    setProfile(null);
   };
 
   return { user, session, profile, loading, signOut, refetchProfile: () => user && fetchProfile(user.id) };
