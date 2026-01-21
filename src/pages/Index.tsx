@@ -1,20 +1,29 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { User, Session } from "@supabase/supabase-js";
-import { Building2, FolderKanban, Users, BarChart3 } from "lucide-react";
+import { User } from "@supabase/supabase-js";
+import { FolderKanban, Users, BarChart3 } from "lucide-react";
+import { AuthModal } from "@/components/auth/AuthModal";
+import logo from "@/assets/logo.png";
+
+type AuthView = "login" | "register";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authView, setAuthView] = useState<AuthView>("login");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         setLoading(false);
+        // Close modal on successful auth
+        if (session?.user) {
+          setAuthModalOpen(false);
+        }
       }
     );
 
@@ -25,6 +34,16 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const openLoginModal = () => {
+    setAuthView("login");
+    setAuthModalOpen(true);
+  };
+
+  const openRegisterModal = () => {
+    setAuthView("register");
+    setAuthModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -43,13 +62,11 @@ const Index = () => {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="CRM Pro" className="h-10 w-auto" />
             <span className="text-xl font-bold text-foreground">CRM Pro</span>
           </div>
           <Button 
-            onClick={() => navigate("/auth")} 
+            onClick={openLoginModal} 
             variant="outline"
             size="sm"
             className="text-primary border-primary hover:bg-primary hover:text-primary-foreground w-auto"
@@ -68,7 +85,7 @@ const Index = () => {
             CRM система для ведення проектів. Відстежуйте етапи, керуйте командою та досягайте результатів.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={() => navigate("/auth")} className="btn-primary px-8 py-3">
+            <Button onClick={openRegisterModal} className="btn-primary px-8 py-3">
               Почати безкоштовно
             </Button>
           </div>
@@ -94,6 +111,12 @@ const Index = () => {
           ))}
         </div>
       </main>
+
+      <AuthModal 
+        open={authModalOpen} 
+        onOpenChange={setAuthModalOpen}
+        defaultView={authView}
+      />
     </div>
   );
 };
