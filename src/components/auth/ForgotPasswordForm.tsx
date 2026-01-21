@@ -8,7 +8,7 @@ import { Mail, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.string().email("Введіть коректний email"),
 });
 
 interface ForgotPasswordFormProps {
@@ -46,8 +46,8 @@ export const ForgotPasswordForm = ({ onSwitchToLogin }: ForgotPasswordFormProps)
 
     if (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось отправить письмо. Попробуйте позже.",
+        title: "Помилка",
+        description: "Не вдалося надіслати листа. Спробуйте пізніше.",
         variant: "destructive",
       });
     } else {
@@ -63,13 +63,13 @@ export const ForgotPasswordForm = ({ onSwitchToLogin }: ForgotPasswordFormProps)
         <div className="w-16 h-16 rounded-full bg-crm-success/10 flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-crm-success" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Письмо отправлено</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Лист надіслано</h1>
         <p className="text-muted-foreground mb-6">
-          Мы отправили инструкции по восстановлению пароля на {email}
+          Ми надіслали інструкції з відновлення пароля на {email}
         </p>
         <Button onClick={onSwitchToLogin} variant="outline" className="btn-secondary">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Вернуться к входу
+          Повернутися до входу
         </Button>
       </div>
     );
@@ -86,9 +86,9 @@ export const ForgotPasswordForm = ({ onSwitchToLogin }: ForgotPasswordFormProps)
       </button>
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Восстановление пароля</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Відновлення пароля</h1>
         <p className="text-muted-foreground">
-          Введите email, указанный при регистрации
+          Введіть email, вказаний при реєстрації
         </p>
       </div>
 
@@ -114,10 +114,10 @@ export const ForgotPasswordForm = ({ onSwitchToLogin }: ForgotPasswordFormProps)
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Отправка...
+              Надсилання...
             </>
           ) : (
-            "Отправить инструкции"
+            "Надіслати інструкції"
           )}
         </Button>
       </form>

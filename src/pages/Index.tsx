@@ -61,9 +61,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="CRM Pro" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-foreground">CRM Pro</span>
+          <div className="flex items-center">
+            <img src={logo} alt="CraftCRM" className="h-10 w-auto" />
           </div>
           <Button 
             onClick={openLoginModal} 

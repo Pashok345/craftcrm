@@ -8,8 +8,8 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Введите корректный email"),
-  password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
+  email: z.string().email("Введіть коректний email"),
+  password: z.string().min(6, "Пароль повинен містити мінімум 6 символів"),
 });
 
 interface LoginFormProps {
@@ -49,14 +49,14 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
     });
 
     if (error) {
-      let message = "Произошла ошибка при входе";
+      let message = "Сталася помилка при вході";
       if (error.message.includes("Invalid login credentials")) {
-        message = "Неверный email или пароль";
+        message = "Невірний email або пароль";
       } else if (error.message.includes("Email not confirmed")) {
-        message = "Email не подтвержден. Проверьте почту.";
+        message = "Email не підтверджено. Перевірте пошту.";
       }
       toast({
-        title: "Ошибка входа",
+        title: "Помилка входу",
         description: message,
         variant: "destructive",
       });
@@ -68,8 +68,8 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
   return (
     <div className="animate-fade-in">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Добро пожаловать</h1>
-        <p className="text-muted-foreground">Войдите в свой аккаунт</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Ласкаво просимо</h1>
+        <p className="text-muted-foreground">Увійдіть у свій акаунт</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,7 +120,7 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
             onClick={onSwitchToForgotPassword}
             className="text-sm link-primary"
           >
-            Восстановить пароль
+            Відновити пароль
           </button>
         </div>
 
@@ -128,10 +128,10 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Вход...
+              Вхід...
             </>
           ) : (
-            "Войти"
+            "Увійти"
           )}
         </Button>
       </form>
@@ -139,9 +139,9 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
       {onSwitchToRegister && (
         <div className="mt-6 text-center">
           <p className="text-muted-foreground">
-            Нет аккаунта?{" "}
+            Немає акаунту?{" "}
             <button onClick={onSwitchToRegister} className="link-primary">
-              Зарегистрироваться
+              Зареєструватися
             </button>
           </p>
         </div>
