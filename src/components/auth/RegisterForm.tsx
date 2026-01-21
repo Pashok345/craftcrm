@@ -9,13 +9,13 @@ import { Mail, Lock, Eye, EyeOff, User, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Имя должно содержать минимум 2 символа").max(100, "Имя слишком длинное"),
-  email: z.string().email("Введите корректный email"),
-  password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
+  name: z.string().min(2, "Ім'я повинно містити мінімум 2 символи").max(100, "Ім'я занадто довге"),
+  email: z.string().email("Введіть коректний email"),
+  password: z.string().min(6, "Пароль повинен містити мінімум 6 символів"),
   confirmPassword: z.string(),
-  acceptTerms: z.boolean().refine((val) => val === true, "Необходимо принять условия"),
+  acceptTerms: z.boolean().refine((val) => val === true, "Необхідно прийняти умови"),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Пароли не совпадают",
+  message: "Паролі не співпадають",
   path: ["confirmPassword"],
 });
 
@@ -67,21 +67,21 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
     });
 
     if (error) {
-      let message = "Произошла ошибка при регистрации";
+      let message = "Сталася помилка при реєстрації";
       if (error.message.includes("User already registered")) {
-        message = "Пользователь с таким email уже зарегистрирован";
+        message = "Користувач з таким email вже зареєстрований";
       } else if (error.message.includes("Password")) {
-        message = "Пароль слишком простой. Используйте более сложный пароль.";
+        message = "Пароль занадто простий. Використайте складніший пароль.";
       }
       toast({
-        title: "Ошибка регистрации",
+        title: "Помилка реєстрації",
         description: message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Регистрация успешна!",
-        description: "Вы можете войти в систему",
+        title: "Реєстрація успішна!",
+        description: "Ви можете увійти в систему",
       });
     }
 
@@ -91,19 +91,19 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
   return (
     <div className="animate-fade-in">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Создать аккаунт</h1>
-        <p className="text-muted-foreground">Заполните данные для регистрации</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Створити акаунт</h1>
+        <p className="text-muted-foreground">Заповніть дані для реєстрації</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Имя</Label>
+          <Label htmlFor="name">Ім'я</Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               id="name"
               type="text"
-              placeholder="Иван Иванов"
+              placeholder="Іван Іванов"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="pl-10"
@@ -155,7 +155,7 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Повторите пароль</Label>
+          <Label htmlFor="confirmPassword">Повторіть пароль</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -189,13 +189,13 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
             htmlFor="terms"
             className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
           >
-            Я принимаю{" "}
+            Я приймаю{" "}
             <a href="#" className="link-primary">
-              пользовательское соглашение
+              угоду користувача
             </a>{" "}
-            и{" "}
+            та{" "}
             <a href="#" className="link-primary">
-              политику конфиденциальности
+              політику конфіденційності
             </a>
           </label>
         </div>
@@ -205,19 +205,19 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Регистрация...
+              Реєстрація...
             </>
           ) : (
-            "Зарегистрироваться"
+            "Зареєструватися"
           )}
         </Button>
       </form>
 
       <div className="mt-6 text-center">
         <p className="text-muted-foreground">
-          Уже есть аккаунт?{" "}
+          Вже є акаунт?{" "}
           <button onClick={onSwitchToLogin} className="link-primary">
-            Войти
+            Увійти
           </button>
         </p>
       </div>
