@@ -4,7 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tag as TagIcon, Plus, X, Check } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Tag as TagIcon, Plus, X, Check, Trash2 } from 'lucide-react';
 import { Tag } from '@/types/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
@@ -29,6 +39,7 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
   const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
   const [isOpen, setIsOpen] = useState(false);
   const [showNewTagForm, setShowNewTagForm] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
 
   useEffect(() => {
     fetchTags();
@@ -101,6 +112,30 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
     }
   };
 
+  const deleteTag = async (tag: Tag) => {
+    // First remove from all tasks
+    await supabase
+      .from('task_tags')
+      .delete()
+      .eq('tag_id', tag.id);
+
+    // Then delete the tag itself
+    const { error } = await supabase
+      .from('tags')
+      .delete()
+      .eq('id', tag.id);
+
+    if (error) {
+      toast.error(t('error'));
+      return;
+    }
+
+    setAllTags(allTags.filter(t => t.id !== tag.id));
+    setTaskTagIds(taskTagIds.filter(id => id !== tag.id));
+    setTagToDelete(null);
+    toast.success(t('tagDeleted') || 'Тег видалено');
+  };
+
   const toggleTag = async (tagId: string) => {
     if (taskTagIds.includes(tagId)) {
       await removeTagFromTask(tagId);
@@ -134,26 +169,38 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
               {t('addTag')}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-3" align="start">
+          <PopoverContent className="w-72 p-3" align="start">
             <div className="space-y-3">
               <h4 className="font-medium text-sm">{t('selectTag')}</h4>
               
               {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                <div className="space-y-1 max-h-40 overflow-y-auto">
                   {allTags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      style={{ backgroundColor: tag.color + '20', color: tag.color, borderColor: tag.color }}
-                      variant="outline"
-                      className={cn(
-                        'cursor-pointer hover:opacity-80 gap-1',
-                        taskTagIds.includes(tag.id) && 'ring-2 ring-offset-1'
-                      )}
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      {taskTagIds.includes(tag.id) && <Check className="h-3 w-3" />}
-                      {tag.name}
-                    </Badge>
+                    <div key={tag.id} className="flex items-center justify-between group">
+                      <Badge
+                        style={{ backgroundColor: tag.color + '20', color: tag.color, borderColor: tag.color }}
+                        variant="outline"
+                        className={cn(
+                          'cursor-pointer hover:opacity-80 gap-1 flex-1',
+                          taskTagIds.includes(tag.id) && 'ring-2 ring-offset-1'
+                        )}
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {taskTagIds.includes(tag.id) && <Check className="h-3 w-3" />}
+                        {tag.name}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTagToDelete(tag);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -211,6 +258,23 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
           </PopoverContent>
         </Popover>
       </div>
+
+      <AlertDialog open={!!tagToDelete} onOpenChange={(open) => !open && setTagToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteTag') || 'Видалити тег?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteTagConfirm') || `Тег "${tagToDelete?.name}" буде видалено з усіх задач. Цю дію неможливо скасувати.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => tagToDelete && deleteTag(tagToDelete)}>
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
