@@ -245,50 +245,52 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="pr-10">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl">{project.title}</DialogTitle>
                 {project.description && (
                   <CollapsibleDescription description={project.description} />
                 )}
               </div>
-              {isCreator ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className={cn(
-                      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity",
-                      PROJECT_STATUS_COLORS[project.status]
-                    )}>
-                      {projectStatusLabels[project.status]}
-                      <ChevronDown className="h-3 w-3" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {statuses.map((s) => (
-                      <DropdownMenuItem 
-                        key={s} 
-                        onClick={() => handleStatusChange(s)}
-                        className={cn(s === project.status && "bg-accent")}
-                      >
-                        <span className={cn(
-                          "inline-block w-2 h-2 rounded-full mr-2",
-                          s === 'planning' && "bg-muted-foreground",
-                          s === 'active' && "bg-crm-success",
-                          s === 'on_hold' && "bg-crm-warning",
-                          s === 'completed' && "bg-primary",
-                          s === 'cancelled' && "bg-destructive"
-                        )} />
-                        {projectStatusLabels[s]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                  {projectStatusLabels[project.status]}
-                </Badge>
-              )}
+              <div className="flex-shrink-0">
+                {isCreator ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className={cn(
+                        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap",
+                        PROJECT_STATUS_COLORS[project.status]
+                      )}>
+                        {projectStatusLabels[project.status]}
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {statuses.map((s) => (
+                        <DropdownMenuItem 
+                          key={s} 
+                          onClick={() => handleStatusChange(s)}
+                          className={cn(s === project.status && "bg-accent")}
+                        >
+                          <span className={cn(
+                            "inline-block w-2 h-2 rounded-full mr-2",
+                            s === 'planning' && "bg-muted-foreground",
+                            s === 'active' && "bg-crm-success",
+                            s === 'on_hold' && "bg-crm-warning",
+                            s === 'completed' && "bg-primary",
+                            s === 'cancelled' && "bg-destructive"
+                          )} />
+                          {projectStatusLabels[s]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Badge className={PROJECT_STATUS_COLORS[project.status]}>
+                    {projectStatusLabels[project.status]}
+                  </Badge>
+                )}
+              </div>
             </div>
           </DialogHeader>
 

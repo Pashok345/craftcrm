@@ -3,7 +3,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
-import logo from "@/assets/logo.png";
 
 type AuthView = "login" | "register" | "forgot-password";
 
@@ -24,27 +23,19 @@ export const AuthModal = ({ open, onOpenChange, defaultView = "login" }: AuthMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <div className="p-6">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <img src={logo} alt="CRM Pro" className="h-16 w-auto" />
-          </div>
-
-          {/* Forms */}
-          {view === "login" && (
-            <LoginForm
-              onSwitchToRegister={() => setView("register")}
-              onSwitchToForgotPassword={() => setView("forgot-password")}
-            />
-          )}
-          {view === "register" && (
-            <RegisterForm onSwitchToLogin={() => setView("login")} />
-          )}
-          {view === "forgot-password" && (
-            <ForgotPasswordForm onSwitchToLogin={() => setView("login")} />
-          )}
-        </div>
+      <DialogContent className="sm:max-w-md p-6">
+        {view === "login" && (
+          <LoginForm
+            onSwitchToRegister={() => setView("register")}
+            onSwitchToForgotPassword={() => setView("forgot-password")}
+          />
+        )}
+        {view === "register" && (
+          <RegisterForm onSwitchToLogin={() => setView("login")} />
+        )}
+        {view === "forgot-password" && (
+          <ForgotPasswordForm onSwitchToLogin={() => setView("login")} />
+        )}
       </DialogContent>
     </Dialog>
   );
