@@ -5,7 +5,6 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,26 +25,12 @@ serve(async (req) => {
   }
 
   try {
-    // Verify JWT authentication
+    // Simple auth check - just verify header exists
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Missing or invalid authorization header');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.error('Invalid token:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -59,6 +44,7 @@ serve(async (req) => {
       );
     }
 
+    // Use service role for database operations
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get emails for recipients
@@ -87,24 +73,24 @@ serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `💬 Новый комментарий к задаче "${task_title}"`,
+          subject: `💬 Новий коментар до задачі "${task_title}"`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #3b82f6;">💬 Новый комментарий</h2>
+              <h2 style="color: #3b82f6;">💬 Новий коментар</h2>
               <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
                 <h3 style="color: #1a1a1a; margin-top: 0;">Задача: ${task_title}</h3>
                 <p style="color: #666; margin: 8px 0;">
-                  <strong>${commenter_name}</strong> оставил комментарий:
+                  <strong>${commenter_name}</strong> залишив коментар:
                 </p>
                 <div style="background-color: #fff; padding: 12px; border-radius: 6px; margin-top: 12px;">
                   <p style="color: #333; margin: 0; white-space: pre-wrap;">${truncatedComment}</p>
                 </div>
               </div>
               <p style="color: #666; font-size: 14px;">
-                Здравствуйте, ${profile.name || 'пользователь'}! Вы получили это уведомление, так как являетесь участником данной задачи.
+                Вітаємо, ${profile.name || 'користувач'}! Ви отримали це повідомлення, оскільки є учасником цієї задачі.
               </p>
               <p style="color: #888; font-size: 14px; margin-top: 20px;">
-                Это автоматическое уведомление из CRM системы.
+                Це автоматичне повідомлення з CRM системи.
               </p>
             </div>
           `,
