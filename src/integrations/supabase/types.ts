@@ -510,6 +510,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_verified: boolean
           name: string
           phone: string | null
           position: Database["public"]["Enums"]["user_position"] | null
@@ -523,6 +524,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_verified?: boolean
           name: string
           phone?: string | null
           position?: Database["public"]["Enums"]["user_position"] | null
@@ -536,6 +538,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_verified?: boolean
           name?: string
           phone?: string | null
           position?: Database["public"]["Enums"]["user_position"] | null
