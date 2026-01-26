@@ -150,23 +150,38 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
         });
       }
 
-      // Create notifications for assignees about new comment
+      // Create notifications for assignees and task creator about new comment
       const { data: userProfile } = await supabase
         .from('profiles')
         .select('name')
         .eq('user_id', user.id)
         .single();
 
+      // Collect all users to notify (assignees + task creator)
+      const usersToNotify = new Set<string>();
+      
+      // Add assignees
       for (const assignee of assignees) {
         if (assignee.user.user_id !== user.id) {
-          await supabase.from('notifications').insert({
-            user_id: assignee.user.user_id,
-            type: 'comment',
-            title: 'Новый комментарий',
-            message: `${userProfile?.name || 'Пользователь'} добавил комментарий к задаче "${task.title}"`,
-            task_id: task.id,
-          });
+          usersToNotify.add(assignee.user.user_id);
         }
+      }
+      
+      // Add task creator if not the commenter
+      if (task.created_by !== user.id) {
+        usersToNotify.add(task.created_by);
+      }
+
+      // Send notifications
+      for (const userId of usersToNotify) {
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'comment',
+          title: 'Новый комментарий',
+          message: `${userProfile?.name || 'Пользователь'} добавил комментарий к задаче "${task.title}"`,
+          task_id: task.id,
+          created_by: user.id,
+        });
       }
 
       setNewComment('');
