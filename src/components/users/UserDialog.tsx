@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { Profile, UserPosition, POSITION_LABELS, AppRole } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -42,6 +42,8 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
   const [isEditing, setIsEditing] = useState(false);
   const [userRole, setUserRole] = useState<AppRole>('user');
   const [roleLoading, setRoleLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(user.is_verified ?? false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { isAdmin } = useUserRole();
@@ -51,8 +53,9 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
   useEffect(() => {
     if (open) {
       fetchUserRole();
+      setIsVerified(user.is_verified ?? false);
     }
-  }, [open, user.user_id]);
+  }, [open, user.user_id, user.is_verified]);
 
   const fetchUserRole = async () => {
     const { data } = await supabase
@@ -62,6 +65,29 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
       .maybeSingle();
     
     setUserRole((data?.role as AppRole) || 'user');
+  };
+
+  const handleVerificationToggle = async (verified: boolean) => {
+    if (!isAdmin || isOwnProfile) return;
+    
+    setVerificationLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_verified: verified })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+
+      setIsVerified(verified);
+      toast({ title: verified ? 'Пользователь верифицирован' : 'Верификация отозвана' });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating verification:', error);
+      toast({ title: 'Ошибка изменения верификации', variant: 'destructive' });
+    } finally {
+      setVerificationLoading(false);
+    }
   };
 
   const handleRoleToggle = async (makeAdmin: boolean) => {
@@ -231,13 +257,26 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Role badge */}
-              {userRole === 'admin' && (
-                <Badge className="bg-primary/10 text-primary gap-1">
-                  <ShieldCheck className="h-3 w-3" />
-                  Администратор
-                </Badge>
-              )}
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2">
+                {userRole === 'admin' && (
+                  <Badge className="bg-primary/10 text-primary gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    Администратор
+                  </Badge>
+                )}
+                {isVerified ? (
+                  <Badge className="bg-crm-success/10 text-crm-success gap-1">
+                    <BadgeCheck className="h-3 w-3" />
+                    Верифицирован
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1 text-muted-foreground">
+                    <BadgeCheck className="h-3 w-3" />
+                    Не верифицирован
+                  </Badge>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -267,18 +306,31 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                 </div>
               )}
 
-              {/* Admin role toggle - only for admins viewing other users */}
+              {/* Admin controls - only for admins viewing other users */}
               {isAdmin && !isOwnProfile && (
-                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Права администратора</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Верификация</span>
+                    </div>
+                    <Switch
+                      checked={isVerified}
+                      onCheckedChange={handleVerificationToggle}
+                      disabled={verificationLoading}
+                    />
                   </div>
-                  <Switch
-                    checked={userRole === 'admin'}
-                    onCheckedChange={handleRoleToggle}
-                    disabled={roleLoading}
-                  />
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Права администратора</span>
+                    </div>
+                    <Switch
+                      checked={userRole === 'admin'}
+                      onCheckedChange={handleRoleToggle}
+                      disabled={roleLoading}
+                    />
+                  </div>
                 </div>
               )}
 

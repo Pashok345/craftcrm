@@ -57,6 +57,7 @@ export interface Profile {
   additional_info?: string;
   avatar_url?: string;
   avatar_color?: string;
+  is_verified?: boolean;
   created_at: string;
   updated_at: string;
 }

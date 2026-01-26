@@ -26,19 +26,42 @@ const Auth = () => {
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
           setIsRecoverySession(true);
           setView("reset-password");
         } else if (session?.user && !isRecoverySession) {
+          // Check if user is verified
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_verified')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (profile?.is_verified === false) {
+            await supabase.auth.signOut();
+            alert('Ваш аккаунт ещё не верифицирован администратором. Обратитесь к администратору.');
+            return;
+          }
           navigate("/");
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       // Don't redirect if we're in recovery mode
       if (session?.user && !isRecoverySession && view !== "reset-password") {
+        // Check if user is verified
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_verified')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        if (profile?.is_verified === false) {
+          await supabase.auth.signOut();
+          return;
+        }
         navigate("/");
       }
     });
