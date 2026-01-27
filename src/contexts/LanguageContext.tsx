@@ -417,6 +417,21 @@ export const translations: Translations = {
   tagName: { ru: 'Название тега', en: 'Tag name', uk: 'Назва тегу' },
   tagCreated: { ru: 'Тег создан', en: 'Tag created', uk: 'Тег створено' },
   createNewTag: { ru: 'Создать новый тег', en: 'Create new tag', uk: 'Створити новий тег' },
+
+  // Export
+  exportReport: { ru: 'Экспорт отчёта', en: 'Export Report', uk: 'Експорт звіту' },
+  exportPDF: { ru: 'Скачать PDF', en: 'Download PDF', uk: 'Завантажити PDF' },
+  exportExcel: { ru: 'Скачать Excel', en: 'Download Excel', uk: 'Завантажити Excel' },
+  reportGenerated: { ru: 'Отчёт сгенерирован', en: 'Report generated', uk: 'Звіт згенеровано' },
+  reportTitle: { ru: 'Аналитический отчёт CRM', en: 'CRM Analytics Report', uk: 'Аналітичний звіт CRM' },
+  generatedAt: { ru: 'Сгенерировано', en: 'Generated at', uk: 'Згенеровано' },
+  summary: { ru: 'Сводка', en: 'Summary', uk: 'Зведення' },
+  tasksList: { ru: 'Список задач', en: 'Tasks List', uk: 'Список задач' },
+  projectsList: { ru: 'Список проектов', en: 'Projects List', uk: 'Список проектів' },
+  timeEntriesList: { ru: 'Записи времени', en: 'Time Entries', uk: 'Записи часу' },
+  noDeadline: { ru: 'Без срока', en: 'No deadline', uk: 'Без терміну' },
+  noBudget: { ru: 'Не указан', en: 'Not set', uk: 'Не вказано' },
+  noDescription: { ru: 'Без описания', en: 'No description', uk: 'Без опису' },
 };
 
 interface LanguageContextType {

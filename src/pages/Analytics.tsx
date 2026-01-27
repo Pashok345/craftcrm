@@ -2,18 +2,22 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
-import { Clock, CheckCircle, Users, Folder, Tag as TagIcon, MessageSquare, ListTodo, Calendar, TrendingUp, FileText, User } from 'lucide-react';
+import { Clock, CheckCircle, Users, Folder, Tag as TagIcon, MessageSquare, ListTodo, Calendar, TrendingUp, FileText, User, Download } from 'lucide-react';
 import { Task, Project, Profile, TimeEntry, Tag } from '@/types/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInDays } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
+import { exportToPDF, exportToExcel } from '@/utils/exportReports';
+import { toast } from 'sonner';
 
 interface TaskComment {
   id: string;
@@ -299,6 +303,85 @@ const Analytics = () => {
     return hours > 0 ? `${hours}${t('hours')} ${mins}${t('minutes')}` : `${mins}${t('minutes')}`;
   };
 
+  const periodLabels: Record<string, string> = {
+    week: t('thisWeek'),
+    month: t('thisMonth'),
+    all: t('allTime'),
+  };
+
+  const getExportTranslations = () => ({
+    reportTitle: t('reportTitle'),
+    generatedAt: t('generatedAt'),
+    period: t('period'),
+    user: t('user'),
+    allEmployees: t('allEmployees'),
+    summary: t('summary'),
+    totalTasks: t('totalTasks'),
+    completedTasks: t('completedTasks'),
+    totalProjects: t('projectsCount'),
+    timeTracked: t('timeTracked'),
+    avgCompletionDays: t('avgCompletionDays'),
+    days: t('days'),
+    hours: t('hours'),
+    tasksByStatus: t('tasksByStatus'),
+    projectsByStatus: t('projectsByStatus'),
+    popularTags: t('popularTags'),
+    tasksList: t('tasksList'),
+    taskTitle: t('tasks'),
+    status: t('status'),
+    deadline: t('dueDate'),
+    createdAt: t('createdAt'),
+    projectsList: t('projectsList'),
+    projectTitle: t('projects'),
+    budget: t('budget'),
+    startDate: t('startDate'),
+    endDate: t('endDate'),
+    timeEntriesList: t('timeEntriesList'),
+    date: t('startDate'),
+    duration: t('durationMinutes'),
+    description: t('description'),
+    noDeadline: t('noDeadline'),
+    noBudget: t('noBudget'),
+    noDescription: t('noDescription'),
+    minutes: t('minutesShort'),
+  });
+
+  const handleExportPDF = () => {
+    exportToPDF({
+      tasks: userTasks,
+      projects: userProjects,
+      profiles,
+      timeEntries: userTimeEntries,
+      taskStatusData,
+      projectStatusData,
+      tagUsageData,
+      totalTimeMinutes,
+      avgCompletionDays,
+      period: periodLabels[period],
+      selectedUser: selectedProfile?.name || '',
+      translations: getExportTranslations(),
+    });
+    toast.success(t('reportGenerated'));
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({
+      tasks: userTasks,
+      projects: userProjects,
+      profiles,
+      timeEntries: userTimeEntries,
+      taskStatusData,
+      projectStatusData,
+      tagUsageData,
+      totalTimeMinutes,
+      avgCompletionDays,
+      period: periodLabels[period],
+      selectedUser: selectedProfile?.name || '',
+      translations: getExportTranslations(),
+    });
+    toast.success(t('reportGenerated'));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -358,6 +441,26 @@ const Analytics = () => {
               <SelectItem value="all">{t('allTime')}</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                {t('exportReport')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileText className="h-4 w-4 mr-2" />
+                {t('exportPDF')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileText className="h-4 w-4 mr-2" />
+                {t('exportExcel')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
