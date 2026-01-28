@@ -108,15 +108,15 @@ export const MeetingDayDialog = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+          <DialogHeader className="pr-10">
+            <DialogTitle className="flex items-center justify-between gap-2">
               <span>
                 {selectedDate && format(selectedDate, 'd MMMM yyyy', { locale: ru })}
               </span>
               <Button
                 size="sm"
                 onClick={() => setCreateDialogOpen(true)}
-                className="gap-1"
+                className="gap-1 flex-shrink-0"
               >
                 <Plus className="h-4 w-4" />
                 Добавить
