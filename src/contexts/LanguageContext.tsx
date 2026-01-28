@@ -82,6 +82,15 @@ export const translations: Translations = {
   chatWith: { ru: 'Чат с', en: 'Chat with', uk: 'Чат з' },
   error: { ru: 'Ошибка', en: 'Error', uk: 'Помилка' },
   failedToCreateChat: { ru: 'Не удалось создать чат', en: 'Failed to create chat', uk: 'Не вдалося створити чат' },
+  deleteChat: { ru: 'Удалить чат', en: 'Delete chat', uk: 'Видалити чат' },
+  leaveChat: { ru: 'Покинуть чат', en: 'Leave chat', uk: 'Покинути чат' },
+  confirmDeleteChat: { ru: 'Удалить чат?', en: 'Delete chat?', uk: 'Видалити чат?' },
+  confirmLeaveChat: { ru: 'Покинуть чат?', en: 'Leave chat?', uk: 'Покинути чат?' },
+  deleteWarning: { ru: 'Все сообщения будут удалены безвозвратно.', en: 'All messages will be permanently deleted.', uk: 'Усі повідомлення будуть видалені назавжди.' },
+  leaveWarning: { ru: 'Вы больше не сможете видеть сообщения этого чата.', en: 'You will no longer be able to see messages in this chat.', uk: 'Ви більше не зможете бачити повідомлення цього чату.' },
+  chatDeleted: { ru: 'Чат удалён', en: 'Chat deleted', uk: 'Чат видалено' },
+  leftChat: { ru: 'Вы вышли из чата', en: 'You left the chat', uk: 'Ви вийшли з чату' },
+  leave: { ru: 'Покинуть', en: 'Leave', uk: 'Покинути' },
   
   // Positions
   director: { ru: 'Директор', en: 'Director', uk: 'Директор' },

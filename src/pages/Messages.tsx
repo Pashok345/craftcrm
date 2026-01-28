@@ -17,7 +17,9 @@ import {
   Paperclip,
   Loader2,
   X,
-  FileText
+  FileText,
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -35,6 +37,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { POSITION_LABELS, UserPosition } from '@/types/database';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChatGroup {
   id: string;
@@ -87,6 +99,8 @@ const Messages = () => {
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'employees'>('chats');
   const [files, setFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<ChatGroup | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -94,7 +108,9 @@ const Messages = () => {
 
   useEffect(() => {
     if (user) {
-      fetchChats();
+      fetchProfiles().then(() => {
+        fetchChats();
+      });
       fetchProfiles();
     }
   }, [user]);
@@ -425,8 +441,8 @@ const Messages = () => {
     const members = chatMembers[chat.id] || [];
     
     if (chat.type === 'direct') {
-      // For direct chats, show the other person's avatar
-      const otherUserId = members.find(id => id !== user?.id) || members[0];
+      // For direct chats, show the other person's avatar (not current user)
+      const otherUserId = members.find(id => id !== user?.id);
       const profile = otherUserId ? profiles[otherUserId] : null;
       const color = otherUserId ? getUserAccentColor(otherUserId) : getChatAccentColor(chat.id);
       
@@ -440,9 +456,10 @@ const Messages = () => {
       );
     }
 
-    // For group chats, show stacked avatars
-    if (members.length >= 2) {
-      const visibleMembers = members.slice(0, 2);
+    // For group chats, show stacked avatars (excluding current user)
+    const otherMembers = members.filter(id => id !== user?.id);
+    if (otherMembers.length >= 2) {
+      const visibleMembers = otherMembers.slice(0, 2);
       return (
         <div className="relative w-10 h-10">
           {visibleMembers.map((memberId, index) => {
@@ -466,6 +483,19 @@ const Messages = () => {
             );
           })}
         </div>
+      );
+    } else if (otherMembers.length === 1) {
+      // Single other member - show their avatar
+      const memberId = otherMembers[0];
+      const profile = profiles[memberId];
+      const color = getUserAccentColor(memberId);
+      return (
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={profile?.avatar_url || undefined} />
+          <AvatarFallback style={{ backgroundColor: color, color: 'white' }}>
+            {profile ? getInitials(profile.name) : '?'}
+          </AvatarFallback>
+        </Avatar>
       );
     }
 
@@ -495,9 +525,67 @@ const Messages = () => {
     }
   };
 
+  // Get display name for chat (for direct chats, show other person's name)
+  const getChatDisplayName = (chat: ChatGroup): string => {
+    if (chat.type === 'direct') {
+      const members = chatMembers[chat.id] || [];
+      const otherUserId = members.find(id => id !== user?.id);
+      if (otherUserId && profiles[otherUserId]) {
+        return profiles[otherUserId].name;
+      }
+    }
+    return chat.name;
+  };
+
   const filteredChats = chats.filter((chat) =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+    getChatDisplayName(chat).toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Delete or leave chat
+  const handleDeleteChat = async () => {
+    if (!chatToDelete || !user) return;
+
+    try {
+      const isCreator = chatToDelete.created_by === user.id;
+
+      if (isCreator || chatToDelete.type === 'direct') {
+        // Creator can delete the entire chat
+        // For direct chats, any participant can delete
+        await supabase.from('messages').delete().eq('chat_id', chatToDelete.id);
+        await supabase.from('chat_members').delete().eq('chat_id', chatToDelete.id);
+        await supabase.from('chat_groups').delete().eq('id', chatToDelete.id);
+        
+        toast({
+          title: t('chatDeleted') || 'Чат удалён',
+        });
+      } else {
+        // Just leave the group
+        await supabase
+          .from('chat_members')
+          .delete()
+          .eq('chat_id', chatToDelete.id)
+          .eq('user_id', user.id);
+        
+        toast({
+          title: t('leftChat') || 'Вы вышли из чата',
+        });
+      }
+
+      setChats(prev => prev.filter(c => c.id !== chatToDelete.id));
+      if (selectedChat?.id === chatToDelete.id) {
+        setSelectedChat(null);
+      }
+    } catch (error) {
+      console.error('Error deleting/leaving chat:', error);
+      toast({
+        title: t('error') || 'Ошибка',
+        variant: 'destructive',
+      });
+    } finally {
+      setChatToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
 
   const groupMessagesByDate = (msgs: Message[]) => {
     const groups: { date: string; messages: Message[] }[] = [];
@@ -574,7 +662,7 @@ const Messages = () => {
                   <div
                     key={chat.id}
                     className={cn(
-                      'p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50',
+                      'p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50 group',
                       selectedChat?.id === chat.id && 'bg-muted'
                     )}
                     onClick={() => setSelectedChat(chat)}
@@ -582,13 +670,29 @@ const Messages = () => {
                     <div className="flex items-center gap-3">
                       {renderChatAvatar(chat)}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{chat.name}</p>
+                        <p className="font-medium truncate">{getChatDisplayName(chat)}</p>
                         {chat.description && (
                           <p className="text-xs text-muted-foreground truncate">
                             {chat.description}
                           </p>
                         )}
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatToDelete(chat);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        {chat.created_by === user?.id || chat.type === 'direct' ? (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <LogOut className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -626,9 +730,28 @@ const Messages = () => {
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="bg-popover">
                   <DropdownMenuItem>{t('participantsMenu')}</DropdownMenuItem>
                   <DropdownMenuItem>{t('settingsMenu')}</DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => {
+                      setChatToDelete(selectedChat);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    {selectedChat.created_by === user?.id || selectedChat.type === 'direct' ? (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t('deleteChat') || 'Удалить чат'}
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        {t('leaveChat') || 'Покинуть чат'}
+                      </>
+                    )}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -769,6 +892,34 @@ const Messages = () => {
           setCreateDialogOpen(false);
         }}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
+                ? (t('confirmDeleteChat') || 'Удалить чат?')
+                : (t('confirmLeaveChat') || 'Покинуть чат?')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
+                ? (t('deleteWarning') || 'Все сообщения будут удалены безвозвратно.')
+                : (t('leaveWarning') || 'Вы больше не сможете видеть сообщения этого чата.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel') || 'Отмена'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteChat}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
+                ? (t('delete') || 'Удалить')
+                : (t('leave') || 'Покинуть')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

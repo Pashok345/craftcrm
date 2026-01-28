@@ -160,7 +160,11 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
           <Button
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/messages')}
+            onClick={() => {
+              navigate('/messages');
+              // Clear unread message count when navigating to messages
+              setUnreadMessagesCount(0);
+            }}
             className="relative"
           >
             <MessageSquare className="h-5 w-5" />

@@ -29,18 +29,64 @@ interface MeetingDialogProps {
   onSuccess: () => void;
 }
 
+// Helper to get next valid time (rounded to next 30 min)
+const getNextValidTime = (selectedDate: Date | null): string => {
+  const now = new Date();
+  const isToday = selectedDate ? 
+    selectedDate.toDateString() === now.toDateString() : 
+    false;
+  
+  if (!isToday) {
+    return '09:00';
+  }
+  
+  // Round up to next 30 minutes
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  let nextHour = currentHour;
+  let nextMinute = currentMinute < 30 ? 30 : 0;
+  
+  if (currentMinute >= 30) {
+    nextHour = currentHour + 1;
+  }
+  
+  // If it's past working hours, default to next morning
+  if (nextHour >= 23) {
+    return '09:00';
+  }
+  
+  return `${String(nextHour).padStart(2, '0')}:${String(nextMinute).padStart(2, '0')}`;
+};
+
+const getMinTimeForDate = (selectedDate: Date | undefined): string | undefined => {
+  if (!selectedDate) return undefined;
+  
+  const now = new Date();
+  const isToday = selectedDate.toDateString() === now.toDateString();
+  
+  if (!isToday) return undefined;
+  
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  return `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+};
+
 export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTime, onSuccess }: MeetingDialogProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
-  const [startTime, setStartTime] = useState(defaultStartTime || '09:00');
-  const [endTime, setEndTime] = useState(() => {
-    if (defaultStartTime) {
-      const [h, m] = defaultStartTime.split(':').map(Number);
-      return `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-    return '10:00';
+  const [startTime, setStartTime] = useState(() => {
+    if (defaultStartTime) return defaultStartTime;
+    return getNextValidTime(selectedDate);
   });
+  const [endTime, setEndTime] = useState(() => {
+    const start = defaultStartTime || getNextValidTime(selectedDate);
+    const [h, m] = start.split(':').map(Number);
+    return `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  });
+  const [timeError, setTimeError] = useState<string | null>(null);
   const [users, setUsers] = useState<Profile[]>([]);
   const [participants, setParticipants] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,22 +96,59 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
   useEffect(() => {
     if (selectedDate) {
       setDate(selectedDate);
+      // Update time when date changes
+      const newTime = getNextValidTime(selectedDate);
+      setStartTime(newTime);
+      const [h, m] = newTime.split(':').map(Number);
+      setEndTime(`${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
     }
   }, [selectedDate]);
 
   useEffect(() => {
     if (defaultStartTime) {
-      setStartTime(defaultStartTime);
-      const [h, m] = defaultStartTime.split(':').map(Number);
-      setEndTime(`${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      // Only use defaultStartTime if it's valid (not in the past for today)
+      const minTime = getMinTimeForDate(date);
+      if (!minTime || defaultStartTime >= minTime) {
+        setStartTime(defaultStartTime);
+        const [h, m] = defaultStartTime.split(':').map(Number);
+        setEndTime(`${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
     }
-  }, [defaultStartTime]);
+  }, [defaultStartTime, date]);
 
   useEffect(() => {
     if (open) {
       fetchUsers();
+      // Reset time error when opening
+      setTimeError(null);
     }
   }, [open]);
+
+  // Validate time whenever it changes
+  useEffect(() => {
+    validateTime();
+  }, [startTime, date]);
+
+  const validateTime = (): boolean => {
+    if (!date) return true;
+    
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      const [h, m] = startTime.split(':').map(Number);
+      const meetingTime = new Date(date);
+      meetingTime.setHours(h, m, 0, 0);
+      
+      if (meetingTime < now) {
+        setTimeError('Нельзя назначить встречу на прошедшее время');
+        return false;
+      }
+    }
+    
+    setTimeError(null);
+    return true;
+  };
 
   const fetchUsers = async () => {
     const { data } = await supabase.from('profiles').select('*');
@@ -75,6 +158,12 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !user) return;
+    
+    // Final time validation before submit
+    if (!validateTime()) {
+      toast({ title: 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -178,6 +267,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   selected={date}
                   onSelect={setDate}
                   initialFocus
+                  disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                   className="pointer-events-auto"
                 />
               </PopoverContent>
@@ -192,8 +282,13 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
+                min={getMinTimeForDate(date)}
                 required
+                className={timeError ? 'border-destructive' : ''}
               />
+              {timeError && (
+                <p className="text-xs text-destructive">{timeError}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">Окончание</Label>
@@ -202,6 +297,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                min={startTime}
               />
             </div>
           </div>
@@ -225,7 +321,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Отмена
             </Button>
-            <Button type="submit" disabled={loading || !title.trim() || !date} className="flex-1">
+            <Button type="submit" disabled={loading || !title.trim() || !date || !!timeError} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Создать
             </Button>
