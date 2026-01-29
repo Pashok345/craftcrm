@@ -4,10 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Phone, User, Plus } from 'lucide-react';
+import { Mail, Phone, User, Plus, Send } from 'lucide-react';
 import { Profile, UserPosition } from '@/types/database';
 import { UserDialog } from '@/components/users/UserDialog';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
+import { InviteUserDialog } from '@/components/users/InviteUserDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -18,6 +19,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const { isAdmin } = useUserRole();
 
   const positionLabels: Record<UserPosition, string> = {
@@ -72,10 +74,16 @@ const Users = () => {
           <p className="text-muted-foreground">{t('usersDescription')}</p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t('addUser')}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setInviteDialogOpen(true)} className="gap-2">
+              <Send className="h-4 w-4" />
+              {t('sendInvitation')}
+            </Button>
+            <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {t('addUser')}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -159,6 +167,12 @@ const Users = () => {
       <AddUserDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
+        onSuccess={fetchUsers}
+      />
+
+      <InviteUserDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
         onSuccess={fetchUsers}
       />
     </div>

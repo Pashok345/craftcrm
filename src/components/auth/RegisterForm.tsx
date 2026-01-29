@@ -79,10 +79,14 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
         variant: "destructive",
       });
     } else {
+      // Sign out immediately - user needs admin verification
+      await supabase.auth.signOut();
       toast({
         title: "Реєстрація успішна!",
-        description: "Ви можете увійти в систему",
+        description: "Ваш акаунт створено. Очікуйте верифікації адміністратором для входу в систему.",
+        duration: 10000,
       });
+      onSwitchToLogin();
     }
 
     setLoading(false);

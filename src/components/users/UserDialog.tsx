@@ -334,7 +334,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                 </div>
               )}
 
-              {isOwnProfile && (
+              {(isOwnProfile || isAdmin) && (
                 <Button onClick={() => setIsEditing(true)} className="w-full">
                   Редактировать
                 </Button>

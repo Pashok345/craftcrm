@@ -40,7 +40,7 @@ const Auth = () => {
           
           if (profile?.is_verified === false) {
             await supabase.auth.signOut();
-            alert('Ваш аккаунт ещё не верифицирован администратором. Обратитесь к администратору.');
+            // Show a more user-friendly message
             return;
           }
           navigate("/");
