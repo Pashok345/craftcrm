@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { CreateChatDialog } from '@/components/messages/CreateChatDialog';
+import { ChatMembersDialog } from '@/components/messages/ChatMembersDialog';
 import { EmployeesList } from '@/components/messages/EmployeesList';
 import {
   DropdownMenu,
@@ -101,6 +102,7 @@ const Messages = () => {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<ChatGroup | null>(null);
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -731,7 +733,12 @@ const Messages = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover">
-                  <DropdownMenuItem>{t('participantsMenu')}</DropdownMenuItem>
+                  {selectedChat.type === 'group' && (
+                    <DropdownMenuItem onClick={() => setMembersDialogOpen(true)}>
+                      <Users className="h-4 w-4 mr-2" />
+                      {t('participantsMenu')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem>{t('settingsMenu')}</DropdownMenuItem>
                   <DropdownMenuItem 
                     className="text-destructive"
@@ -920,6 +927,18 @@ const Messages = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedChat && selectedChat.type === 'group' && (
+        <ChatMembersDialog
+          open={membersDialogOpen}
+          onOpenChange={setMembersDialogOpen}
+          chatId={selectedChat.id}
+          chatCreatorId={selectedChat.created_by}
+          onMembersUpdated={() => {
+            fetchChatMembers();
+          }}
+        />
+      )}
     </div>
   );
 };
