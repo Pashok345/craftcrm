@@ -43,7 +43,7 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -60,6 +60,29 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
         description: message,
         variant: "destructive",
       });
+      setLoading(false);
+      return;
+    }
+
+    // Check verification status
+    if (data?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_verified')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+      
+      if (profile?.is_verified === false) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Акаунт не верифіковано",
+          description: "Ваш акаунт очікує верифікації адміністратором. Зверніться до адміністратора.",
+          variant: "destructive",
+          duration: 10000,
+        });
+        setLoading(false);
+        return;
+      }
     }
 
     setLoading(false);

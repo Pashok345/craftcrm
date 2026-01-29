@@ -441,6 +441,17 @@ export const translations: Translations = {
   noDeadline: { ru: 'Без срока', en: 'No deadline', uk: 'Без терміну' },
   noBudget: { ru: 'Не указан', en: 'Not set', uk: 'Не вказано' },
   noDescription: { ru: 'Без описания', en: 'No description', uk: 'Без опису' },
+
+  // User invitations
+  sendInvitation: { ru: 'Отправить приглашение', en: 'Send invitation', uk: 'Надіслати запрошення' },
+  sendInvite: { ru: 'Отправить', en: 'Send', uk: 'Надіслати' },
+  name: { ru: 'Имя', en: 'Name', uk: 'Імʼя' },
+  invitationSent: { ru: 'Приглашение отправлено', en: 'Invitation sent', uk: 'Запрошення надіслано' },
+  invitationSentDescription: { ru: 'Письмо с ссылкой для входа отправлено на {email}', en: 'An email with login link has been sent to {email}', uk: 'Лист із посиланням для входу надіслано на {email}' },
+  invitationError: { ru: 'Не удалось отправить приглашение', en: 'Failed to send invitation', uk: 'Не вдалося надіслати запрошення' },
+  userAlreadyExists: { ru: 'Пользователь с таким email уже существует', en: 'User with this email already exists', uk: 'Користувач з такою поштою вже існує' },
+  invitationNote: { ru: 'Пользователь получит письмо со ссылкой для входа. После входа ему нужно будет установить пароль и указать должность. Аккаунт станет активным после верификации администратором.', en: 'User will receive an email with login link. After logging in, they need to set password and position. Account will be active after admin verification.', uk: 'Користувач отримає лист із посиланням для входу. Після входу потрібно встановити пароль та вказати посаду. Акаунт стане активним після верифікації адміністратором.' },
+  fillRequiredFields: { ru: 'Заполните все обязательные поля', en: 'Fill all required fields', uk: 'Заповніть усі обовʼязкові поля' },
 };
 
 interface LanguageContextType {

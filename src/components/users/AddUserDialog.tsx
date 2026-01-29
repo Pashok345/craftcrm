@@ -95,10 +95,14 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
         throw new Error(data.error);
       }
 
-      // Send welcome email (without password)
+      // Send welcome email with the reset link
       try {
         await supabase.functions.invoke('send-welcome-email', {
-          body: { email: email.trim(), name: name.trim() }
+          body: { 
+            email: email.trim(), 
+            name: name.trim(),
+            resetLink: data?.resetLink || null
+          }
         });
       } catch (emailError) {
         console.error('Error sending welcome email:', emailError);

@@ -123,16 +123,20 @@ serve(async (req) => {
       }
 
       // Generate password reset link for the new user
+      const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
       const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'recovery',
         email: email.trim(),
         options: {
-          redirectTo: `${req.headers.get('origin') || 'https://id-preview--89d1915e-0917-4526-a2dc-404fa91de9fb.lovable.app'}/auth`
+          redirectTo: `${origin}/auth`
         }
       })
 
+      let resetLink = null
       if (resetError) {
         console.error('Error generating reset link:', resetError)
+      } else if (resetData?.properties?.action_link) {
+        resetLink = resetData.properties.action_link
       }
 
       console.log('User created successfully:', newUser.user.id)
@@ -140,6 +144,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           userId: newUser.user.id,
+          resetLink,
           message: 'User created successfully'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

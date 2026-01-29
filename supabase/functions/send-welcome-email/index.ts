@@ -15,6 +15,7 @@ const corsHeaders = {
 interface WelcomeEmailRequest {
   email: string;
   name: string;
+  resetLink?: string;
 }
 
 serve(async (req) => {
@@ -67,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    const { email, name }: WelcomeEmailRequest = await req.json();
+    const { email, name, resetLink }: WelcomeEmailRequest = await req.json();
 
     if (!email) {
       return new Response(
@@ -76,23 +77,41 @@ serve(async (req) => {
       );
     }
 
-    // Send welcome email WITHOUT password - user will receive password reset link
+    // Determine if we have a reset link to show a button
+    const resetButtonHtml = resetLink ? `
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${resetLink}" 
+           style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          Войти и установить пароль
+        </a>
+      </div>
+    ` : `
+      <p style="color: #666; margin: 16px 0;">
+        Для входа в систему используйте ссылку для сброса пароля, которая была отправлена на ваш email отдельным письмом.
+      </p>
+    `;
+
+    // Send welcome email with or without reset link
     const { error: emailError } = await resend.emails.send({
       from: "CRM <onboarding@resend.dev>",
       to: [email],
-      subject: 'Добро пожаловать в CRM систему!',
+      subject: 'Приглашение в CRM систему',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Добро пожаловать, ${name || 'пользователь'}!</h2>
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="color: #666; margin: 8px 0;">
-              Ваш аккаунт в CRM системе успешно создан.
+              Вас пригласили в CRM систему.
             </p>
             <p style="color: #666; margin: 8px 0;">
               <strong>Email:</strong> ${email}
             </p>
-            <p style="color: #666; margin: 16px 0;">
-              Для входа в систему используйте ссылку для сброса пароля, которая была отправлена на ваш email отдельным письмом.
+            ${resetButtonHtml}
+            <p style="color: #888; font-size: 14px; margin-top: 16px;">
+              После входа вам нужно будет установить пароль и указать свою должность.
+            </p>
+            <p style="color: #ff6600; font-size: 14px; margin-top: 8px;">
+              <strong>Важно:</strong> Ваш аккаунт станет активным после верификации администратором.
             </p>
           </div>
           <p style="color: #888; font-size: 14px;">
