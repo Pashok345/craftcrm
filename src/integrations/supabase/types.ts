@@ -763,6 +763,41 @@ export type Database = {
           },
         ]
       }
+      task_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          new_status: string
+          old_status: string | null
+          task_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          new_status: string
+          old_status?: string | null
+          task_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_status_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_tags: {
         Row: {
           created_at: string

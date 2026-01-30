@@ -189,6 +189,32 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           user_id: userId,
         }));
         await supabase.from('meeting_participants').insert(participantRecords);
+        
+        // Create notifications for each participant
+        const notifications = participants.map((userId) => ({
+          user_id: userId,
+          type: 'meeting_invite',
+          title: 'Приглашение на встречу',
+          message: `Вас пригласили на встречу "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} в ${startTime}`,
+          created_by: user.id,
+        }));
+        await supabase.from('notifications').insert(notifications);
+        
+        // Send emails to participants
+        const participantProfiles = users.filter(u => participants.includes(u.user_id));
+        for (const participant of participantProfiles) {
+          try {
+            await supabase.functions.invoke('send-notification-email', {
+              body: {
+                to: participant.email,
+                subject: `Приглашение на встречу: ${title}`,
+                message: `Вас пригласили на встречу "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} в ${startTime}`,
+              },
+            });
+          } catch (emailError) {
+            console.error('Error sending meeting invite email:', emailError);
+          }
+        }
       }
 
       toast({ title: 'Встреча создана' });

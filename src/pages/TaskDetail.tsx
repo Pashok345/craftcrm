@@ -374,6 +374,16 @@ const TaskDetail = () => {
       .eq('id', task.id);
     
     if (!error) {
+      // Record status change history
+      await supabase
+        .from('task_status_history')
+        .insert({
+          task_id: task.id,
+          old_status: oldStatus,
+          new_status: newStatus,
+          changed_by: user.id,
+        });
+      
       setTask({ ...task, status: newStatus });
       toast({ title: t('statusUpdated') });
 
