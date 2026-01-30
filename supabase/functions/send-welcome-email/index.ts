@@ -35,7 +35,7 @@ serve(async (req) => {
       );
     }
 
-    // Use service role to verify the token and get user info
+    // Use service role to verify the token
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -44,17 +44,22 @@ serve(async (req) => {
     });
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
     
-    if (userError || !user) {
-      console.error('Invalid token:', userError);
+    // Verify user using admin API
+    const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(
+      // First decode the JWT to get user ID
+      JSON.parse(atob(token.split('.')[1])).sub
+    );
+    
+    if (userError || !userData?.user) {
+      console.error('Invalid token or user not found:', userError);
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = user.id;
+    const userId = userData.user.id;
     
     // Verify user is admin using the same admin client
     const { data: roleData } = await adminClient

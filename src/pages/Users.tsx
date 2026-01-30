@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Phone, User, Plus, Send } from 'lucide-react';
+import { Mail, Phone, User, Plus, Send, Shield } from 'lucide-react';
 import { Profile, UserPosition } from '@/types/database';
 import { UserDialog } from '@/components/users/UserDialog';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
@@ -12,9 +12,13 @@ import { InviteUserDialog } from '@/components/users/InviteUserDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+interface UserWithRole extends Profile {
+  isAdmin?: boolean;
+}
+
 const Users = () => {
   const { t } = useLanguage();
-  const [users, setUsers] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -39,13 +43,30 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('name', { ascending: true });
+      // Fetch users and admin roles in parallel
+      const [usersResult, rolesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .order('name', { ascending: true }),
+        supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .eq('role', 'admin')
+      ]);
 
-      if (error) throw error;
-      setUsers((data || []) as Profile[]);
+      if (usersResult.error) throw usersResult.error;
+      
+      const adminUserIds = new Set(
+        (rolesResult.data || []).map(r => r.user_id)
+      );
+      
+      const usersWithRoles: UserWithRole[] = (usersResult.data || []).map(user => ({
+        ...user,
+        isAdmin: adminUserIds.has(user.user_id)
+      }));
+      
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -129,11 +150,19 @@ const Users = () => {
                       <h3 className="font-medium text-foreground truncate">
                         {user.name || t('noName')}
                       </h3>
-                      {user.position && (
-                        <Badge variant="secondary" className="mt-1">
-                          {positionLabels[user.position as UserPosition] || user.position}
-                        </Badge>
-                      )}
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
+                        {user.isAdmin && (
+                          <Badge variant="outline" className="gap-1 bg-crm-warning/10 text-crm-warning border-crm-warning/30">
+                            <Shield className="h-3 w-3" />
+                            {t('admin')}
+                          </Badge>
+                        )}
+                        {user.position && (
+                          <Badge variant="secondary">
+                            {positionLabels[user.position as UserPosition] || user.position}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="mt-3 space-y-1">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="h-4 w-4 shrink-0" />
