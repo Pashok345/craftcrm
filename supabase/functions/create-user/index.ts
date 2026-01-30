@@ -97,10 +97,17 @@ serve(async (req) => {
 
     if (createError) {
       console.error('Error creating user:', createError)
+      console.error('Error message:', createError.message)
+      console.error('Error code:', (createError as any).code)
+      
       let errorMessage = 'Failed to create user'
-      if (createError.message?.includes('already registered') || createError.message?.includes('already exists')) {
+      const errMsg = createError.message || ''
+      const errCode = (createError as any).code || ''
+      
+      if (errMsg.includes('already registered') || errMsg.includes('already exists') || errCode === 'email_exists') {
         errorMessage = 'User with this email already exists'
       }
+      
       return new Response(
         JSON.stringify({ error: errorMessage }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
