@@ -230,6 +230,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_read: boolean
+          meeting_id: string | null
           message: string
           task_id: string | null
           title: string
@@ -241,6 +242,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_read?: boolean
+          meeting_id?: string | null
           message: string
           task_id?: string | null
           title: string
@@ -252,6 +254,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_read?: boolean
+          meeting_id?: string | null
           message?: string
           task_id?: string | null
           title?: string
@@ -259,6 +262,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_task_id_fkey"
             columns: ["task_id"]
