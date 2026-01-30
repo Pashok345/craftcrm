@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +33,7 @@ interface MeetingWithParticipants extends Meeting {
 
 const Meetings = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [meetings, setMeetings] = useState<MeetingWithParticipants[]>([]);
@@ -60,29 +62,66 @@ const Meetings = () => {
   const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7:00 - 20:00
 
   useEffect(() => {
-    fetchMeetings();
-  }, [currentDate]);
+    if (user) {
+      fetchMeetings();
+    }
+  }, [currentDate, user]);
 
   useEffect(() => {
-    if (activeTab === 'day') {
+    if (activeTab === 'day' && user) {
       fetchDayMeetings();
     }
-  }, [selectedDay, activeTab]);
+  }, [selectedDay, activeTab, user]);
 
   const fetchMeetings = async () => {
+    if (!user) return;
+    
     try {
       const start = startOfMonth(currentDate);
       const end = endOfMonth(currentDate);
 
-      const { data, error } = await supabase
+      // Get meetings where user is creator
+      const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
+        .eq('created_by', user.id)
         .gte('meeting_date', start.toISOString().split('T')[0])
         .lte('meeting_date', end.toISOString().split('T')[0])
         .order('start_time', { ascending: true });
 
-      if (error) throw error;
-      setMeetings((data || []) as MeetingWithParticipants[]);
+      if (createdError) throw createdError;
+
+      // Get meetings where user is participant
+      const { data: participantData, error: participantError } = await supabase
+        .from('meeting_participants')
+        .select('meeting_id')
+        .eq('user_id', user.id);
+
+      if (participantError) throw participantError;
+
+      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
+      
+      let participantMeetings: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data: invitedMeetings, error: invitedError } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .gte('meeting_date', start.toISOString().split('T')[0])
+          .lte('meeting_date', end.toISOString().split('T')[0])
+          .order('start_time', { ascending: true });
+
+        if (invitedError) throw invitedError;
+        participantMeetings = (invitedMeetings || []) as Meeting[];
+      }
+
+      // Combine and deduplicate
+      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
+      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
+        index === self.findIndex(m => m.id === meeting.id)
+      );
+
+      setMeetings(uniqueMeetings as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching meetings:', error);
     } finally {
@@ -91,16 +130,51 @@ const Meetings = () => {
   };
 
   const fetchDayMeetings = async () => {
+    if (!user) return;
+    
     try {
       const dateStr = format(selectedDay, 'yyyy-MM-dd');
-      const { data, error } = await supabase
+      
+      // Get meetings where user is creator
+      const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
+        .eq('created_by', user.id)
         .eq('meeting_date', dateStr)
         .order('start_time', { ascending: true });
 
-      if (error) throw error;
-      setDayMeetings((data || []) as MeetingWithParticipants[]);
+      if (createdError) throw createdError;
+
+      // Get meetings where user is participant
+      const { data: participantData, error: participantError } = await supabase
+        .from('meeting_participants')
+        .select('meeting_id')
+        .eq('user_id', user.id);
+
+      if (participantError) throw participantError;
+
+      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
+      
+      let participantMeetings: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data: invitedMeetings, error: invitedError } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .eq('meeting_date', dateStr)
+          .order('start_time', { ascending: true });
+
+        if (invitedError) throw invitedError;
+        participantMeetings = (invitedMeetings || []) as Meeting[];
+      }
+
+      // Combine and deduplicate
+      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
+      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
+        index === self.findIndex(m => m.id === meeting.id)
+      );
+
+      setDayMeetings(uniqueMeetings as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching day meetings:', error);
     }

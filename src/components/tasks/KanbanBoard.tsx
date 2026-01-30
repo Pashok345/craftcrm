@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ const DEFAULT_COLUMNS: Column[] = [
 
 export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   
   const [columns, setColumns] = useState<Column[]>(() => {
     const saved = localStorage.getItem('kanban-columns-v2');
@@ -249,6 +251,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
 
       // Update task status in database
       const newStatus = destColumn.status as TaskStatus;
+      const oldStatus = sourceColumn.status;
       
       try {
         const { error } = await supabase
@@ -261,6 +264,17 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
           // Revert on error
           onTaskUpdate();
         } else {
+          // Record status change history
+          if (user) {
+            await supabase
+              .from('task_status_history')
+              .insert({
+                task_id: taskId,
+                old_status: oldStatus,
+                new_status: newStatus,
+                changed_by: user.id,
+              });
+          }
           // Refresh to sync with server
           onTaskUpdate();
         }
