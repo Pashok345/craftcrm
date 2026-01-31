@@ -80,10 +80,11 @@ serve(async (req) => {
       )
     }
 
-    // Check if user has already confirmed their email (completed registration)
-    if (existingUser.email_confirmed_at) {
+    // Check if user has actually completed registration (signed in at least once)
+    // email_confirmed_at can be set if they clicked the link but didn't complete password setup
+    if (existingUser.last_sign_in_at) {
       return new Response(
-        JSON.stringify({ error: 'Пользователь уже подтвердил email и завершил регистрацию' }),
+        JSON.stringify({ error: 'Пользователь уже завершил регистрацию и входил в систему' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
