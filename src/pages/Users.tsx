@@ -14,6 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UserWithRole extends Profile {
   isAdmin?: boolean;
+  isInvited?: boolean; // User hasn't confirmed email yet
 }
 
 const Users = () => {
@@ -63,7 +64,10 @@ const Users = () => {
       
       const usersWithRoles: UserWithRole[] = (usersResult.data || []).map(user => ({
         ...user,
-        isAdmin: adminUserIds.has(user.user_id)
+        isAdmin: adminUserIds.has(user.user_id),
+        // User is "invited" if they exist but haven't been verified yet
+        // This is a heuristic - users created via invite won't have verified status
+        isInvited: !user.is_verified && !adminUserIds.has(user.user_id)
       }));
       
       setUsers(usersWithRoles);
@@ -157,6 +161,12 @@ const Users = () => {
                             {t('admin')}
                           </Badge>
                         )}
+                        {user.isInvited && (
+                          <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary/30">
+                            <Send className="h-3 w-3" />
+                            Приглашён
+                          </Badge>
+                        )}
                         {user.position && (
                           <Badge variant="secondary">
                             {positionLabels[user.position as UserPosition] || user.position}
@@ -190,6 +200,7 @@ const Users = () => {
           onOpenChange={setDialogOpen}
           user={selectedUser}
           onUpdate={fetchUsers}
+          isInvitedUser={(users.find(u => u.id === selectedUser.id) as UserWithRole)?.isInvited}
         />
       )}
 
