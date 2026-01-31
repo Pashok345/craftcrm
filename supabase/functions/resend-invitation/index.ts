@@ -67,31 +67,98 @@ serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
 
-    // Resend invitation using inviteUserByEmail - for existing unconfirmed users,
-    // this will resend the invitation email
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    // First, check if user exists and their confirmation status
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+    const existingUser = existingUsers?.users?.find(
+      u => u.email?.toLowerCase() === email.trim().toLowerCase()
+    )
+
+    if (!existingUser) {
+      return new Response(
+        JSON.stringify({ error: 'Пользователь не найден' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check if user has already confirmed their email (completed registration)
+    if (existingUser.email_confirmed_at) {
+      return new Response(
+        JSON.stringify({ error: 'Пользователь уже подтвердил email и завершил регистрацию' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // For unconfirmed users, use generateLink to create a new invite link
+    // This will also send an email via Supabase's built-in email system
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'invite',
+      email: email.trim(),
+      options: {
+        redirectTo: `${origin}/auth`
+      }
+    })
+
+    if (linkError) {
+      console.error('Error generating invite link:', linkError)
+      return new Response(
+        JSON.stringify({ error: 'Не удалось сгенерировать ссылку приглашения' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Invite link generated for:', email)
+    
+    // The generateLink doesn't automatically send email, so we need to use 
+    // inviteUserByEmail approach but for new invite we can delete and recreate
+    // Actually, let's try updating the user to trigger a new invite
+    
+    // Delete the old user and create new invitation
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
+    
+    if (deleteError) {
+      console.error('Error deleting old user:', deleteError)
+      return new Response(
+        JSON.stringify({ error: 'Не удалось обновить приглашение' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Get user's profile data before deletion to preserve it
+    const { data: profileData } = await supabaseAdmin
+      .from('profiles')
+      .select('name, position, phone')
+      .eq('email', email.trim())
+      .maybeSingle()
+
+    // Now create a fresh invitation
+    const { data: newInvite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email.trim(),
       {
+        data: {
+          name: profileData?.name || '',
+        },
         redirectTo: `${origin}/auth`
       }
     )
 
     if (inviteError) {
-      console.error('Error resending invitation:', inviteError)
-      
-      // If user already confirmed, different message
-      if (inviteError.message?.includes('already been registered') || 
-          inviteError.message?.includes('already exists')) {
-        return new Response(
-          JSON.stringify({ error: 'Пользователь уже подтвердил email' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      
+      console.error('Error creating new invitation:', inviteError)
       return new Response(
         JSON.stringify({ error: 'Не удалось отправить приглашение' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Update the new user's profile with preserved data
+    if (newInvite.user && profileData) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          position: profileData.position,
+          phone: profileData.phone,
+        })
+        .eq('user_id', newInvite.user.id)
     }
 
     console.log('Invitation resent to:', email)
