@@ -82,30 +82,57 @@ serve(async (req) => {
       )
     }
 
-    // Generate a secure random password (user will use password reset)
-    const randomPassword = crypto.randomUUID() + crypto.randomUUID().slice(0, 8)
+    // Check if user with this email already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+    const userExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.trim().toLowerCase())
+    
+    if (userExists) {
+      return new Response(
+        JSON.stringify({ error: 'Пользователь с таким email уже существует' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
-    // Create user via admin API
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: email.trim(),
-      password: randomPassword,
-      email_confirm: true, // Auto-confirm email since admin is creating
-      user_metadata: {
-        name: name.trim(),
-      },
-    })
+    // Check if phone already exists in profiles
+    if (phone && phone.trim() !== '+38' && phone.trim() !== '') {
+      const { data: existingPhone } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('phone', phone.trim())
+        .maybeSingle()
+      
+      if (existingPhone) {
+        return new Response(
+          JSON.stringify({ error: 'Пользователь с таким телефоном уже существует' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
-    if (createError) {
-      console.error('Error creating user:', createError)
-      console.error('Error message:', createError.message)
-      console.error('Error code:', (createError as any).code)
+    // Get the origin for redirect URL
+    const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
+
+    // Use inviteUserByEmail - this sends invitation via Supabase's built-in email system
+    // (same system that sends verification emails - no Resend needed!)
+    const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      email.trim(),
+      {
+        data: {
+          name: name.trim(),
+        },
+        redirectTo: `${origin}/auth`
+      }
+    )
+
+    if (inviteError) {
+      console.error('Error inviting user:', inviteError)
+      console.error('Error message:', inviteError.message)
       
-      let errorMessage = 'Failed to create user'
-      const errMsg = createError.message || ''
-      const errCode = (createError as any).code || ''
+      let errorMessage = 'Не удалось создать пользователя'
+      const errMsg = inviteError.message || ''
       
-      if (errMsg.includes('already registered') || errMsg.includes('already exists') || errCode === 'email_exists') {
-        errorMessage = 'User with this email already exists'
+      if (errMsg.includes('already registered') || errMsg.includes('already exists')) {
+        errorMessage = 'Пользователь с таким email уже существует'
       }
       
       return new Response(
@@ -129,30 +156,13 @@ serve(async (req) => {
         console.error('Profile update error:', profileError)
       }
 
-      // Generate password reset link for the new user
-      const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
-      const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
-        email: email.trim(),
-        options: {
-          redirectTo: `${origin}/auth`
-        }
-      })
-
-      let resetLink = null
-      if (resetError) {
-        console.error('Error generating reset link:', resetError)
-      } else if (resetData?.properties?.action_link) {
-        resetLink = resetData.properties.action_link
-      }
-
-      console.log('User created successfully:', newUser.user.id)
+      console.log('User invited successfully:', newUser.user.id)
+      // Invitation email is sent automatically by Supabase Auth
       return new Response(
         JSON.stringify({ 
           success: true, 
           userId: newUser.user.id,
-          resetLink,
-          message: 'User created successfully'
+          message: 'Приглашение отправлено на email пользователя'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
