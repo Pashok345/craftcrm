@@ -6,6 +6,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +31,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, BadgeCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, BadgeCheck, Trash2, Send, Mail } from 'lucide-react';
 import { Profile, UserPosition, POSITION_LABELS, AppRole } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -31,9 +41,10 @@ interface UserDialogProps {
   onOpenChange: (open: boolean) => void;
   user: Profile;
   onUpdate: () => void;
+  isInvitedUser?: boolean;
 }
 
-export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogProps) => {
+export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser = false }: UserDialogProps) => {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || '');
   const [position, setPosition] = useState<UserPosition | ''>(user.position || '');
@@ -44,6 +55,9 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
   const [roleLoading, setRoleLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(user.is_verified ?? false);
   const [verificationLoading, setVerificationLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { isAdmin } = useUserRole();
@@ -132,6 +146,59 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
     }
   };
 
+  const handleDeleteUser = async () => {
+    setDeleteLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: user.user_id },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Пользователь удалён' });
+      setDeleteDialogOpen(false);
+      onOpenChange(false);
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({ 
+        title: error?.message || 'Ошибка удаления пользователя', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleResendInvitation = async () => {
+    setResendLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const { data, error } = await supabase.functions.invoke('resend-invitation', {
+        body: { email: user.email },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Приглашение отправлено повторно' });
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast({ 
+        title: error?.message || 'Ошибка отправки приглашения', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!name.trim()) return;
 
@@ -170,25 +237,36 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
     : 'U';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Профиль пользователя</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="flex flex-row items-center justify-between pr-8">
+            <DialogTitle>Профиль пользователя</DialogTitle>
+            {isAdmin && !isOwnProfile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium text-lg">{user.name}</h3>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h3 className="font-medium text-lg">{user.name}</h3>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
             </div>
-          </div>
 
           {isEditing ? (
             <div className="space-y-4">
@@ -265,6 +343,12 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                     Администратор
                   </Badge>
                 )}
+                {isInvitedUser && (
+                  <Badge variant="outline" className="gap-1 bg-crm-warning/10 text-crm-warning border-crm-warning/30">
+                    <Mail className="h-3 w-3" />
+                    Отправлено приглашение
+                  </Badge>
+                )}
                 {isVerified ? (
                   <Badge className="bg-crm-success/10 text-crm-success gap-1">
                     <BadgeCheck className="h-3 w-3" />
@@ -334,6 +418,23 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
                 </div>
               )}
 
+              {/* Resend invitation button for invited users */}
+              {isAdmin && !isOwnProfile && isInvitedUser && (
+                <Button
+                  variant="outline"
+                  onClick={handleResendInvitation}
+                  disabled={resendLoading}
+                  className="w-full gap-2"
+                >
+                  {resendLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Отправить повторно
+                </Button>
+              )}
+
               {(isOwnProfile || isAdmin) && (
                 <Button onClick={() => setIsEditing(true)} className="w-full">
                   Редактировать
@@ -344,5 +445,29 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate }: UserDialogPro
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Delete confirmation dialog */}
+    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Удалить пользователя?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Вы уверены, что хотите удалить пользователя {user.name}? Это действие нельзя отменить.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteLoading}>Нет</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteUser}
+            disabled={deleteLoading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Да, удалить
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
