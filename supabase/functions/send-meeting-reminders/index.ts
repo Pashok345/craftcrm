@@ -24,9 +24,9 @@ async function sendMeetingEmails(
   emailsSent: string[]
 ) {
   const reminderText = {
-    '1hour': { subject: 'через 1 час', message: 'Встреча начнётся через 1 час.' },
-    '15min': { subject: 'через 15 минут', message: 'Встреча начнётся через 15 минут. Не опоздайте!' },
-    'started': { subject: 'началась', message: 'Встреча уже началась! Присоединяйтесь!' },
+    '1hour': { subject: 'через 1 годину', message: 'Зустріч розпочнеться через 1 годину.' },
+    '15min': { subject: 'через 15 хвилин', message: 'Зустріч розпочнеться через 15 хвилин. Не запізнюйтесь!' },
+    'started': { subject: 'розпочалась', message: 'Зустріч вже розпочалась! Приєднуйтесь!' },
   };
 
   const emojiMap = {
@@ -42,37 +42,34 @@ async function sendMeetingEmails(
   };
 
   for (const meeting of meetings) {
-    // Get participants
     const { data: participants } = await supabase
       .from('meeting_participants')
       .select('user_id')
       .eq('meeting_id', meeting.id);
 
-    // Get creator profile
     const { data: creatorProfile } = await supabase
       .from('profiles')
       .select('email, name, user_id')
       .eq('user_id', meeting.created_by)
       .single();
 
-    // Collect all emails and user IDs
-    const emailMap: Map<string, string> = new Map();
+    const emailMap: Map<string, { email: string; name: string }> = new Map();
     
     if (creatorProfile?.email) {
-      emailMap.set(creatorProfile.user_id, creatorProfile.email);
+      emailMap.set(creatorProfile.user_id, { email: creatorProfile.email, name: creatorProfile.name });
     }
 
     if (participants && participants.length > 0) {
       const userIds = participants.map((p: any) => p.user_id);
       const { data: participantProfiles } = await supabase
         .from('profiles')
-        .select('email, user_id')
+        .select('email, user_id, name')
         .in('user_id', userIds);
 
       if (participantProfiles) {
         participantProfiles.forEach((p: any) => {
           if (p.email && !emailMap.has(p.user_id)) {
-            emailMap.set(p.user_id, p.email);
+            emailMap.set(p.user_id, { email: p.email, name: p.name });
           }
         });
       }
@@ -80,51 +77,100 @@ async function sendMeetingEmails(
 
     console.log(`Sending ${reminderType} reminders for meeting "${meeting.title}" to ${emailMap.size} recipients`);
 
-    // Create in-app notifications for all users
-    for (const [userId, email] of emailMap) {
+    for (const [userId, userData] of emailMap) {
       try {
-        // Create in-app notification
         await supabase.from('notifications').insert({
           user_id: userId,
           type: 'meeting',
-          title: `${emojiMap[reminderType]} Встреча ${reminderText[reminderType].subject}`,
+          title: `${emojiMap[reminderType]} Зустріч ${reminderText[reminderType].subject}`,
           message: `"${meeting.title}" - ${meeting.start_time.slice(0, 5)}`,
         });
 
-        // Send email
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
-          to: [email],
+          to: [userData.email],
           subject: `${emojiMap[reminderType]} ${meeting.title} - ${reminderText[reminderType].subject}`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: ${colorMap[reminderType]};">${emojiMap[reminderType]} Напоминание о встрече</h2>
-              <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${colorMap[reminderType]};">
-                <h3 style="color: #1a1a1a; margin-top: 0;">${meeting.title}</h3>
-                <p style="color: #666; margin: 8px 0;">
-                  <strong>Дата:</strong> ${meeting.meeting_date}
-                </p>
-                <p style="color: #666; margin: 8px 0;">
-                  <strong>Время:</strong> ${meeting.start_time.slice(0, 5)}${meeting.end_time ? ` - ${meeting.end_time.slice(0, 5)}` : ''}
-                </p>
-                ${meeting.description ? `<p style="color: #666; margin: 8px 0;"><strong>Описание:</strong> ${meeting.description}</p>` : ''}
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                  <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
+                    <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+                  </div>
+                </div>
+                
+                <!-- Main Card -->
+                <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <span style="font-size: 48px;">${emojiMap[reminderType]}</span>
+                  </div>
+                  <h1 style="color: ${colorMap[reminderType]}; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                    Нагадування про зустріч
+                  </h1>
+                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
+                    Вітаємо, ${userData.name || 'колего'}!
+                  </p>
+                  
+                  <!-- Meeting Card -->
+                  <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid ${colorMap[reminderType]};">
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${meeting.title}</h2>
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                      <span style="font-size: 16px; margin-right: 8px;">📅</span>
+                      <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                        <strong>Дата:</strong> ${meeting.meeting_date}
+                      </p>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                      <span style="font-size: 16px; margin-right: 8px;">🕐</span>
+                      <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                        <strong>Час:</strong> ${meeting.start_time.slice(0, 5)}${meeting.end_time ? ` - ${meeting.end_time.slice(0, 5)}` : ''}
+                      </p>
+                    </div>
+                    ${meeting.description ? `
+                      <div style="display: flex; align-items: flex-start; margin-top: 12px;">
+                        <span style="font-size: 16px; margin-right: 8px;">📝</span>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                          <strong>Опис:</strong> ${meeting.description}
+                        </p>
+                      </div>
+                    ` : ''}
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center; font-weight: 500;">
+                    ${reminderText[reminderType].message}
+                  </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 32px;">
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                    Це автоматичне сповіщення з CRM системи
+                  </p>
+                  <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                    © 2024 CRM Pro. Усі права захищено.
+                  </p>
+                </div>
               </div>
-              <p style="color: #888; font-size: 14px;">${reminderText[reminderType].message}</p>
-              <p style="color: #888; font-size: 12px; margin-top: 20px;">
-                Это автоматическое уведомление из CRM системы.
-              </p>
-            </div>
+            </body>
+            </html>
           `,
         });
 
         if (emailError) {
-          console.error(`Error sending email to ${email}:`, emailError);
+          console.error(`Error sending email to ${userData.email}:`, emailError);
         } else {
-          emailsSent.push(email);
-          console.log(`${reminderType} reminder sent to ${email}`);
+          emailsSent.push(userData.email);
+          console.log(`${reminderType} reminder sent to ${userData.email}`);
         }
       } catch (sendError) {
-        console.error(`Failed to send email to ${email}:`, sendError);
+        console.error(`Failed to send email to ${userData.email}:`, sendError);
       }
     }
   }
@@ -136,7 +182,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authorization - only accept requests with service role key
     const authHeader = req.headers.get("Authorization");
     const expectedAuth = `Bearer ${supabaseServiceKey}`;
     
@@ -153,35 +198,27 @@ serve(async (req) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     
-    // Current time
     const currentHour = now.getUTCHours().toString().padStart(2, '0');
     const currentMinute = now.getUTCMinutes().toString().padStart(2, '0');
     const currentTime = `${currentHour}:${currentMinute}`;
     
-    // 1 hour from now
     const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
     const oneHourTime = `${oneHourLater.getUTCHours().toString().padStart(2, '0')}:${oneHourLater.getUTCMinutes().toString().padStart(2, '0')}`;
     const oneHourWindowEnd = new Date(oneHourLater.getTime() + 2 * 60 * 1000);
     const oneHourWindowEndTime = `${oneHourWindowEnd.getUTCHours().toString().padStart(2, '0')}:${oneHourWindowEnd.getUTCMinutes().toString().padStart(2, '0')}`;
     
-    // 15 minutes from now
     const fifteenMinLater = new Date(now.getTime() + 15 * 60 * 1000);
     const fifteenMinTime = `${fifteenMinLater.getUTCHours().toString().padStart(2, '0')}:${fifteenMinLater.getUTCMinutes().toString().padStart(2, '0')}`;
     const fifteenMinWindowEnd = new Date(fifteenMinLater.getTime() + 2 * 60 * 1000);
     const fifteenMinWindowEndTime = `${fifteenMinWindowEnd.getUTCHours().toString().padStart(2, '0')}:${fifteenMinWindowEnd.getUTCMinutes().toString().padStart(2, '0')}`;
     
-    // Meetings starting now (within 2 min window)
     const startedWindowEnd = new Date(now.getTime() + 2 * 60 * 1000);
     const startedWindowEndTime = `${startedWindowEnd.getUTCHours().toString().padStart(2, '0')}:${startedWindowEnd.getUTCMinutes().toString().padStart(2, '0')}`;
 
     console.log(`Checking meetings at ${currentTime} on ${today}`);
-    console.log(`1 hour window: ${oneHourTime} - ${oneHourWindowEndTime}`);
-    console.log(`15 min window: ${fifteenMinTime} - ${fifteenMinWindowEndTime}`);
-    console.log(`Started window: ${currentTime} - ${startedWindowEndTime}`);
 
     const emailsSent: string[] = [];
 
-    // Get meetings starting in 1 hour
     const { data: meetingsOneHour } = await supabase
       .from('meetings')
       .select('*')
@@ -194,7 +231,6 @@ serve(async (req) => {
       await sendMeetingEmails(supabase, meetingsOneHour, '1hour', emailsSent);
     }
 
-    // Get meetings starting in 15 minutes
     const { data: meetingsFifteenMin } = await supabase
       .from('meetings')
       .select('*')
@@ -207,7 +243,6 @@ serve(async (req) => {
       await sendMeetingEmails(supabase, meetingsFifteenMin, '15min', emailsSent);
     }
 
-    // Get meetings that just started
     const { data: meetingsStarted } = await supabase
       .from('meetings')
       .select('*')

@@ -465,6 +465,31 @@ export const translations: Translations = {
   userAlreadyExists: { ru: 'Пользователь с таким email уже существует', en: 'User with this email already exists', uk: 'Користувач з такою поштою вже існує' },
   invitationNote: { ru: 'Пользователь получит письмо со ссылкой для входа. После входа ему нужно будет установить пароль и указать должность. Аккаунт станет активным после верификации администратором.', en: 'User will receive an email with login link. After logging in, they need to set password and position. Account will be active after admin verification.', uk: 'Користувач отримає лист із посиланням для входу. Після входу потрібно встановити пароль та вказати посаду. Акаунт стане активним після верифікації адміністратором.' },
   fillRequiredFields: { ru: 'Заполните все обязательные поля', en: 'Fill all required fields', uk: 'Заповніть усі обовʼязкові поля' },
+  
+  // User profile dialog
+  userProfile: { ru: 'Профиль пользователя', en: 'User Profile', uk: 'Профіль користувача' },
+  userVerified: { ru: 'Пользователь верифицирован', en: 'User verified', uk: 'Користувача верифіковано' },
+  verificationRevoked: { ru: 'Верификация отозвана', en: 'Verification revoked', uk: 'Верифікацію скасовано' },
+  verificationError: { ru: 'Ошибка изменения верификации', en: 'Verification error', uk: 'Помилка верифікації' },
+  adminGranted: { ru: 'Права админа выданы', en: 'Admin rights granted', uk: 'Права адміністратора надано' },
+  adminRevoked: { ru: 'Права админа отозваны', en: 'Admin rights revoked', uk: 'Права адміністратора скасовано' },
+  roleError: { ru: 'Ошибка изменения прав', en: 'Role change error', uk: 'Помилка зміни прав' },
+  userDeleted: { ru: 'Пользователь удалён', en: 'User deleted', uk: 'Користувача видалено' },
+  deleteError: { ru: 'Ошибка удаления', en: 'Delete error', uk: 'Помилка видалення' },
+  invitationResent: { ru: 'Приглашение отправлено повторно', en: 'Invitation resent', uk: 'Запрошення надіслано повторно' },
+  profileUpdated: { ru: 'Профиль обновлён', en: 'Profile updated', uk: 'Профіль оновлено' },
+  administrator: { ru: 'Администратор', en: 'Administrator', uk: 'Адміністратор' },
+  invitationSentBadge: { ru: 'Отправлено приглашение', en: 'Invitation sent', uk: 'Надіслано запрошення' },
+  verified: { ru: 'Верифицирован', en: 'Verified', uk: 'Верифіковано' },
+  notVerified: { ru: 'Не верифицирован', en: 'Not verified', uk: 'Не верифіковано' },
+  email: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
+  verification: { ru: 'Верификация', en: 'Verification', uk: 'Верифікація' },
+  adminRights: { ru: 'Права администратора', en: 'Admin rights', uk: 'Права адміністратора' },
+  resendInvitation: { ru: 'Отправить повторно', en: 'Resend invitation', uk: 'Надіслати повторно' },
+  deleteUserTitle: { ru: 'Видалити користувача?', en: 'Delete user?', uk: 'Видалити користувача?' },
+  deleteUserConfirm: { ru: 'Вы уверены, что хотите удалить пользователя {name}? Это действие нельзя отменить.', en: 'Are you sure you want to delete user {name}? This action cannot be undone.', uk: 'Ви впевнені, що хочете видалити користувача {name}? Цю дію не можна скасувати.' },
+  no: { ru: 'Нет', en: 'No', uk: 'Ні' },
+  yesDelete: { ru: 'Да, удалить', en: 'Yes, delete', uk: 'Так, видалити' },
 };
 
 interface LanguageContextType {

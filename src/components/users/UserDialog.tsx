@@ -32,9 +32,43 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, BadgeCheck, Trash2, Send, Mail } from 'lucide-react';
-import { Profile, UserPosition, POSITION_LABELS, AppRole } from '@/types/database';
+import { Profile, UserPosition, AppRole } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+const POSITION_LABELS_LOCALIZED: Record<string, Record<UserPosition, string>> = {
+  uk: {
+    director: 'Директор',
+    manager: 'Менеджер',
+    developer: 'Розробник',
+    designer: 'Дизайнер',
+    analyst: 'Аналітик',
+    accountant: 'Бухгалтер',
+    hr: 'HR',
+    other: 'Інше',
+  },
+  ru: {
+    director: 'Директор',
+    manager: 'Менеджер',
+    developer: 'Разработчик',
+    designer: 'Дизайнер',
+    analyst: 'Аналитик',
+    accountant: 'Бухгалтер',
+    hr: 'HR',
+    other: 'Другое',
+  },
+  en: {
+    director: 'Director',
+    manager: 'Manager',
+    developer: 'Developer',
+    designer: 'Designer',
+    analyst: 'Analyst',
+    accountant: 'Accountant',
+    hr: 'HR',
+    other: 'Other',
+  },
+};
 
 interface UserDialogProps {
   open: boolean;
@@ -45,6 +79,7 @@ interface UserDialogProps {
 }
 
 export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser = false }: UserDialogProps) => {
+  const { t, language } = useLanguage();
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || '');
   const [position, setPosition] = useState<UserPosition | ''>(user.position || '');
@@ -63,6 +98,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
   const { isAdmin } = useUserRole();
 
   const isOwnProfile = currentUser?.id === user.user_id;
+  const positionLabels = POSITION_LABELS_LOCALIZED[language] || POSITION_LABELS_LOCALIZED.uk;
 
   useEffect(() => {
     if (open) {
@@ -94,11 +130,11 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       if (error) throw error;
 
       setIsVerified(verified);
-      toast({ title: verified ? 'Пользователь верифицирован' : 'Верификация отозвана' });
+      toast({ title: verified ? t('userVerified') : t('verificationRevoked') });
       onUpdate();
     } catch (error) {
       console.error('Error updating verification:', error);
-      toast({ title: 'Ошибка изменения верификации', variant: 'destructive' });
+      toast({ title: t('verificationError'), variant: 'destructive' });
     } finally {
       setVerificationLoading(false);
     }
@@ -111,7 +147,6 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
     try {
       const newRole: AppRole = makeAdmin ? 'admin' : 'user';
       
-      // Check if role record exists
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('id')
@@ -119,7 +154,6 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
         .maybeSingle();
 
       if (existingRole) {
-        // Update existing role
         const { error } = await supabase
           .from('user_roles')
           .update({ role: newRole })
@@ -127,7 +161,6 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
         
         if (error) throw error;
       } else {
-        // Insert new role
         const { error } = await supabase
           .from('user_roles')
           .insert({ user_id: user.user_id, role: newRole });
@@ -136,11 +169,11 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       }
 
       setUserRole(newRole);
-      toast({ title: makeAdmin ? 'Права админа выданы' : 'Права админа отозваны' });
+      toast({ title: makeAdmin ? t('adminGranted') : t('adminRevoked') });
       onUpdate();
     } catch (error) {
       console.error('Error updating role:', error);
-      toast({ title: 'Ошибка изменения прав', variant: 'destructive' });
+      toast({ title: t('roleError'), variant: 'destructive' });
     } finally {
       setRoleLoading(false);
     }
@@ -159,14 +192,14 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Пользователь удалён' });
+      toast({ title: t('userDeleted') });
       setDeleteDialogOpen(false);
       onOpenChange(false);
       onUpdate();
     } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({ 
-        title: error?.message || 'Ошибка удаления пользователя', 
+        title: error?.message || t('deleteError'), 
         variant: 'destructive' 
       });
     } finally {
@@ -187,11 +220,11 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Приглашение отправлено повторно' });
+      toast({ title: t('invitationResent') });
     } catch (error: any) {
       console.error('Error resending invitation:', error);
       toast({ 
-        title: error?.message || 'Ошибка отправки приглашения', 
+        title: error?.message || t('invitationError'), 
         variant: 'destructive' 
       });
     } finally {
@@ -216,12 +249,12 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
 
       if (error) throw error;
 
-      toast({ title: 'Профиль обновлён' });
+      toast({ title: t('profileUpdated') });
       setIsEditing(false);
       onUpdate();
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast({ title: 'Ошибка при обновлении', variant: 'destructive' });
+      toast({ title: t('errorSaving'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -241,7 +274,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between pr-8">
-            <DialogTitle>Профиль пользователя</DialogTitle>
+            <DialogTitle>{t('userProfile')}</DialogTitle>
             {isAdmin && !isOwnProfile && (
               <Button
                 variant="ghost"
@@ -271,7 +304,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
           {isEditing ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">ФИО *</Label>
+                <Label htmlFor="name">{t('fullName')} *</Label>
                 <Input
                   id="name"
                   value={name}
@@ -281,7 +314,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Телефон</Label>
+                <Label htmlFor="phone">{t('phone')}</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -292,13 +325,13 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
               </div>
 
               <div className="space-y-2">
-                <Label>Должность</Label>
+                <Label>{t('position')}</Label>
                 <Select value={position} onValueChange={(v) => setPosition(v as UserPosition)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите должность" />
+                    <SelectValue placeholder={t('selectPosition')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(POSITION_LABELS).map(([key, label]) => (
+                    {Object.entries(positionLabels).map(([key, label]) => (
                       <SelectItem key={key} value={key}>
                         {label}
                       </SelectItem>
@@ -308,13 +341,13 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="additionalInfo">Дополнительная информация</Label>
+                <Label htmlFor="additionalInfo">{t('additionalInfo')}</Label>
                 <Textarea
                   id="additionalInfo"
                   value={additionalInfo}
                   onChange={(e) => setAdditionalInfo(e.target.value)}
                   rows={3}
-                  placeholder="Любая дополнительная информация..."
+                  placeholder={t('additionalInfoPlaceholder')}
                 />
               </div>
 
@@ -325,11 +358,11 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
                   onClick={() => setIsEditing(false)}
                   className="flex-1"
                 >
-                  Отмена
+                  {t('cancel')}
                 </Button>
                 <Button onClick={handleSave} disabled={loading || !name.trim()} className="flex-1">
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Сохранить
+                  {t('save')}
                 </Button>
               </div>
             </div>
@@ -340,52 +373,52 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
                 {userRole === 'admin' && (
                   <Badge className="bg-primary/10 text-primary gap-1">
                     <ShieldCheck className="h-3 w-3" />
-                    Администратор
+                    {t('administrator')}
                   </Badge>
                 )}
                 {isInvitedUser && (
                   <Badge variant="outline" className="gap-1 bg-crm-warning/10 text-crm-warning border-crm-warning/30">
                     <Mail className="h-3 w-3" />
-                    Отправлено приглашение
+                    {t('invitationSentBadge')}
                   </Badge>
                 )}
                 {isVerified ? (
                   <Badge className="bg-crm-success/10 text-crm-success gap-1">
                     <BadgeCheck className="h-3 w-3" />
-                    Верифицирован
+                    {t('verified')}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="gap-1 text-muted-foreground">
                     <BadgeCheck className="h-3 w-3" />
-                    Не верифицирован
+                    {t('notVerified')}
                   </Badge>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Почта</p>
+                  <p className="text-sm text-muted-foreground">{t('email')}</p>
                   <p className="font-medium">{user.email}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Телефон</p>
+                  <p className="text-sm text-muted-foreground">{t('phone')}</p>
                   <p className="font-medium">{user.phone || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">ФИО</p>
+                  <p className="text-sm text-muted-foreground">{t('fullName')}</p>
                   <p className="font-medium">{user.name || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Должность</p>
+                  <p className="text-sm text-muted-foreground">{t('position')}</p>
                   <p className="font-medium">
-                    {user.position ? POSITION_LABELS[user.position as UserPosition] : '—'}
+                    {user.position ? positionLabels[user.position as UserPosition] : '—'}
                   </p>
                 </div>
               </div>
 
               {user.additional_info && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Дополнительно</p>
+                  <p className="text-sm text-muted-foreground">{t('additionalInfo')}</p>
                   <p className="font-medium">{user.additional_info}</p>
                 </div>
               )}
@@ -396,7 +429,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Верификация</span>
+                      <span className="text-sm font-medium">{t('verification')}</span>
                     </div>
                     <Switch
                       checked={isVerified}
@@ -407,7 +440,7 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Права администратора</span>
+                      <span className="text-sm font-medium">{t('adminRights')}</span>
                     </div>
                     <Switch
                       checked={userRole === 'admin'}
@@ -431,13 +464,13 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Отправить повторно
+                  {t('resendInvitation')}
                 </Button>
               )}
 
               {(isOwnProfile || isAdmin) && (
                 <Button onClick={() => setIsEditing(true)} className="w-full">
-                  Редактировать
+                  {t('edit')}
                 </Button>
               )}
             </div>
@@ -450,20 +483,20 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
     <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Удалить пользователя?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteUserTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Вы уверены, что хотите удалить пользователя {user.name}? Это действие нельзя отменить.
+            {t('deleteUserConfirm').replace('{name}', user.name)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteLoading}>Нет</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteLoading}>{t('no')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDeleteUser}
             disabled={deleteLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Да, удалить
+            {t('yesDelete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

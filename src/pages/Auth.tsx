@@ -20,6 +20,13 @@ const Auth = () => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type') || searchParams.get('type');
     
+    // Check for invite token - redirect to complete-profile
+    if (type === 'invite' || type === 'signup') {
+      // User came from invite link - redirect to profile completion
+      navigate("/complete-profile");
+      return;
+    }
+    
     if (type === 'recovery') {
       setIsRecoverySession(true);
       setView("reset-password");
@@ -30,8 +37,22 @@ const Auth = () => {
         if (event === 'PASSWORD_RECOVERY') {
           setIsRecoverySession(true);
           setView("reset-password");
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // Check if this is from an invite - user needs to complete profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_verified, position, phone')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          // If not verified and hasn't set up profile, redirect to complete-profile
+          if (!profile?.is_verified) {
+            navigate("/complete-profile");
+            return;
+          }
+          
+          navigate("/");
         } else if (session?.user && !isRecoverySession) {
-          // Check if user is verified
           const { data: profile } = await supabase
             .from('profiles')
             .select('is_verified')
@@ -40,7 +61,6 @@ const Auth = () => {
           
           if (profile?.is_verified === false) {
             await supabase.auth.signOut();
-            // Show a more user-friendly message
             return;
           }
           navigate("/");
@@ -51,15 +71,15 @@ const Auth = () => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       // Don't redirect if we're in recovery mode
       if (session?.user && !isRecoverySession && view !== "reset-password") {
-        // Check if user is verified
         const { data: profile } = await supabase
           .from('profiles')
           .select('is_verified')
           .eq('user_id', session.user.id)
           .maybeSingle();
         
+        // If not verified, redirect to complete-profile
         if (profile?.is_verified === false) {
-          await supabase.auth.signOut();
+          navigate("/complete-profile");
           return;
         }
         navigate("/");

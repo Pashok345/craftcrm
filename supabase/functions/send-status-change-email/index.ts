@@ -23,18 +23,18 @@ interface StatusChangeRequest {
 }
 
 const taskStatusLabels: Record<string, string> = {
-  todo: 'К выполнению',
-  in_progress: 'В работе',
-  review: 'На проверке',
-  done: 'Завершена',
+  todo: 'До виконання',
+  in_progress: 'В роботі',
+  review: 'На перевірці',
+  done: 'Виконано',
 };
 
 const projectStatusLabels: Record<string, string> = {
-  planning: 'Планирование',
-  active: 'Активный',
-  on_hold: 'Приостановлен',
-  completed: 'Завершён',
-  cancelled: 'Отменён',
+  planning: 'Планування',
+  active: 'Активний',
+  on_hold: 'Призупинено',
+  completed: 'Завершено',
+  cancelled: 'Скасовано',
 };
 
 serve(async (req) => {
@@ -43,7 +43,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify JWT authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Missing or invalid authorization header');
@@ -78,7 +77,6 @@ serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get emails for recipients
     const { data: profiles, error: profilesError } = await adminClient
       .from('profiles')
       .select('user_id, email, name')
@@ -95,8 +93,8 @@ serve(async (req) => {
     const statusLabels = entity_type === 'task' ? taskStatusLabels : projectStatusLabels;
     const oldStatusLabel = statusLabels[old_status] || old_status;
     const newStatusLabel = statusLabels[new_status] || new_status;
-    const entityTypeLabel = entity_type === 'task' ? 'задачи' : 'проекта';
-    const entityTypeTitle = entity_type === 'task' ? 'Задача' : 'Проект';
+    const entityTypeLabel = entity_type === 'task' ? 'завдання' : 'проекту';
+    const entityTypeTitle = entity_type === 'task' ? 'Завдання' : 'Проект';
     const emoji = entity_type === 'task' ? '📋' : '📁';
 
     console.log(`Sending status change emails for ${entity_type} "${entity_title}" to ${profiles.length} recipients`);
@@ -107,12 +105,11 @@ serve(async (req) => {
       if (!profile.email) continue;
 
       try {
-        // Create in-app notification
         await adminClient.from('notifications').insert({
           user_id: profile.user_id,
           type: 'status_change',
-          title: `Статус ${entityTypeLabel} изменён`,
-          message: `${changed_by_name} изменил статус ${entityTypeLabel} "${entity_title}": ${oldStatusLabel} → ${newStatusLabel}`,
+          title: `Статус ${entityTypeLabel} змінено`,
+          message: `${changed_by_name} змінив статус ${entityTypeLabel} "${entity_title}": ${oldStatusLabel} → ${newStatusLabel}`,
           task_id: entity_type === 'task' ? entity_id : null,
           created_by: user.id,
         });
@@ -120,32 +117,74 @@ serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `${emoji} Статус ${entityTypeLabel} "${entity_title}" изменён`,
+          subject: `${emoji} Статус ${entityTypeLabel} "${entity_title}" змінено`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #8b5cf6;">${emoji} Изменение статуса</h2>
-              <div style="background-color: #f5f3ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #8b5cf6;">
-                <h3 style="color: #1a1a1a; margin-top: 0;">${entityTypeTitle}: ${entity_title}</h3>
-                <p style="color: #666; margin: 12px 0;">
-                  <strong>${changed_by_name}</strong> изменил статус:
-                </p>
-                <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0;">
-                  <span style="background-color: #e5e7eb; padding: 6px 12px; border-radius: 20px; font-size: 14px; color: #666;">
-                    ${oldStatusLabel}
-                  </span>
-                  <span style="color: #666;">→</span>
-                  <span style="background-color: #22c55e; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px;">
-                    ${newStatusLabel}
-                  </span>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                  <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
+                    <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+                  </div>
+                </div>
+                
+                <!-- Main Card -->
+                <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <span style="font-size: 48px;">${emoji}</span>
+                  </div>
+                  <h1 style="color: #8b5cf6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                    Зміна статусу
+                  </h1>
+                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
+                    Вітаємо, ${profile.name || 'колего'}!
+                  </p>
+                  
+                  <!-- Entity Card -->
+                  <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #8b5cf6;">
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">
+                      ${entityTypeTitle}:
+                    </p>
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${entity_title}</h2>
+                    
+                    <p style="color: #6b7280; margin: 0 0 16px 0; font-size: 14px;">
+                      <strong>${changed_by_name}</strong> змінив статус:
+                    </p>
+                    
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                      <span style="background-color: #e5e7eb; padding: 8px 16px; border-radius: 20px; font-size: 14px; color: #6b7280;">
+                        ${oldStatusLabel}
+                      </span>
+                      <span style="color: #6b7280; font-size: 20px;">→</span>
+                      <span style="background-color: #22c55e; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ${newStatusLabel}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
+                    Ви отримали це повідомлення як учасник ${entity_type === 'task' ? 'цього завдання' : 'цього проекту'}.
+                  </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 32px;">
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                    Це автоматичне сповіщення з CRM системи
+                  </p>
+                  <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                    © 2024 CRM Pro. Усі права захищено.
+                  </p>
                 </div>
               </div>
-              <p style="color: #666; font-size: 14px;">
-                Здравствуйте, ${profile.name || 'пользователь'}! Вы получили это уведомление, так как являетесь участником данного ${entity_type === 'task' ? 'задачи' : 'проекта'}.
-              </p>
-              <p style="color: #888; font-size: 14px; margin-top: 20px;">
-                Это автоматическое уведомление из CRM системы.
-              </p>
-            </div>
+            </body>
+            </html>
           `,
         });
 

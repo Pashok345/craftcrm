@@ -5,7 +5,6 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,13 +18,11 @@ interface WelcomeEmailRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT and check admin role
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Missing or invalid authorization header');
@@ -35,7 +32,6 @@ serve(async (req) => {
       );
     }
 
-    // Use service role to verify the token
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -45,9 +41,7 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     
-    // Verify user using admin API
     const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(
-      // First decode the JWT to get user ID
       JSON.parse(atob(token.split('.')[1])).sub
     );
     
@@ -61,7 +55,6 @@ serve(async (req) => {
 
     const userId = userData.user.id;
     
-    // Verify user is admin using the same admin client
     const { data: roleData } = await adminClient
       .from('user_roles')
       .select('role')
@@ -86,47 +79,101 @@ serve(async (req) => {
       );
     }
 
-    // Determine if we have a reset link to show a button
     const resetButtonHtml = resetLink ? `
-      <div style="text-align: center; margin: 24px 0;">
+      <div style="text-align: center; margin: 32px 0;">
         <a href="${resetLink}" 
-           style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          Войти и установить пароль
+           style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+          Увійти та встановити пароль
         </a>
       </div>
     ` : `
-      <p style="color: #666; margin: 16px 0;">
-        Для входа в систему используйте ссылку для сброса пароля, которая была отправлена на ваш email отдельным письмом.
+      <p style="color: #6b7280; margin: 16px 0; text-align: center;">
+        Для входу в систему використайте посилання для скидання пароля, яке було надіслано на вашу пошту окремим листом.
       </p>
     `;
 
-    // Send welcome email with or without reset link
     const { error: emailError } = await resend.emails.send({
       from: "CRM <onboarding@resend.dev>",
       to: [email],
-      subject: 'Приглашение в CRM систему',
+      subject: '🚀 Запрошення до CRM системи',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Добро пожаловать, ${name || 'пользователь'}!</h2>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #666; margin: 8px 0;">
-              Вас пригласили в CRM систему.
-            </p>
-            <p style="color: #666; margin: 8px 0;">
-              <strong>Email:</strong> ${email}
-            </p>
-            ${resetButtonHtml}
-            <p style="color: #888; font-size: 14px; margin-top: 16px;">
-              После входа вам нужно будет установить пароль и указать свою должность.
-            </p>
-            <p style="color: #ff6600; font-size: 14px; margin-top: 8px;">
-              <strong>Важно:</strong> Ваш аккаунт станет активным после верификации администратором.
-            </p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 32px;">
+              <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
+                <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+              </div>
+            </div>
+            
+            <!-- Main Card -->
+            <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+              <h1 style="color: #111827; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                Вітаємо, ${name || 'колего'}! 👋
+              </h1>
+              <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
+                Вас запрошено до CRM системи
+              </p>
+              
+              <!-- Info Box -->
+              <div style="background-color: #f0f9ff; border-radius: 12px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #3b82f6;">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                  <span style="font-size: 20px; margin-right: 10px;">📧</span>
+                  <div>
+                    <p style="color: #6b7280; margin: 0; font-size: 14px;">Ваша пошта</p>
+                    <p style="color: #111827; margin: 0; font-weight: 600;">${email}</p>
+                  </div>
+                </div>
+              </div>
+              
+              ${resetButtonHtml}
+              
+              <!-- Steps -->
+              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+                <p style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 16px;">
+                  Після входу вам потрібно:
+                </p>
+                <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+                  <span style="background-color: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">1</span>
+                  <p style="color: #6b7280; margin: 0; font-size: 14px;">Встановити пароль для входу</p>
+                </div>
+                <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+                  <span style="background-color: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">2</span>
+                  <p style="color: #6b7280; margin: 0; font-size: 14px;">Вказати номер телефону</p>
+                </div>
+                <div style="display: flex; align-items: flex-start;">
+                  <span style="background-color: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">3</span>
+                  <p style="color: #6b7280; margin: 0; font-size: 14px;">Обрати вашу посаду</p>
+                </div>
+              </div>
+              
+              <!-- Notice -->
+              <div style="background-color: #fef3c7; border-radius: 12px; padding: 16px; margin-top: 24px; display: flex; align-items: flex-start;">
+                <span style="font-size: 20px; margin-right: 12px;">⚡</span>
+                <p style="color: #92400e; margin: 0; font-size: 14px;">
+                  <strong>Важливо:</strong> Ваш акаунт стане активним після верифікації адміністратором.
+                </p>
+              </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 32px;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Якщо у вас виникнуть питання, зверніться до адміністратора
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                © 2024 CRM Pro. Усі права захищено.
+              </p>
+            </div>
           </div>
-          <p style="color: #888; font-size: 14px;">
-            Если у вас возникнут вопросы, обратитесь к администратору.
-          </p>
-        </div>
+        </body>
+        </html>
       `,
     });
 
