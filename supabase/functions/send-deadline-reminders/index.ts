@@ -17,7 +17,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authorization - only accept requests with service role key
     const authHeader = req.headers.get("Authorization");
     const expectedAuth = `Bearer ${supabaseServiceKey}`;
     
@@ -31,7 +30,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get tasks with deadlines tomorrow
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -39,7 +37,6 @@ serve(async (req) => {
 
     console.log(`Checking tasks with deadline on ${tomorrowDate}`);
 
-    // Get tasks with deadline tomorrow that are not done
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select('id, title, deadline, created_by, status')
@@ -62,14 +59,21 @@ serve(async (req) => {
 
     const emailsSent: string[] = [];
 
+    const getStatusLabel = (status: string) => {
+      switch (status) {
+        case 'todo': return 'До виконання';
+        case 'in_progress': return 'В роботі';
+        case 'review': return 'На перевірці';
+        default: return status;
+      }
+    };
+
     for (const task of tasks) {
-      // Get assignees for this task
       const { data: assignees } = await supabase
         .from('task_assignees')
         .select('user_id')
         .eq('task_id', task.id);
 
-      // Collect all users to notify (assignees + creator)
       const usersToNotify = new Set<string>();
       
       if (assignees) {
@@ -80,7 +84,6 @@ serve(async (req) => {
         usersToNotify.add(task.created_by);
       }
 
-      // Get emails for all users
       const userIds = Array.from(usersToNotify);
       if (userIds.length === 0) continue;
 
@@ -97,39 +100,80 @@ serve(async (req) => {
         if (!profile.email) continue;
 
         try {
-          // Create in-app notification
           await supabase.from('notifications').insert({
             user_id: profile.user_id,
             type: 'deadline',
-            title: 'Приближается дедлайн задачи',
-            message: `Задача "${task.title}" должна быть завершена завтра (${tomorrowDate})`,
+            title: 'Наближається дедлайн завдання',
+            message: `Завдання "${task.title}" має бути завершено завтра (${tomorrowDate})`,
             task_id: task.id,
           });
 
-          // Send email
           const { error: emailError } = await resend.emails.send({
             from: "CRM <onboarding@resend.dev>",
             to: [profile.email],
-            subject: `⏰ Напоминание: дедлайн задачи "${task.title}" завтра`,
+            subject: `⏰ Нагадування: дедлайн завдання "${task.title}" завтра`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #f59e0b;">⏰ Приближается дедлайн</h2>
-                <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                  <h3 style="color: #1a1a1a; margin-top: 0;">${task.title}</h3>
-                  <p style="color: #666; margin: 8px 0;">
-                    <strong>Дедлайн:</strong> ${tomorrowDate}
-                  </p>
-                  <p style="color: #666; margin: 8px 0;">
-                    <strong>Статус:</strong> ${task.status === 'todo' ? 'К выполнению' : task.status === 'in_progress' ? 'В работе' : task.status === 'review' ? 'На проверке' : task.status}
-                  </p>
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                  <!-- Header -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
+                      <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Main Card -->
+                  <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                      <span style="font-size: 48px;">⏰</span>
+                    </div>
+                    <h1 style="color: #f59e0b; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                      Наближається дедлайн!
+                    </h1>
+                    <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
+                      Вітаємо, ${profile.name || 'колего'}! Нагадуємо про завдання.
+                    </p>
+                    
+                    <!-- Task Card -->
+                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #f59e0b;">
+                      <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${task.title}</h2>
+                      <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 16px; margin-right: 8px;">📅</span>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                          <strong>Дедлайн:</strong> ${tomorrowDate}
+                        </p>
+                      </div>
+                      <div style="display: flex; align-items: center;">
+                        <span style="font-size: 16px; margin-right: 8px;">📋</span>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                          <strong>Статус:</strong> ${getStatusLabel(task.status)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
+                      Термін виконання завдання закінчується завтра. Будь ласка, завершіть його вчасно.
+                    </p>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="text-align: center; margin-top: 32px;">
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                      Це автоматичне сповіщення з CRM системи
+                    </p>
+                    <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                      © 2024 CRM Pro. Усі права захищено.
+                    </p>
+                  </div>
                 </div>
-                <p style="color: #666; font-size: 14px;">
-                  Здравствуйте, ${profile.name || 'пользователь'}! Напоминаем, что срок выполнения задачи истекает завтра.
-                </p>
-                <p style="color: #888; font-size: 14px; margin-top: 20px;">
-                  Это автоматическое уведомление из CRM системы.
-                </p>
-              </div>
+              </body>
+              </html>
             `,
           });
 

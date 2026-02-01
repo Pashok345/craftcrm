@@ -26,7 +26,6 @@ serve(async (req) => {
   }
 
   try {
-    // Verify JWT authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Missing or invalid authorization header');
@@ -36,7 +35,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate the JWT token and get user
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -60,10 +58,8 @@ serve(async (req) => {
       );
     }
 
-    // Use service role for database operations
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify caller is related to the task (creator or assignee)
     const { data: taskData } = await adminClient
       .from('tasks')
       .select('created_by')
@@ -85,7 +81,6 @@ serve(async (req) => {
       );
     }
 
-    // Get emails for recipients
     const { data: profiles, error: profilesError } = await adminClient
       .from('profiles')
       .select('user_id, email, name')
@@ -111,26 +106,68 @@ serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `💬 Новий коментар до задачі "${task_title}"`,
+          subject: `💬 Новий коментар до завдання "${task_title}"`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #3b82f6;">💬 Новий коментар</h2>
-              <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-                <h3 style="color: #1a1a1a; margin-top: 0;">Задача: ${task_title}</h3>
-                <p style="color: #666; margin: 8px 0;">
-                  <strong>${commenter_name}</strong> залишив коментар:
-                </p>
-                <div style="background-color: #fff; padding: 12px; border-radius: 6px; margin-top: 12px;">
-                  <p style="color: #333; margin: 0; white-space: pre-wrap;">${truncatedComment}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                  <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
+                    <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+                  </div>
+                </div>
+                
+                <!-- Main Card -->
+                <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <span style="font-size: 48px;">💬</span>
+                  </div>
+                  <h1 style="color: #3b82f6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                    Новий коментар
+                  </h1>
+                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
+                    Вітаємо, ${profile.name || 'колего'}! У завданні є новий коментар.
+                  </p>
+                  
+                  <!-- Task Card -->
+                  <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #3b82f6;">
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">
+                      <strong>Завдання:</strong>
+                    </p>
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${task_title}</h2>
+                    
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">
+                      <strong>${commenter_name}</strong> залишив коментар:
+                    </p>
+                    
+                    <div style="background-color: white; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                      <p style="color: #374151; margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6;">${truncatedComment}</p>
+                    </div>
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
+                    Ви отримали це повідомлення, оскільки є учасником цього завдання.
+                  </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 32px;">
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                    Це автоматичне сповіщення з CRM системи
+                  </p>
+                  <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                    © 2024 CRM Pro. Усі права захищено.
+                  </p>
                 </div>
               </div>
-              <p style="color: #666; font-size: 14px;">
-                Вітаємо, ${profile.name || 'користувач'}! Ви отримали це повідомлення, оскільки є учасником цієї задачі.
-              </p>
-              <p style="color: #888; font-size: 14px; margin-top: 20px;">
-                Це автоматичне повідомлення з CRM системи.
-              </p>
-            </div>
+            </body>
+            </html>
           `,
         });
 

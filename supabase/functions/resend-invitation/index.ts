@@ -114,7 +114,7 @@ serve(async (req) => {
         data: {
           name: existingProfile?.name || '',
         },
-        redirectTo: `${origin}/auth`
+        redirectTo: `${origin}/complete-profile`
       }
     )
 

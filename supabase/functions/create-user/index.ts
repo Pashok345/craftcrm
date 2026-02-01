@@ -113,14 +113,13 @@ serve(async (req) => {
     const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
 
     // Use inviteUserByEmail - this sends invitation via Supabase's built-in email system
-    // (same system that sends verification emails - no Resend needed!)
     const { data: newUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email.trim(),
       {
         data: {
           name: name.trim(),
         },
-        redirectTo: `${origin}/auth`
+        redirectTo: `${origin}/complete-profile`
       }
     )
 

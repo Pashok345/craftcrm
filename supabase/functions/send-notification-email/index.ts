@@ -21,13 +21,11 @@ interface NotificationEmailRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       console.error('Missing or invalid authorization header');
@@ -52,8 +50,6 @@ serve(async (req) => {
     }
 
     const currentUserId = user.id;
-    
-    // Use service role for database operations
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { user_id, type, title, message, task_id }: NotificationEmailRequest = await req.json();
 
@@ -64,10 +60,7 @@ serve(async (req) => {
       );
     }
 
-    // Authorization check: user can send notifications related to their tasks
-    // or must be admin to send arbitrary notifications
     if (task_id) {
-      // Check if current user is related to the task (creator or assignee)
       const { data: taskRelation } = await adminClient
         .from('tasks')
         .select('id, created_by')
@@ -84,7 +77,6 @@ serve(async (req) => {
       const isTaskRelated = taskRelation?.created_by === currentUserId || !!assigneeRelation;
       
       if (!isTaskRelated) {
-        // Check if admin
         const { data: roleData } = await adminClient
           .from('user_roles')
           .select('role')
@@ -101,7 +93,6 @@ serve(async (req) => {
         }
       }
     } else {
-      // For non-task notifications, require admin role
       const { data: roleData } = await adminClient
         .from('user_roles')
         .select('role')
@@ -118,7 +109,6 @@ serve(async (req) => {
       }
     }
 
-    // Get user email
     const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('email, name')
@@ -137,44 +127,92 @@ serve(async (req) => {
     let htmlContent = '';
 
     if (type === 'welcome') {
-      subject = 'Добро пожаловать в CRM систему!';
+      subject = 'Ласкаво просимо до CRM системи!';
       htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Добро пожаловать, ${profile.name || 'пользователь'}!</h2>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #666; margin: 8px 0;">
-              Ваш аккаунт в CRM системе успешно создан.
-            </p>
-            <p style="color: #666; margin: 8px 0;">
-              Теперь вы можете войти в систему и начать работу.
-            </p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px;">
+                <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+              </div>
+            </div>
+            <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <span style="font-size: 48px;">🎉</span>
+              </div>
+              <h1 style="color: #22c55e; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                Ласкаво просимо!
+              </h1>
+              <p style="color: #6b7280; font-size: 16px; margin: 0 0 24px 0; text-align: center;">
+                Вітаємо, ${profile.name || 'колего'}!
+              </p>
+              <div style="background-color: #f0fdf4; border-radius: 12px; padding: 24px; border-left: 4px solid #22c55e;">
+                <p style="color: #374151; margin: 0 0 8px 0;">
+                  Ваш акаунт у CRM системі успішно створено.
+                </p>
+                <p style="color: #374151; margin: 0;">
+                  Тепер ви можете увійти в систему та розпочати роботу.
+                </p>
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 32px;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Якщо у вас виникнуть питання, зверніться до адміністратора.
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                © 2024 CRM Pro. Усі права захищено.
+              </p>
+            </div>
           </div>
-          <p style="color: #888; font-size: 14px;">
-            Если у вас возникнут вопросы, обратитесь к администратору.
-          </p>
-        </div>
+        </body>
+        </html>
       `;
     } else {
-      subject = title || 'Новое уведомление';
+      subject = title || 'Нове сповіщення';
       htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${title}</h2>
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #666; margin: 8px 0;">
-              ${message}
-            </p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px;">
+                <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
+              </div>
+            </div>
+            <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <span style="font-size: 48px;">🔔</span>
+              </div>
+              <h1 style="color: #3b82f6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
+                ${title}
+              </h1>
+              <div style="background-color: #eff6ff; border-radius: 12px; padding: 24px; margin-top: 24px; border-left: 4px solid #3b82f6;">
+                <p style="color: #374151; margin: 0;">
+                  ${message}
+                </p>
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 32px;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Це автоматичне сповіщення з CRM системи
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+                © 2024 CRM Pro. Усі права захищено.
+              </p>
+            </div>
           </div>
-          ${task_id ? `
-            <p style="color: #666; font-size: 14px;">
-              <a href="${supabaseUrl.replace('.supabase.co', '')}/tasks/${task_id}" style="color: #3b82f6;">
-                Перейти к задаче
-              </a>
-            </p>
-          ` : ''}
-          <p style="color: #888; font-size: 14px;">
-            Это автоматическое уведомление из CRM системы.
-          </p>
-        </div>
+        </body>
+        </html>
       `;
     }
 
