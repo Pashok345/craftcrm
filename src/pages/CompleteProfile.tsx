@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,10 +37,21 @@ const CompleteProfile = () => {
   const [checkingSession, setCheckingSession] = useState(true);
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
     const checkSession = async () => {
+      // If redirected back with PKCE code, exchange it for a session first
+      const code = searchParams.get('code');
+      if (code) {
+        try {
+          await supabase.auth.exchangeCodeForSession(code);
+        } catch {
+          // ignore
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -58,7 +69,7 @@ const CompleteProfile = () => {
 
       if (profile?.is_verified) {
         // Already verified - go to dashboard
-        navigate('/');
+        navigate('/dashboard');
         return;
       }
 
@@ -79,7 +90,7 @@ const CompleteProfile = () => {
     };
 
     checkSession();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const formatPhone = (value: string) => {
     // Remove all non-digits except + at start
@@ -177,7 +188,7 @@ const CompleteProfile = () => {
       });
 
       // Redirect to dashboard
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Error completing profile:', error);
       toast({
