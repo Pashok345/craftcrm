@@ -66,11 +66,12 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
+    const normalizedEmail = email.trim().toLowerCase()
 
     // First, check if user exists and their confirmation status
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
     const existingUser = existingUsers?.users?.find(
-      u => u.email?.toLowerCase() === email.trim().toLowerCase()
+      u => u.email?.toLowerCase() === normalizedEmail
     )
 
     if (!existingUser) {
@@ -80,26 +81,26 @@ serve(async (req) => {
       )
     }
 
-    // If the user has already signed in at least once, they have completed onboarding.
-    // Treat this as a non-fatal business case (200) so the UI can show a friendly message
-    // without triggering a runtime error overlay.
-    if (existingUser.last_sign_in_at) {
+    // IMPORTANT:
+    // last_sign_in_at can be set as soon as the user clicks the invite link (auto-sign-in),
+    // even if they haven't set a password / completed onboarding.
+    // So we only block resending when the profile is already verified in our CRM.
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('name, position, phone, is_verified')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    if (existingProfile?.is_verified) {
       return new Response(
         JSON.stringify({
           success: false,
-          code: 'already_registered',
-          message: 'Пользователь уже завершил регистрацию и входил в систему',
+          code: 'already_verified',
+          message: 'Пользователь уже активирован и имеет доступ к системе',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Get user's profile data before deletion to preserve it
-    const { data: existingProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('name, position, phone')
-      .eq('email', email.trim())
-      .maybeSingle()
 
     // Delete the old user and create new invitation
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
@@ -114,7 +115,7 @@ serve(async (req) => {
 
     // Now create a fresh invitation
     const { data: newInvite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      email.trim(),
+      normalizedEmail,
       {
         data: {
           name: existingProfile?.name || '',
