@@ -19,12 +19,14 @@ const Auth = () => {
     // Check for recovery token in URL hash or search params
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type') || searchParams.get('type');
-    
-    // Check for invite token - redirect to complete-profile
-    if (type === 'invite' || type === 'signup') {
-      // User came from invite link - redirect to profile completion
-      navigate("/complete-profile");
-      return;
+
+    // If Auth redirected back with PKCE code, exchange it for a session
+    // (invite links may use this flow depending on project settings)
+    const code = searchParams.get('code') || hashParams.get('code');
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).catch(() => {
+        // ignore: user will see normal auth UI
+      });
     }
     
     if (type === 'recovery') {
@@ -32,57 +34,47 @@ const Auth = () => {
       setView("reset-password");
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsRecoverySession(true);
-          setView("reset-password");
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          // Check if this is from an invite - user needs to complete profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_verified, position, phone')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          // If not verified and hasn't set up profile, redirect to complete-profile
-          if (!profile?.is_verified) {
-            navigate("/complete-profile");
-            return;
-          }
-          
-          navigate("/");
-        } else if (session?.user && !isRecoverySession) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoverySession(true);
+        setView("reset-password");
+        return;
+      }
+
+      if (event === 'SIGNED_IN' && session?.user && !isRecoverySession) {
+        // Defer DB calls outside callback
+        setTimeout(async () => {
           const { data: profile } = await supabase
             .from('profiles')
             .select('is_verified')
-            .eq('user_id', session.user.id)
+            .eq('user_id', session.user!.id)
             .maybeSingle();
-          
-          if (profile?.is_verified === false) {
-            await supabase.auth.signOut();
-            return;
-          }
-          navigate("/");
-        }
-      }
-    );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+          if (profile?.is_verified) {
+            navigate('/dashboard');
+          } else {
+            navigate('/complete-profile');
+          }
+        }, 0);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
       // Don't redirect if we're in recovery mode
       if (session?.user && !isRecoverySession && view !== "reset-password") {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_verified')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        // If not verified, redirect to complete-profile
-        if (profile?.is_verified === false) {
-          navigate("/complete-profile");
-          return;
-        }
-        navigate("/");
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_verified')
+            .eq('user_id', session.user!.id)
+            .maybeSingle();
+
+          if (profile?.is_verified) {
+            navigate('/dashboard');
+          } else {
+            navigate('/complete-profile');
+          }
+        }, 0);
       }
     });
 
