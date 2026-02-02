@@ -80,12 +80,17 @@ serve(async (req) => {
       )
     }
 
-    // Check if user has actually completed registration (signed in at least once)
-    // email_confirmed_at can be set if they clicked the link but didn't complete password setup
+    // If the user has already signed in at least once, they have completed onboarding.
+    // Treat this as a non-fatal business case (200) so the UI can show a friendly message
+    // without triggering a runtime error overlay.
     if (existingUser.last_sign_in_at) {
       return new Response(
-        JSON.stringify({ error: 'Пользователь уже завершил регистрацию и входил в систему' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          success: false,
+          code: 'already_registered',
+          message: 'Пользователь уже завершил регистрацию и входил в систему',
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 

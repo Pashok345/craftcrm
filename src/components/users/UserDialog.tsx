@@ -218,6 +218,15 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
       });
 
       if (error) throw error;
+      // Non-fatal business cases (e.g. user already onboarded)
+      if (data?.success === false) {
+        toast({
+          title: data?.message || t('invitationError'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (data?.error) throw new Error(data.error);
 
       toast({ title: t('invitationResent') });
