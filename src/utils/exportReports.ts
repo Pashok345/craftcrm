@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Task, Project, Profile, TimeEntry } from '@/types/database';
 import { format, parseISO } from 'date-fns';
 
@@ -276,104 +276,138 @@ export const exportToPDF = (data: ExportData) => {
   doc.save(`analytics-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
 
-export const exportToExcel = (data: ExportData) => {
+export const exportToExcel = async (data: ExportData) => {
   const { translations: t } = data;
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'CRM Pro';
+  workbook.created = new Date();
   
   // Summary sheet
-  const summaryData = [
-    [t.reportTitle],
-    [],
-    [t.generatedAt, format(new Date(), 'dd.MM.yyyy HH:mm')],
-    [t.period, data.period],
-    [t.user, data.selectedUser || t.allEmployees],
-    [],
-    [t.summary],
-    [t.totalTasks, data.tasks.length],
-    [t.completedTasks, data.tasks.filter(task => task.status === 'done').length],
-    [t.totalProjects, data.projects.length],
-    [t.timeTracked, `${Math.round(data.totalTimeMinutes / 60)} ${t.hours}`],
-    [t.avgCompletionDays, `${data.avgCompletionDays} ${t.days}`],
-  ];
+  const summarySheet = workbook.addWorksheet('Summary');
+  summarySheet.addRow([t.reportTitle]);
+  summarySheet.addRow([]);
+  summarySheet.addRow([t.generatedAt, format(new Date(), 'dd.MM.yyyy HH:mm')]);
+  summarySheet.addRow([t.period, data.period]);
+  summarySheet.addRow([t.user, data.selectedUser || t.allEmployees]);
+  summarySheet.addRow([]);
+  summarySheet.addRow([t.summary]);
+  summarySheet.addRow([t.totalTasks, data.tasks.length]);
+  summarySheet.addRow([t.completedTasks, data.tasks.filter(task => task.status === 'done').length]);
+  summarySheet.addRow([t.totalProjects, data.projects.length]);
+  summarySheet.addRow([t.timeTracked, `${Math.round(data.totalTimeMinutes / 60)} ${t.hours}`]);
+  summarySheet.addRow([t.avgCompletionDays, `${data.avgCompletionDays} ${t.days}`]);
   
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+  // Style the title
+  summarySheet.getRow(1).font = { bold: true, size: 14 };
+  summarySheet.getColumn(1).width = 25;
+  summarySheet.getColumn(2).width = 30;
   
   // Task status sheet
   if (data.taskStatusData.length > 0) {
-    const taskStatusSheet = XLSX.utils.json_to_sheet(
-      data.taskStatusData.map(item => ({
-        [t.status]: item.name,
-        [t.totalTasks]: item.value,
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, taskStatusSheet, 'Task Status');
+    const taskStatusSheet = workbook.addWorksheet('Task Status');
+    taskStatusSheet.addRow([t.status, t.totalTasks]);
+    taskStatusSheet.getRow(1).font = { bold: true };
+    data.taskStatusData.forEach(item => {
+      taskStatusSheet.addRow([item.name, item.value]);
+    });
+    taskStatusSheet.getColumn(1).width = 20;
+    taskStatusSheet.getColumn(2).width = 15;
   }
   
   // Project status sheet
   if (data.projectStatusData.length > 0) {
-    const projectStatusSheet = XLSX.utils.json_to_sheet(
-      data.projectStatusData.map(item => ({
-        [t.status]: item.name,
-        [t.totalProjects]: item.value,
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, projectStatusSheet, 'Project Status');
+    const projectStatusSheet = workbook.addWorksheet('Project Status');
+    projectStatusSheet.addRow([t.status, t.totalProjects]);
+    projectStatusSheet.getRow(1).font = { bold: true };
+    data.projectStatusData.forEach(item => {
+      projectStatusSheet.addRow([item.name, item.value]);
+    });
+    projectStatusSheet.getColumn(1).width = 20;
+    projectStatusSheet.getColumn(2).width = 15;
   }
   
   // Tags sheet
   if (data.tagUsageData.length > 0) {
-    const tagsSheet = XLSX.utils.json_to_sheet(
-      data.tagUsageData.map(item => ({
-        Tag: item.name,
-        Usage: item.value,
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, tagsSheet, 'Tags');
+    const tagsSheet = workbook.addWorksheet('Tags');
+    tagsSheet.addRow(['Tag', 'Usage']);
+    tagsSheet.getRow(1).font = { bold: true };
+    data.tagUsageData.forEach(item => {
+      tagsSheet.addRow([item.name, item.value]);
+    });
+    tagsSheet.getColumn(1).width = 20;
+    tagsSheet.getColumn(2).width = 10;
   }
   
   // Tasks sheet
   if (data.tasks.length > 0) {
-    const tasksSheet = XLSX.utils.json_to_sheet(
-      data.tasks.map(task => ({
-        [t.taskTitle]: task.title,
-        [t.status]: getStatusLabel(task.status, t),
-        [t.deadline]: task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : '',
-        [t.createdAt]: format(parseISO(task.created_at), 'dd.MM.yyyy'),
-        [t.description]: task.description || '',
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, tasksSheet, 'Tasks');
+    const tasksSheet = workbook.addWorksheet('Tasks');
+    tasksSheet.addRow([t.taskTitle, t.status, t.deadline, t.createdAt, t.description]);
+    tasksSheet.getRow(1).font = { bold: true };
+    data.tasks.forEach(task => {
+      tasksSheet.addRow([
+        task.title,
+        getStatusLabel(task.status, t),
+        task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : '',
+        format(parseISO(task.created_at), 'dd.MM.yyyy'),
+        task.description || ''
+      ]);
+    });
+    tasksSheet.getColumn(1).width = 40;
+    tasksSheet.getColumn(2).width = 15;
+    tasksSheet.getColumn(3).width = 15;
+    tasksSheet.getColumn(4).width = 15;
+    tasksSheet.getColumn(5).width = 50;
   }
   
   // Projects sheet
   if (data.projects.length > 0) {
-    const projectsSheet = XLSX.utils.json_to_sheet(
-      data.projects.map(project => ({
-        [t.projectTitle]: project.title,
-        [t.status]: getProjectStatusLabel(project.status, t),
-        [t.budget]: project.budget || '',
-        [t.startDate]: project.start_date ? format(parseISO(project.start_date), 'dd.MM.yyyy') : '',
-        [t.endDate]: project.end_date ? format(parseISO(project.end_date), 'dd.MM.yyyy') : '',
-        [t.description]: project.description || '',
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, projectsSheet, 'Projects');
+    const projectsSheet = workbook.addWorksheet('Projects');
+    projectsSheet.addRow([t.projectTitle, t.status, t.budget, t.startDate, t.endDate, t.description]);
+    projectsSheet.getRow(1).font = { bold: true };
+    data.projects.forEach(project => {
+      projectsSheet.addRow([
+        project.title,
+        getProjectStatusLabel(project.status, t),
+        project.budget || '',
+        project.start_date ? format(parseISO(project.start_date), 'dd.MM.yyyy') : '',
+        project.end_date ? format(parseISO(project.end_date), 'dd.MM.yyyy') : '',
+        project.description || ''
+      ]);
+    });
+    projectsSheet.getColumn(1).width = 35;
+    projectsSheet.getColumn(2).width = 15;
+    projectsSheet.getColumn(3).width = 15;
+    projectsSheet.getColumn(4).width = 15;
+    projectsSheet.getColumn(5).width = 15;
+    projectsSheet.getColumn(6).width = 50;
   }
   
   // Time entries sheet
   if (data.timeEntries.length > 0) {
-    const timeSheet = XLSX.utils.json_to_sheet(
-      data.timeEntries.map(entry => ({
-        [t.date]: format(parseISO(entry.start_time), 'dd.MM.yyyy HH:mm'),
-        [t.duration]: entry.duration_minutes || 0,
-        [t.description]: entry.description || '',
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, timeSheet, 'Time Entries');
+    const timeSheet = workbook.addWorksheet('Time Entries');
+    timeSheet.addRow([t.date, t.duration, t.description]);
+    timeSheet.getRow(1).font = { bold: true };
+    data.timeEntries.forEach(entry => {
+      timeSheet.addRow([
+        format(parseISO(entry.start_time), 'dd.MM.yyyy HH:mm'),
+        entry.duration_minutes || 0,
+        entry.description || ''
+      ]);
+    });
+    timeSheet.getColumn(1).width = 20;
+    timeSheet.getColumn(2).width = 15;
+    timeSheet.getColumn(3).width = 50;
   }
   
-  XLSX.writeFile(workbook, `analytics-report-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  // Generate and download the file
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `analytics-report-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 function getStatusLabel(status: string, t: ExportData['translations']): string {
