@@ -35,11 +35,14 @@ serve(async (req) => {
       );
     }
 
+    const token = authHeader.replace('Bearer ', '');
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // CRITICAL: Must pass token explicitly when verify_jwt=false
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Invalid token:', userError);
