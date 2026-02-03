@@ -775,6 +775,62 @@ const Messages = () => {
                   {group.messages.map((msg) => {
                     const isOwn = msg.user_id === user?.id;
                     const profile = profiles[msg.user_id];
+                    
+                    // Parse message content for attachments
+                    const renderMessageContent = (content: string) => {
+                      // Check for file attachment pattern: [📎 filename](url)
+                      const filePattern = /\[📎\s*([^\]]+)\]\(([^)]+)\)/g;
+                      const parts: React.ReactNode[] = [];
+                      let lastIndex = 0;
+                      let match;
+                      
+                      while ((match = filePattern.exec(content)) !== null) {
+                        // Add text before the match
+                        if (match.index > lastIndex) {
+                          const textBefore = content.slice(lastIndex, match.index).trim();
+                          if (textBefore) {
+                            parts.push(<span key={`text-${lastIndex}`}>{textBefore}</span>);
+                          }
+                        }
+                        
+                        const fileName = match[1];
+                        const fileUrl = match[2];
+                        
+                        parts.push(
+                          <a
+                            key={`file-${match.index}`}
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              'flex items-center gap-2 p-2 rounded-lg mt-1 hover:opacity-80 transition-opacity',
+                              isOwn ? 'bg-primary-foreground/10' : 'bg-muted'
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <FileText className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm truncate max-w-[200px]">{fileName}</span>
+                          </a>
+                        );
+                        
+                        lastIndex = match.index + match[0].length;
+                      }
+                      
+                      // Add remaining text
+                      if (lastIndex < content.length) {
+                        const remainingText = content.slice(lastIndex).trim();
+                        if (remainingText) {
+                          parts.push(<span key={`text-${lastIndex}`}>{remainingText}</span>);
+                        }
+                      }
+                      
+                      // If no files found, return original content
+                      if (parts.length === 0) {
+                        return <span>{content}</span>;
+                      }
+                      
+                      return <div className="space-y-1">{parts}</div>;
+                    };
 
                     return (
                       <div
@@ -805,7 +861,7 @@ const Messages = () => {
                               {profile.name}
                             </p>
                           )}
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <div className="text-sm whitespace-pre-wrap">{renderMessageContent(msg.content)}</div>
                           <p
                             className={cn(
                               'text-[10px] mt-1',

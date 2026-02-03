@@ -439,6 +439,9 @@ export const translations: Translations = {
   tagName: { ru: 'Название тега', en: 'Tag name', uk: 'Назва тегу' },
   tagCreated: { ru: 'Тег создан', en: 'Tag created', uk: 'Тег створено' },
   createNewTag: { ru: 'Создать новый тег', en: 'Create new tag', uk: 'Створити новий тег' },
+  deleteTag: { ru: 'Удалить тег?', en: 'Delete tag?', uk: 'Видалити тег?' },
+  deleteTagConfirm: { ru: 'Тег будет удалён из всех задач. Это действие нельзя отменить.', en: 'Tag will be removed from all tasks. This action cannot be undone.', uk: 'Тег буде видалено з усіх задач. Цю дію неможливо скасувати.' },
+  tagDeleted: { ru: 'Тег удалён', en: 'Tag deleted', uk: 'Тег видалено' },
 
   // Export
   exportReport: { ru: 'Экспорт отчёта', en: 'Export Report', uk: 'Експорт звіту' },
