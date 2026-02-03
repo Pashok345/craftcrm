@@ -22,6 +22,7 @@ import Processes from "./pages/Processes";
 import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 import Analytics from "./pages/Analytics";
+import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
 
