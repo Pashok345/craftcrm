@@ -81,7 +81,7 @@ export const ProposalDialog = ({ open, onOpenChange, proposal }: ProposalDialogP
         title,
         client_id: clientId || null,
         deal_id: dealId || null,
-        content: items.filter((i) => i.name.trim()),
+        content: JSON.parse(JSON.stringify(items.filter((i) => i.name.trim()))),
         total_amount: totalAmount,
         status,
         valid_until: validUntil || null,
