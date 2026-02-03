@@ -30,6 +30,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     { icon: Folder, label: t('projects'), path: '/projects' },
     { icon: CheckSquare, label: t('tasks'), path: '/tasks' },
     { icon: GitBranch, label: t('processes'), path: '/processes' },
+    { icon: TrendingUp, label: t('sales'), path: '/sales' },
     { icon: Calendar, label: t('meetings'), path: '/meetings' },
     { icon: BarChart3, label: t('analytics'), path: '/analytics' },
     { icon: Users, label: t('users'), path: '/users' },
