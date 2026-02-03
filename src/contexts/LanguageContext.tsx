@@ -501,7 +501,17 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+// Default context value to prevent crashes during React error recovery
+const defaultLanguageContext: LanguageContextType = {
+  language: 'uk',
+  setLanguage: () => {},
+  t: (key: string) => {
+    const translation = translations[key];
+    return translation?.uk || key;
+  },
+};
+
+const LanguageContext = createContext<LanguageContextType>(defaultLanguageContext);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
