@@ -533,9 +533,7 @@ export const translations: Translations = {
   stageUpdated: { ru: 'Этап обновлён', en: 'Stage updated', uk: 'Етап оновлено' },
   
   // Deal Comments
-  writeComment: { ru: 'Написать комментарий...', en: 'Write a comment...', uk: 'Написати коментар...' },
   unknownUser: { ru: 'Неизвестный пользователь', en: 'Unknown user', uk: 'Невідомий користувач' },
-  loading: { ru: 'Загрузка', en: 'Loading', uk: 'Завантаження' },
   
   // Clients
   noClients: { ru: 'Нет клиентов', en: 'No clients', uk: 'Немає клієнтів' },
