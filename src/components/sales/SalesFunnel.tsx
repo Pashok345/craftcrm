@@ -120,7 +120,14 @@ export const SalesFunnel = () => {
               <Card className="h-full">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                      onClick={() => {
+                        setSelectedStage(stage);
+                        setStageDialogOpen(true);
+                      }}
+                      title={t('editStage')}
+                    >
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: stage.color }}
