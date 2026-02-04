@@ -23,6 +23,8 @@ export const SalesFunnel = () => {
   const [dealDialogOpen, setDealDialogOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<DealStage | undefined>(undefined);
 
   const { data: stages = [] } = useQuery({
     queryKey: ['deal-stages'],
