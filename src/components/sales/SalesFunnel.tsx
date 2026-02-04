@@ -98,10 +98,19 @@ export const SalesFunnel = () => {
           <span>{t('totalDeals')}: {deals.length}</span>
           <span>{t('totalAmount')}: {formatCurrency(deals.reduce((sum, d) => sum + (d.amount || 0), 0))}</span>
         </div>
-        <Button onClick={() => setDealDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('addDeal')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => {
+            setSelectedStage(undefined);
+            setStageDialogOpen(true);
+          }}>
+            <Settings2 className="h-4 w-4 mr-2" />
+            {t('addStage')}
+          </Button>
+          <Button onClick={() => setDealDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('addDeal')}
+          </Button>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
