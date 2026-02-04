@@ -239,6 +239,13 @@ export const SalesFunnel = () => {
           stages={stages}
         />
       )}
+
+      <StageDialog
+        open={stageDialogOpen}
+        onOpenChange={setStageDialogOpen}
+        stage={selectedStage}
+        maxSortOrder={Math.max(...stages.map(s => s.sort_order), 0)}
+      />
     </div>
   );
 };

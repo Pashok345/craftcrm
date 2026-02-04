@@ -162,7 +162,7 @@ export const ClientDialog = ({ open, onOpenChange, client }: ClientDialogProps) 
               <Input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+7 (999) 123-45-67"
+                placeholder="+38 (0XX) XXX-XX-XX"
               />
             </div>
           </div>

@@ -155,6 +155,10 @@ export const DealDetailDialog = ({
                 {t('delete')}
               </Button>
             </div>
+
+            <Separator className="my-4" />
+            
+            <DealCommentsSection dealId={deal.id} />
           </div>
         </DialogContent>
       </Dialog>
