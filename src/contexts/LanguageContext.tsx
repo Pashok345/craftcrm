@@ -523,6 +523,20 @@ export const translations: Translations = {
   deleteDeal: { ru: 'Удалить сделку', en: 'Delete deal', uk: 'Видалити угоду' },
   deleteDealConfirm: { ru: 'Вы уверены, что хотите удалить эту сделку?', en: 'Are you sure you want to delete this deal?', uk: 'Ви впевнені, що хочете видалити цю угоду?' },
   
+  // Stages
+  addStage: { ru: 'Добавить этап', en: 'Add stage', uk: 'Додати етап' },
+  editStage: { ru: 'Редактировать этап', en: 'Edit stage', uk: 'Редагувати етап' },
+  stageName: { ru: 'Название этапа', en: 'Stage name', uk: 'Назва етапу' },
+  enterStageName: { ru: 'Введите название этапа', en: 'Enter stage name', uk: 'Введіть назву етапу' },
+  stageColor: { ru: 'Цвет этапа', en: 'Stage color', uk: 'Колір етапу' },
+  stageCreated: { ru: 'Этап создан', en: 'Stage created', uk: 'Етап створено' },
+  stageUpdated: { ru: 'Этап обновлён', en: 'Stage updated', uk: 'Етап оновлено' },
+  
+  // Deal Comments
+  writeComment: { ru: 'Написать комментарий...', en: 'Write a comment...', uk: 'Написати коментар...' },
+  unknownUser: { ru: 'Неизвестный пользователь', en: 'Unknown user', uk: 'Невідомий користувач' },
+  loading: { ru: 'Загрузка', en: 'Loading', uk: 'Завантаження' },
+  
   // Clients
   noClients: { ru: 'Нет клиентов', en: 'No clients', uk: 'Немає клієнтів' },
   addFirstClient: { ru: 'Добавьте первого клиента', en: 'Add your first client', uk: 'Додайте першого клієнта' },
