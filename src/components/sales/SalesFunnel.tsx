@@ -7,12 +7,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, DollarSign, Calendar, Building2 } from 'lucide-react';
+import { Plus, DollarSign, Calendar, Building2, Settings2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DealDialog } from './DealDialog';
 import { DealDetailDialog } from './DealDetailDialog';
+import { StageDialog } from './StageDialog';
 import type { Deal, DealStage, Client } from '@/types/sales';
 
 export const SalesFunnel = () => {
@@ -22,6 +23,8 @@ export const SalesFunnel = () => {
   const [dealDialogOpen, setDealDialogOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<DealStage | undefined>(undefined);
 
   const { data: stages = [] } = useQuery({
     queryKey: ['deal-stages'],
@@ -95,10 +98,19 @@ export const SalesFunnel = () => {
           <span>{t('totalDeals')}: {deals.length}</span>
           <span>{t('totalAmount')}: {formatCurrency(deals.reduce((sum, d) => sum + (d.amount || 0), 0))}</span>
         </div>
-        <Button onClick={() => setDealDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('addDeal')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => {
+            setSelectedStage(undefined);
+            setStageDialogOpen(true);
+          }}>
+            <Settings2 className="h-4 w-4 mr-2" />
+            {t('addStage')}
+          </Button>
+          <Button onClick={() => setDealDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('addDeal')}
+          </Button>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -108,7 +120,14 @@ export const SalesFunnel = () => {
               <Card className="h-full">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                      onClick={() => {
+                        setSelectedStage(stage);
+                        setStageDialogOpen(true);
+                      }}
+                      title={t('editStage')}
+                    >
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: stage.color }}
@@ -220,6 +239,13 @@ export const SalesFunnel = () => {
           stages={stages}
         />
       )}
+
+      <StageDialog
+        open={stageDialogOpen}
+        onOpenChange={setStageDialogOpen}
+        stage={selectedStage}
+        maxSortOrder={Math.max(...stages.map(s => s.sort_order), 0)}
+      />
     </div>
   );
 };

@@ -21,10 +21,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { DollarSign, Calendar, Building2, Percent, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { DealDialog } from './DealDialog';
+import { DealCommentsSection } from './DealCommentsSection';
 import type { Deal, DealStage } from '@/types/sales';
 
 interface DealDetailDialogProps {
@@ -153,6 +155,10 @@ export const DealDetailDialog = ({
                 {t('delete')}
               </Button>
             </div>
+
+            <Separator className="my-4" />
+            
+            <DealCommentsSection dealId={deal.id} />
           </div>
         </DialogContent>
       </Dialog>

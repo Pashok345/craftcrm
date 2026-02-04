@@ -167,6 +167,41 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_comments: {
+        Row: {
+          content: string
+          created_at: string
+          deal_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          deal_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          deal_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_comments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_stages: {
         Row: {
           color: string
