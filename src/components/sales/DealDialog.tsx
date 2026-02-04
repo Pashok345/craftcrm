@@ -154,12 +154,12 @@ export const DealDialog = ({ open, onOpenChange, stages, deal }: DealDialogProps
 
           <div className="space-y-2">
             <Label>{t('client')}</Label>
-            <Select value={clientId} onValueChange={setClientId}>
+          <Select value={clientId || '__none__'} onValueChange={(v) => setClientId(v === '__none__' ? '' : v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t('selectClient')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('noClient')}</SelectItem>
+                <SelectItem value="__none__">{t('noClient')}</SelectItem>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.name}
