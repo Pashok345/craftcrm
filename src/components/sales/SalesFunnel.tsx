@@ -7,12 +7,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, DollarSign, Calendar, Building2 } from 'lucide-react';
+import { Plus, DollarSign, Calendar, Building2, Settings2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DealDialog } from './DealDialog';
 import { DealDetailDialog } from './DealDetailDialog';
+import { StageDialog } from './StageDialog';
 import type { Deal, DealStage, Client } from '@/types/sales';
 
 export const SalesFunnel = () => {
