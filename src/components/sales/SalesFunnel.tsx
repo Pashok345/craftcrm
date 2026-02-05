@@ -154,118 +154,142 @@ export const SalesFunnel = () => {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="stages" direction="horizontal" type="STAGE">
-          {(provided) => (
+          {(stagesProvided) => (
             <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
+              ref={stagesProvided.innerRef}
+              {...stagesProvided.droppableProps}
               className="flex gap-4 overflow-x-auto pb-4"
             >
-              {stages.map((stage, index) => (
-                <Draggable key={stage.id} draggableId={`stage-${stage.id}`} index={index}>
-                  {(provided, snapshot) => (
+              {stages.map((stage, stageIndex) => (
+                <Draggable key={stage.id} draggableId={`stage-${stage.id}`} index={stageIndex}>
+                  {(stageProvided, stageSnapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
+                      ref={stageProvided.innerRef}
+                      {...stageProvided.draggableProps}
                       className={cn(
                         "flex-shrink-0 w-72",
-                        snapshot.isDragging && "opacity-90"
+                        stageSnapshot.isDragging && "opacity-90"
                       )}
                     >
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: stage.color }}
-                      />
-                      <CardTitle className="text-sm font-medium">
-                        {stage.name}
-                      </CardTitle>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {getDealsByStage(stage.id).length}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(getStageTotal(stage.id))}
-                  </p>
-                </CardHeader>
-                <CardContent className="p-2">
-                  <Droppable droppableId={stage.id}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          'min-h-[200px] space-y-2 p-1 rounded-lg transition-colors',
-                          snapshot.isDraggingOver && 'bg-muted/50'
-                        )}
-                      >
-                        {getDealsByStage(stage.id).map((deal, index) => (
-                          <Draggable key={deal.id} draggableId={deal.id} index={index}>
+                      <Card className="h-full">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div
+                                {...stageProvided.dragHandleProps}
+                                className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-muted rounded"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <div
+                                className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                                onClick={() => {
+                                  setSelectedStage(stage);
+                                  setStageDialogOpen(true);
+                                }}
+                                title={t('editStage')}
+                              >
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: stage.color }}
+                                />
+                                <CardTitle className="text-sm font-medium">
+                                  {stage.name}
+                                </CardTitle>
+                              </div>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {getDealsByStage(stage.id).length}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(getStageTotal(stage.id))}
+                          </p>
+                        </CardHeader>
+                        <CardContent className="p-2">
+                          <Droppable droppableId={stage.id} type="DEAL">
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
+                                {...provided.droppableProps}
                                 className={cn(
-                                  'p-3 bg-card border rounded-lg cursor-pointer hover:shadow-md transition-shadow',
-                                  snapshot.isDragging && 'shadow-lg'
+                                  'min-h-[200px] space-y-2 p-1 rounded-lg transition-colors',
+                                  snapshot.isDraggingOver && 'bg-muted/50'
                                 )}
-                                onClick={() => {
-                                  setSelectedDeal(deal);
-                                  setDetailDialogOpen(true);
-                                }}
                               >
-                                <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                                  {deal.title}
-                                </h4>
-                                
-                                {deal.client && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                                    <Building2 className="h-3 w-3" />
-                                    <span className="truncate">{deal.client.name}</span>
-                                  </div>
-                                )}
-                                
-                                {deal.amount && (
-                                  <div className="flex items-center gap-1 text-xs font-medium text-primary">
-                                    <DollarSign className="h-3 w-3" />
-                                    {formatCurrency(deal.amount)}
-                                  </div>
-                                )}
-                                
-                                {deal.expected_close_date && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {format(new Date(deal.expected_close_date), 'd MMM', { locale: ru })}
-                                  </div>
-                                )}
-
-                                {deal.probability !== undefined && deal.probability !== null && (
-                                  <div className="mt-2">
-                                    <div className="flex justify-between text-xs mb-1">
-                                      <span className="text-muted-foreground">{t('probability')}</span>
-                                      <span>{deal.probability}%</span>
-                                    </div>
-                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                {getDealsByStage(stage.id).map((deal, index) => (
+                                  <Draggable key={deal.id} draggableId={deal.id} index={index}>
+                                    {(dealProvided, dealSnapshot) => (
                                       <div
-                                        className="h-full bg-primary transition-all"
-                                        style={{ width: `${deal.probability}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                )}
+                                        ref={dealProvided.innerRef}
+                                        {...dealProvided.draggableProps}
+                                        {...dealProvided.dragHandleProps}
+                                        className={cn(
+                                          'p-3 bg-card border rounded-lg cursor-pointer hover:shadow-md transition-shadow',
+                                          dealSnapshot.isDragging && 'shadow-lg'
+                                        )}
+                                        onClick={() => {
+                                          setSelectedDeal(deal);
+                                          setDetailDialogOpen(true);
+                                        }}
+                                      >
+                                        <h4 className="font-medium text-sm mb-2 line-clamp-2">
+                                          {deal.title}
+                                        </h4>
+                                        
+                                        {deal.client && (
+                                          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                                            <Building2 className="h-3 w-3" />
+                                            <span className="truncate">{deal.client.name}</span>
+                                          </div>
+                                        )}
+                                        
+                                        {deal.amount && (
+                                          <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                                            <DollarSign className="h-3 w-3" />
+                                            {formatCurrency(deal.amount)}
+                                          </div>
+                                        )}
+                                        
+                                        {deal.expected_close_date && (
+                                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {format(new Date(deal.expected_close_date), 'd MMM', { locale: ru })}
+                                          </div>
+                                        )}
+
+                                        {deal.probability !== undefined && deal.probability !== null && (
+                                          <div className="mt-2">
+                                            <div className="flex justify-between text-xs mb-1">
+                                              <span className="text-muted-foreground">{t('probability')}</span>
+                                              <span>{deal.probability}%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                              <div
+                                                className="h-full bg-primary transition-all"
+                                                style={{ width: `${deal.probability}%` }}
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                ))}
+                                {provided.placeholder}
                               </div>
                             )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </CardContent>
-              </Card>
+                          </Droppable>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {stagesProvided.placeholder}
             </div>
-          ))}
-        </div>
+          )}
+        </Droppable>
       </DragDropContext>
 
       <DealDialog
