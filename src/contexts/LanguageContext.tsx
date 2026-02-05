@@ -596,11 +596,6 @@ export const translations: Translations = {
   stagesReordered: { ru: 'Порядок этапов изменён', en: 'Stages reordered', uk: 'Порядок етапів змінено' },
   
   // Proposal enhancements
-  comments: { ru: 'Комментарии', en: 'Comments', uk: 'Коментарі' },
-  noComments: { ru: 'Нет комментариев', en: 'No comments', uk: 'Немає коментарів' },
-  writeComment: { ru: 'Напишите комментарий...', en: 'Write a comment...', uk: 'Напишіть коментар...' },
-  attachments: { ru: 'Вложения', en: 'Attachments', uk: 'Вкладення' },
-  noAttachments: { ru: 'Нет вложений', en: 'No attachments', uk: 'Немає вкладень' },
   uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
   uploading: { ru: 'Загрузка...', en: 'Uploading...', uk: 'Завантаження...' },
   attachmentUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
