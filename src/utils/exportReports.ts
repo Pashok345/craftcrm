@@ -183,22 +183,22 @@ export const exportToPDF = async (data: ExportData) => {
     yPos = 20;
     
     doc.setFontSize(14);
-    doc.text(safeText(t.tasksList), 14, yPos);
+    doc.text(t.tasksList, 14, yPos);
     yPos += 8;
     
     const taskRows = data.tasks.slice(0, 50).map(task => [
-      safeText(task.title.substring(0, 40) + (task.title.length > 40 ? '...' : '')),
-      safeText(getStatusLabel(task.status, t)),
-      task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : safeText(t.noDeadline),
+      task.title.substring(0, 40) + (task.title.length > 40 ? '...' : ''),
+      getStatusLabel(task.status, t),
+      task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : t.noDeadline,
       format(parseISO(task.created_at), 'dd.MM.yyyy'),
     ]);
     
     autoTable(doc, {
       startY: yPos,
-      head: [[safeText(t.taskTitle), safeText(t.status), safeText(t.deadline), safeText(t.createdAt)]],
+      head: [[t.taskTitle, t.status, t.deadline, t.createdAt]],
       body: taskRows,
       theme: 'striped',
-      styles: { fontSize: 9 },
+      styles: { fontSize: 9, font: 'Roboto' },
       columnStyles: {
         0: { cellWidth: 70 },
         1: { cellWidth: 35 },
@@ -214,23 +214,23 @@ export const exportToPDF = async (data: ExportData) => {
     yPos = 20;
     
     doc.setFontSize(14);
-    doc.text(safeText(t.projectsList), 14, yPos);
+    doc.text(t.projectsList, 14, yPos);
     yPos += 8;
     
     const projectRows = data.projects.slice(0, 50).map(project => [
-      safeText(project.title.substring(0, 35) + (project.title.length > 35 ? '...' : '')),
-      safeText(getProjectStatusLabel(project.status, t)),
-      project.budget ? `$${project.budget.toLocaleString()}` : safeText(t.noBudget),
+      project.title.substring(0, 35) + (project.title.length > 35 ? '...' : ''),
+      getProjectStatusLabel(project.status, t),
+      project.budget ? `$${project.budget.toLocaleString()}` : t.noBudget,
       project.start_date ? format(parseISO(project.start_date), 'dd.MM.yyyy') : '-',
       project.end_date ? format(parseISO(project.end_date), 'dd.MM.yyyy') : '-',
     ]);
     
     autoTable(doc, {
       startY: yPos,
-      head: [[safeText(t.projectTitle), safeText(t.status), safeText(t.budget), safeText(t.startDate), safeText(t.endDate)]],
+      head: [[t.projectTitle, t.status, t.budget, t.startDate, t.endDate]],
       body: projectRows,
       theme: 'striped',
-      styles: { fontSize: 9 },
+      styles: { fontSize: 9, font: 'Roboto' },
     });
   }
   
@@ -240,21 +240,21 @@ export const exportToPDF = async (data: ExportData) => {
     yPos = 20;
     
     doc.setFontSize(14);
-    doc.text(safeText(t.timeEntriesList), 14, yPos);
+    doc.text(t.timeEntriesList, 14, yPos);
     yPos += 8;
     
     const timeRows = data.timeEntries.slice(0, 50).map(entry => [
       format(parseISO(entry.start_time), 'dd.MM.yyyy HH:mm'),
-      `${entry.duration_minutes || 0} ${safeText(t.minutes)}`,
-      safeText(entry.description?.substring(0, 40) || t.noDescription),
+      `${entry.duration_minutes || 0} ${t.minutes}`,
+      entry.description?.substring(0, 40) || t.noDescription,
     ]);
     
     autoTable(doc, {
       startY: yPos,
-      head: [[safeText(t.date), safeText(t.duration), safeText(t.description)]],
+      head: [[t.date, t.duration, t.description]],
       body: timeRows,
       theme: 'striped',
-      styles: { fontSize: 9 },
+      styles: { fontSize: 9, font: 'Roboto' },
     });
   }
   
