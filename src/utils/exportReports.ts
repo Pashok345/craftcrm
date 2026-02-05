@@ -67,13 +67,16 @@ const setupPdfWithFont = async (doc: jsPDF): Promise<void> => {
   }
 };
 
-export const exportToPDF = (data: ExportData) => {
+export const exportToPDF = async (data: ExportData) => {
   const doc = new jsPDF();
   const { translations: t } = data;
   
+  // Setup font with Cyrillic support
+  await setupPdfWithFont(doc);
+  
   // Title
   doc.setFontSize(20);
-  doc.text(safeText(t.reportTitle), 14, 22);
+  doc.text(t.reportTitle, 14, 22);
   
   // Metadata
   doc.setFontSize(10);
