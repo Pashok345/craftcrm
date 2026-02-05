@@ -153,19 +153,23 @@ export const SalesFunnel = () => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages.map((stage) => (
-            <div key={stage.id} className="flex-shrink-0 w-72">
-              <Card className="h-full">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer hover:opacity-80"
-                      onClick={() => {
-                        setSelectedStage(stage);
-                        setStageDialogOpen(true);
-                      }}
-                      title={t('editStage')}
+        <Droppable droppableId="stages" direction="horizontal" type="STAGE">
+          {(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="flex gap-4 overflow-x-auto pb-4"
+            >
+              {stages.map((stage, index) => (
+                <Draggable key={stage.id} draggableId={`stage-${stage.id}`} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={cn(
+                        "flex-shrink-0 w-72",
+                        snapshot.isDragging && "opacity-90"
+                      )}
                     >
                       <div
                         className="w-3 h-3 rounded-full"
