@@ -4,10 +4,11 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, DollarSign, Calendar, Building2, Settings2 } from 'lucide-react';
+import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ import type { Deal, DealStage, Client } from '@/types/sales';
 export const SalesFunnel = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dealDialogOpen, setDealDialogOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
@@ -66,11 +68,48 @@ export const SalesFunnel = () => {
     },
   });
 
+  const reorderStagesMutation = useMutation({
+    mutationFn: async (reorderedStages: { id: string; sort_order: number }[]) => {
+      for (const stage of reorderedStages) {
+        const { error } = await supabase
+          .from('deal_stages')
+          .update({ sort_order: stage.sort_order })
+          .eq('id', stage.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deal-stages'] });
+      toast({ title: t('stagesReordered') });
+    },
+    onError: () => {
+      toast({ title: t('error'), variant: 'destructive' });
+    },
+  });
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
+    const { source, destination, type } = result;
+
+    // Handle stage reordering
+    if (type === 'STAGE') {
+      const reordered = Array.from(stages);
+      const [removed] = reordered.splice(source.index, 1);
+      reordered.splice(destination.index, 0, removed);
+
+      const updates = reordered.map((stage, index) => ({
+        id: stage.id,
+        sort_order: index,
+      }));
+
+      reorderStagesMutation.mutate(updates);
+      return;
+    }
+
+    // Handle deal movement between stages
     const dealId = result.draggableId;
-    const newStageId = result.destination.droppableId;
+    const newStageId = destination.droppableId;
 
     updateDealStageMutation.mutate({ dealId, stageId: newStageId });
   };
