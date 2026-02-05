@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import {
   Table,
   TableBody,
@@ -29,12 +31,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Pencil, Trash2, Download, Building2, Calendar } from 'lucide-react';
+import { Pencil, Trash2, Download, Building2, Calendar, Mail, MessageSquare, Paperclip, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ProposalDialog } from './ProposalDialog';
+import { ProposalCommentsSection } from './ProposalCommentsSection';
+import { ProposalAttachmentsSection } from './ProposalAttachmentsSection';
+import { loadRobotoFontBase64 } from '@/utils/fontBase64';
 import type { Proposal, Client, Deal } from '@/types/sales';
 import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS } from '@/types/sales';
 
@@ -43,25 +48,6 @@ interface ProposalDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   proposal: Proposal & { client?: Client | null; deal?: Deal | null };
 }
-
-// Transliteration for PDF
-const transliterate = (text: string): string => {
-  const map: Record<string, string> = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
-    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
-    'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya', 'і': 'i', 'ї': 'yi',
-    'є': 'ye', 'ґ': 'g',
-    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
-    'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
-    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-    'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '',
-    'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya', 'І': 'I', 'Ї': 'Yi',
-    'Є': 'Ye', 'Ґ': 'G',
-  };
-  return text.split('').map((char) => map[char] || char).join('');
-};
 
 export const ProposalDetailDialog = ({
   open,
@@ -73,6 +59,7 @@ export const ProposalDetailDialog = ({
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -97,34 +84,44 @@ export const ProposalDetailDialog = ({
     }).format(amount);
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const doc = new jsPDF();
+    
+    // Load font for Cyrillic support
+    try {
+      const fontBase64 = await loadRobotoFontBase64();
+      doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
+      doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+      doc.setFont('Roboto');
+    } catch (error) {
+      console.error('Failed to load font:', error);
+    }
     
     // Title
     doc.setFontSize(20);
-    doc.text(transliterate(t('commercialProposal')), 14, 20);
+    doc.text(t('commercialProposal'), 14, 20);
     
     // Proposal title
     doc.setFontSize(14);
-    doc.text(transliterate(proposal.title), 14, 32);
+    doc.text(proposal.title, 14, 32);
     
     // Client info
     let yPos = 45;
     if (proposal.client) {
       doc.setFontSize(10);
-      doc.text(`${transliterate(t('client'))}: ${transliterate(proposal.client.name)}`, 14, yPos);
+      doc.text(`${t('client')}: ${proposal.client.name}`, 14, yPos);
       yPos += 6;
       if (proposal.client.company) {
-        doc.text(`${transliterate(t('company'))}: ${transliterate(proposal.client.company)}`, 14, yPos);
+        doc.text(`${t('company')}: ${proposal.client.company}`, 14, yPos);
         yPos += 6;
       }
     }
     
     // Date and validity
-    doc.text(`${transliterate(t('date'))}: ${format(new Date(proposal.created_at), 'd MMMM yyyy', { locale: ru })}`, 14, yPos);
+    doc.text(`${t('date')}: ${format(new Date(proposal.created_at), 'd MMMM yyyy', { locale: ru })}`, 14, yPos);
     yPos += 6;
     if (proposal.valid_until) {
-      doc.text(`${transliterate(t('validUntil'))}: ${format(new Date(proposal.valid_until), 'd MMMM yyyy', { locale: ru })}`, 14, yPos);
+      doc.text(`${t('validUntil')}: ${format(new Date(proposal.valid_until), 'd MMMM yyyy', { locale: ru })}`, 14, yPos);
       yPos += 6;
     }
     
@@ -135,24 +132,24 @@ export const ProposalDetailDialog = ({
       autoTable(doc, {
         startY: yPos,
         head: [[
-          transliterate(t('itemName')),
-          transliterate(t('quantity')),
-          transliterate(t('price')),
-          transliterate(t('total')),
+          t('itemName'),
+          t('quantity'),
+          t('price'),
+          t('total'),
         ]],
         body: proposal.content.map((item) => [
-          transliterate(item.name),
+          item.name,
           item.quantity.toString(),
           formatCurrency(item.price),
           formatCurrency(item.quantity * item.price),
         ]),
         foot: [[
-          transliterate(t('total')),
+          t('total'),
           '',
           '',
           formatCurrency(proposal.total_amount || 0),
         ]],
-        styles: { fontSize: 10 },
+        styles: { fontSize: 10, font: 'Roboto' },
         headStyles: { fillColor: [59, 130, 246] },
         footStyles: { fillColor: [243, 244, 246], textColor: [0, 0, 0], fontStyle: 'bold' },
       });
@@ -162,10 +159,40 @@ export const ProposalDetailDialog = ({
     toast({ title: t('pdfGenerated') });
   };
 
+  const handleSendEmail = async () => {
+    if (!proposal.client?.email) {
+      toast({ 
+        title: t('error'), 
+        description: t('clientEmailRequired'),
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      // Update proposal status to 'sent'
+      await supabase
+        .from('proposals')
+        .update({ status: 'sent' })
+        .eq('id', proposal.id);
+
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      toast({ 
+        title: t('proposalSentSuccess'),
+        description: `${t('sentTo')}: ${proposal.client.email}`
+      });
+    } catch (error) {
+      toast({ title: t('error'), variant: 'destructive' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pr-10">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-xl">{proposal.title}</DialogTitle>
@@ -185,6 +212,9 @@ export const ProposalDetailDialog = ({
                   <div>
                     <p className="text-xs text-muted-foreground">{t('client')}</p>
                     <p className="font-medium">{proposal.client.name}</p>
+                    {proposal.client.email && (
+                      <p className="text-xs text-muted-foreground">{proposal.client.email}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -236,27 +266,55 @@ export const ProposalDetailDialog = ({
               </div>
             )}
 
-            <div className="flex justify-between pt-4 border-t">
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
               <Button variant="outline" onClick={generatePDF}>
                 <Download className="h-4 w-4 mr-2" />
                 {t('downloadPDF')}
               </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-                  <Pencil className="h-4 w-4 mr-1" />
-                  {t('edit')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setDeleteDialogOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  {t('delete')}
-                </Button>
-              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleSendEmail}
+                disabled={sendingEmail || !proposal.client?.email}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                {t('sendProposalEmail')}
+              </Button>
+              <div className="flex-1" />
+              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                {t('edit')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                {t('delete')}
+              </Button>
             </div>
+
+            <Separator />
+
+            <Tabs defaultValue="comments" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="comments" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  {t('comments')}
+                </TabsTrigger>
+                <TabsTrigger value="attachments" className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  {t('attachments')}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="comments" className="mt-4">
+                <ProposalCommentsSection proposalId={proposal.id} />
+              </TabsContent>
+              <TabsContent value="attachments" className="mt-4">
+                <ProposalAttachmentsSection proposalId={proposal.id} />
+              </TabsContent>
+            </Tabs>
           </div>
         </DialogContent>
       </Dialog>
