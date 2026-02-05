@@ -591,6 +591,24 @@ export const translations: Translations = {
   commercialProposal: { ru: 'Коммерческое предложение', en: 'Commercial Proposal', uk: 'Комерційна пропозиція' },
   date: { ru: 'Дата', en: 'Date', uk: 'Дата' },
   pdfGenerated: { ru: 'PDF сгенерирован', en: 'PDF generated', uk: 'PDF згенеровано' },
+  
+  // Stage reordering
+  stagesReordered: { ru: 'Порядок этапов изменён', en: 'Stages reordered', uk: 'Порядок етапів змінено' },
+  
+  // Proposal enhancements
+  comments: { ru: 'Комментарии', en: 'Comments', uk: 'Коментарі' },
+  noComments: { ru: 'Нет комментариев', en: 'No comments', uk: 'Немає коментарів' },
+  writeComment: { ru: 'Напишите комментарий...', en: 'Write a comment...', uk: 'Напишіть коментар...' },
+  attachments: { ru: 'Вложения', en: 'Attachments', uk: 'Вкладення' },
+  noAttachments: { ru: 'Нет вложений', en: 'No attachments', uk: 'Немає вкладень' },
+  uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
+  uploading: { ru: 'Загрузка...', en: 'Uploading...', uk: 'Завантаження...' },
+  attachmentUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
+  attachmentDeleted: { ru: 'Файл удалён', en: 'File deleted', uk: 'Файл видалено' },
+  sendProposalEmail: { ru: 'Отправить КП на e-mail', en: 'Send proposal via email', uk: 'Надіслати КП на e-mail' },
+  clientEmailRequired: { ru: 'У клиента не указан e-mail', en: 'Client email is required', uk: 'У клієнта не вказано e-mail' },
+  proposalSentSuccess: { ru: 'КП отмечено как отправленное', en: 'Proposal marked as sent', uk: 'КП позначено як надіслане' },
+  sentTo: { ru: 'Отправлено на', en: 'Sent to', uk: 'Надіслано на' },
 };
 
 interface LanguageContextType {
