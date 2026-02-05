@@ -192,12 +192,12 @@ export const ProposalDialog = ({ open, onOpenChange, proposal }: ProposalDialogP
 
             <div className="space-y-2">
               <Label>{t('deal')}</Label>
-              <Select value={dealId} onValueChange={setDealId}>
+              <Select value={dealId || '__none__'} onValueChange={(v) => setDealId(v === '__none__' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('selectDeal')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('noDeal')}</SelectItem>
+                  <SelectItem value="__none__">{t('noDeal')}</SelectItem>
                   {deals.map((deal) => (
                     <SelectItem key={deal.id} value={deal.id}>
                       {deal.title}
