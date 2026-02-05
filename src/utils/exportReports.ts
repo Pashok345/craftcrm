@@ -81,25 +81,25 @@ export const exportToPDF = async (data: ExportData) => {
   // Metadata
   doc.setFontSize(10);
   doc.setTextColor(100);
-  doc.text(`${safeText(t.generatedAt)}: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`, 14, 32);
-  doc.text(`${safeText(t.period)}: ${safeText(data.period)}`, 14, 38);
-  doc.text(`${safeText(t.user)}: ${safeText(data.selectedUser) || safeText(t.allEmployees)}`, 14, 44);
+  doc.text(`${t.generatedAt}: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`, 14, 32);
+  doc.text(`${t.period}: ${data.period}`, 14, 38);
+  doc.text(`${t.user}: ${data.selectedUser || t.allEmployees}`, 14, 44);
   
   let yPos = 55;
   
   // Summary section
   doc.setFontSize(14);
   doc.setTextColor(0);
-  doc.text(safeText(t.summary), 14, yPos);
+  doc.text(t.summary, 14, yPos);
   yPos += 10;
   
   const completedTasks = data.tasks.filter(task => task.status === 'done').length;
   const summaryData = [
-    [safeText(t.totalTasks), data.tasks.length.toString()],
-    [safeText(t.completedTasks), completedTasks.toString()],
-    [safeText(t.totalProjects), data.projects.length.toString()],
-    [safeText(t.timeTracked), `${Math.round(data.totalTimeMinutes / 60)} ${safeText(t.hours)}`],
-    [safeText(t.avgCompletionDays), `${data.avgCompletionDays} ${safeText(t.days)}`],
+    [t.totalTasks, data.tasks.length.toString()],
+    [t.completedTasks, completedTasks.toString()],
+    [t.totalProjects, data.projects.length.toString()],
+    [t.timeTracked, `${Math.round(data.totalTimeMinutes / 60)} ${t.hours}`],
+    [t.avgCompletionDays, `${data.avgCompletionDays} ${t.days}`],
   ];
   
   autoTable(doc, {
@@ -107,7 +107,7 @@ export const exportToPDF = async (data: ExportData) => {
     head: [],
     body: summaryData,
     theme: 'grid',
-    styles: { fontSize: 10 },
+    styles: { fontSize: 10, font: 'Roboto' },
     columnStyles: {
       0: { fontStyle: 'bold', cellWidth: 60 },
       1: { cellWidth: 40 },
@@ -119,15 +119,15 @@ export const exportToPDF = async (data: ExportData) => {
   // Tasks by status
   if (data.taskStatusData.length > 0) {
     doc.setFontSize(14);
-    doc.text(safeText(t.tasksByStatus), 14, yPos);
+    doc.text(t.tasksByStatus, 14, yPos);
     yPos += 8;
     
     autoTable(doc, {
       startY: yPos,
-      head: [[safeText(t.status), safeText(t.totalTasks)]],
-      body: data.taskStatusData.map(item => [safeText(item.name), item.value.toString()]),
+      head: [[t.status, t.totalTasks]],
+      body: data.taskStatusData.map(item => [item.name, item.value.toString()]),
       theme: 'striped',
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10, font: 'Roboto' },
     });
     
     yPos = (doc as any).lastAutoTable.finalY + 15;
@@ -141,15 +141,15 @@ export const exportToPDF = async (data: ExportData) => {
     }
     
     doc.setFontSize(14);
-    doc.text(safeText(t.projectsByStatus), 14, yPos);
+    doc.text(t.projectsByStatus, 14, yPos);
     yPos += 8;
     
     autoTable(doc, {
       startY: yPos,
-      head: [[safeText(t.status), safeText(t.totalProjects)]],
-      body: data.projectStatusData.map(item => [safeText(item.name), item.value.toString()]),
+      head: [[t.status, t.totalProjects]],
+      body: data.projectStatusData.map(item => [item.name, item.value.toString()]),
       theme: 'striped',
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10, font: 'Roboto' },
     });
     
     yPos = (doc as any).lastAutoTable.finalY + 15;
@@ -163,15 +163,15 @@ export const exportToPDF = async (data: ExportData) => {
     }
     
     doc.setFontSize(14);
-    doc.text(safeText(t.popularTags), 14, yPos);
+    doc.text(t.popularTags, 14, yPos);
     yPos += 8;
     
     autoTable(doc, {
       startY: yPos,
-      head: [['Tag', 'Usage']],
-      body: data.tagUsageData.map(item => [safeText(item.name), item.value.toString()]),
+      head: [[t.taskTitle, t.totalTasks]],
+      body: data.tagUsageData.map(item => [item.name, item.value.toString()]),
       theme: 'striped',
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10, font: 'Roboto' },
     });
     
     yPos = (doc as any).lastAutoTable.finalY + 15;
