@@ -7,7 +7,16 @@ import { ProposalsList } from '@/components/sales/ProposalsList';
 import { FunnelAnalytics } from '@/components/sales/FunnelAnalytics';
 import { TrendingUp, Users, FileText, BarChart3 } from 'lucide-react';
 
-// ... keep existing code (Sales component declaration and header)
+const Sales = () => {
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState('funnel');
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">{t('salesTitle')}</h1>
+        <p className="text-muted-foreground">{t('salesDescription')}</p>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
