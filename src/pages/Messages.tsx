@@ -856,12 +856,29 @@ const Messages = () => {
                         }
                       }
                       
-                      // If no files found, return original content
+                      // If no files found, highlight @mentions in text
                       if (parts.length === 0) {
-                        return <span>{content}</span>;
+                        return highlightMentions(content);
                       }
                       
                       return <div className="space-y-1">{parts}</div>;
+                    };
+
+                    const highlightMentions = (text: string) => {
+                      const mentionRegex = /(@\S+(?:\s+\S+)?)/g;
+                      const segments = text.split(mentionRegex);
+                      if (segments.length === 1) return <span>{text}</span>;
+                      return (
+                        <span>
+                          {segments.map((seg, i) =>
+                            seg.startsWith('@') ? (
+                              <span key={i} className="font-semibold text-accent-foreground bg-accent/30 rounded px-0.5">{seg}</span>
+                            ) : (
+                              <span key={i}>{seg}</span>
+                            )
+                          )}
+                        </span>
+                      );
                     };
 
                     return (
