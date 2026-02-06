@@ -298,10 +298,9 @@ const Messages = () => {
           continue;
         }
 
-        // Use signed URL with 7-day expiry for private bucket access
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('chat-attachments')
-          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days expiry
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7);
 
         if (signedUrlError || !signedUrlData?.signedUrl) {
           console.error('Signed URL error:', signedUrlError);
@@ -315,7 +314,6 @@ const Messages = () => {
         });
       }
 
-      // Add file info to message content if files were uploaded
       if (uploadedFiles.length > 0) {
         const filesInfo = uploadedFiles.map(f => `[📎 ${f.name}](${f.url})`).join('\n');
         messageContent = messageContent ? `${messageContent}\n\n${filesInfo}` : filesInfo;
@@ -335,6 +333,39 @@ const Messages = () => {
       if (!error) {
         setNewMessage('');
         setFiles([]);
+
+        // Handle @mentions - find @Name patterns and send notifications
+        const mentionPattern = /@(\S+(?:\s+\S+)?)/g;
+        let mentionMatch;
+        const mentionedUserIds = new Set<string>();
+        
+        while ((mentionMatch = mentionPattern.exec(messageContent)) !== null) {
+          const mentionName = mentionMatch[1];
+          // Find profile by name match
+          Object.values(profiles).forEach(p => {
+            if (p.name.toLowerCase().includes(mentionName.toLowerCase())) {
+              if (p.user_id !== user.id) {
+                mentionedUserIds.add(p.user_id);
+              }
+            }
+          });
+        }
+
+        // Send notification for each mention
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .single();
+
+        for (const userId of mentionedUserIds) {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'mention',
+            title: t('mentionInChat') || 'Упоминание в чате',
+            message: `${myProfile?.name || t('user')} ${t('mentionedYou')}: "${messageContent.slice(0, 80)}${messageContent.length > 80 ? '...' : ''}"`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
