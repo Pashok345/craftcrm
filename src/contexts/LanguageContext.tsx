@@ -595,6 +595,31 @@ export const translations: Translations = {
   // Stage reordering
   stagesReordered: { ru: 'Порядок этапов изменён', en: 'Stages reordered', uk: 'Порядок етапів змінено' },
   
+  // Funnel analytics
+  revenueForecast: { ru: 'Прогноз выручки', en: 'Revenue forecast', uk: 'Прогноз виручки' },
+  avgDealCycle: { ru: 'Средний цикл сделки', en: 'Avg deal cycle', uk: 'Середній цикл угоди' },
+  stageConversion: { ru: 'Конверсия по этапам', en: 'Stage conversion', uk: 'Конверсія за етапами' },
+  conversion: { ru: 'Конверсия', en: 'Conversion', uk: 'Конверсія' },
+  amountByStage: { ru: 'Сумма по этапам', en: 'Amount by stage', uk: 'Сума за етапами' },
+  dealDistribution: { ru: 'Распределение сделок', en: 'Deal distribution', uk: 'Розподіл угод' },
+  funnelAnalytics: { ru: 'Аналитика воронки', en: 'Funnel analytics', uk: 'Аналітика воронки' },
+  
+  // Client import/export
+  importCSV: { ru: 'Импорт CSV', en: 'Import CSV', uk: 'Імпорт CSV' },
+  exportCSV: { ru: 'Экспорт CSV', en: 'Export CSV', uk: 'Експорт CSV' },
+  importSuccess: { ru: 'Импорт завершён', en: 'Import completed', uk: 'Імпорт завершено' },
+  importError: { ru: 'Ошибка импорта', en: 'Import error', uk: 'Помилка імпорту' },
+  exportSuccess: { ru: 'Файл экспортирован', en: 'File exported', uk: 'Файл експортовано' },
+  
+  // Subtasks
+  subtasks: { ru: 'Подзадачи', en: 'Subtasks', uk: 'Підзавдання' },
+  addSubtask: { ru: 'Добавить подзадачу...', en: 'Add subtask...', uk: 'Додати підзавдання...' },
+  
+  // Message reactions & mentions
+  reactionAdded: { ru: 'Реакция добавлена', en: 'Reaction added', uk: 'Реакцію додано' },
+  mentionedYou: { ru: 'упомянул вас', en: 'mentioned you', uk: 'згадав вас' },
+  mentionInChat: { ru: 'Упоминание в чате', en: 'Mention in chat', uk: 'Згадка в чаті' },
+  
   // Proposal enhancements
   uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
   uploading: { ru: 'Загрузка...', en: 'Uploading...', uk: 'Завантаження...' },

@@ -59,10 +59,13 @@ export const ClientsList = () => {
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('addClient')}
-        </Button>
+        <div className="flex gap-2">
+          <ClientImportExport clients={filteredClients} />
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('addClient')}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
