@@ -724,6 +724,9 @@ const TaskDetail = () => {
         </CardContent>
       </Card>
 
+      {/* Subtasks */}
+      {user && <SubtasksList taskId={task.id} />}
+
       {/* Time Tracker */}
       {user && (
         <TimeTracker taskId={task.id} userId={user.id} />
