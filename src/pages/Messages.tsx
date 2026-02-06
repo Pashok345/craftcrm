@@ -27,6 +27,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { CreateChatDialog } from '@/components/messages/CreateChatDialog';
 import { ChatMembersDialog } from '@/components/messages/ChatMembersDialog';
 import { EmployeesList } from '@/components/messages/EmployeesList';
+import { MessageReactions } from '@/components/messages/MessageReactions';
 import {
   DropdownMenu,
   DropdownMenuContent,
