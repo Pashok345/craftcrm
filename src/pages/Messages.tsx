@@ -868,7 +868,7 @@ const Messages = () => {
                       <div
                         key={msg.id}
                         className={cn(
-                          'flex gap-2 mb-3',
+                          'flex gap-2 mb-3 group',
                           isOwn ? 'justify-end' : 'justify-start'
                         )}
                       >
@@ -880,28 +880,31 @@ const Messages = () => {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div
-                          className={cn(
-                            'max-w-[70%] rounded-2xl px-4 py-2 shadow-sm',
-                            isOwn
-                              ? 'bg-primary text-primary-foreground rounded-br-md'
-                              : 'bg-card border border-border rounded-bl-md'
-                          )}
-                        >
-                          {!isOwn && profile && (
-                            <p className="text-xs font-medium mb-1 opacity-70">
-                              {profile.name}
-                            </p>
-                          )}
-                          <div className="text-sm whitespace-pre-wrap">{renderMessageContent(msg.content)}</div>
-                          <p
+                        <div className="max-w-[70%]">
+                          <div
                             className={cn(
-                              'text-[10px] mt-1',
-                              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              'rounded-2xl px-4 py-2 shadow-sm',
+                              isOwn
+                                ? 'bg-primary text-primary-foreground rounded-br-md'
+                                : 'bg-card border border-border rounded-bl-md'
                             )}
                           >
-                            {format(new Date(msg.created_at), 'HH:mm')}
-                          </p>
+                            {!isOwn && profile && (
+                              <p className="text-xs font-medium mb-1 opacity-70">
+                                {profile.name}
+                              </p>
+                            )}
+                            <div className="text-sm whitespace-pre-wrap">{renderMessageContent(msg.content)}</div>
+                            <p
+                              className={cn(
+                                'text-[10px] mt-1',
+                                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              )}
+                            >
+                              {format(new Date(msg.created_at), 'HH:mm')}
+                            </p>
+                          </div>
+                          <MessageReactions messageId={msg.id} isOwn={isOwn} />
                         </div>
                       </div>
                     );
