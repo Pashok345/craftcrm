@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Plus, Search, Mail, Phone, Building2, User } from 'lucide-react';
 import { ClientDialog } from './ClientDialog';
 import { ClientDetailDialog } from './ClientDetailDialog';
+import { ClientImportExport } from './ClientImportExport';
 import type { Client } from '@/types/sales';
 
 export const ClientsList = () => {
