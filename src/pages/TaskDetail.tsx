@@ -25,6 +25,7 @@ import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
 import { TagsManager } from '@/components/tasks/TagsManager';
+import { SubtasksList } from '@/components/tasks/SubtasksList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import {
@@ -722,6 +723,9 @@ const TaskDetail = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Subtasks */}
+      {user && <SubtasksList taskId={task.id} />}
 
       {/* Time Tracker */}
       {user && (
