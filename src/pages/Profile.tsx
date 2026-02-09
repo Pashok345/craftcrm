@@ -250,6 +250,17 @@ const Profile = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="email">{t('email')}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('enterEmail')}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
