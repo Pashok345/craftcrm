@@ -29,6 +29,23 @@ export const translations: Translations = {
   settingsTitle: { ru: 'Настройки', en: 'Settings', uk: 'Налаштування' },
   settingsDescription: { ru: 'Настройки приложения', en: 'Application settings', uk: 'Налаштування додатку' },
   
+  // Theme
+  themeTitle: { ru: 'Тема оформления', en: 'Theme', uk: 'Тема оформлення' },
+  themeLight: { ru: 'Светлая', en: 'Light', uk: 'Світла' },
+  themeDark: { ru: 'Тёмная', en: 'Dark', uk: 'Темна' },
+  themeSystem: { ru: 'Системная', en: 'System', uk: 'Системна' },
+  
+  // Notification settings
+  notificationSettings: { ru: 'Уведомления', en: 'Notifications', uk: 'Сповіщення' },
+  notifyMeetings: { ru: 'Уведомления о встречах', en: 'Meeting notifications', uk: 'Сповіщення про зустрічі' },
+  notifyTasks: { ru: 'Уведомления о задачах', en: 'Task notifications', uk: 'Сповіщення про завдання' },
+  notifyMessages: { ru: 'Уведомления о сообщениях', en: 'Message notifications', uk: 'Сповіщення про повідомлення' },
+  soundNotifications: { ru: 'Звук уведомлений', en: 'Notification sound', uk: 'Звук сповіщень' },
+  
+  // Email
+  email: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
+  enterEmail: { ru: 'Введите e-mail', en: 'Enter email', uk: 'Введіть e-mail' },
+  
   // Profile
   profileTitle: { ru: 'Профиль', en: 'Profile', uk: 'Профіль' },
   profileDescription: { ru: 'Управление профилем и личными данными', en: 'Manage profile and personal data', uk: 'Керування профілем та особистими даними' },
