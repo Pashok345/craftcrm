@@ -502,7 +502,7 @@ export const translations: Translations = {
   invitationSentBadge: { ru: 'Отправлено приглашение', en: 'Invitation sent', uk: 'Надіслано запрошення' },
   verified: { ru: 'Верифицирован', en: 'Verified', uk: 'Верифіковано' },
   notVerified: { ru: 'Не верифицирован', en: 'Not verified', uk: 'Не верифіковано' },
-  email: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
+  userEmail: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
   verification: { ru: 'Верификация', en: 'Verification', uk: 'Верифікація' },
   adminRights: { ru: 'Права администратора', en: 'Admin rights', uk: 'Права адміністратора' },
   resendInvitation: { ru: 'Отправить повторно', en: 'Resend invitation', uk: 'Надіслати повторно' },
