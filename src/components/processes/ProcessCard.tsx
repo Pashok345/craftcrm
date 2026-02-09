@@ -111,7 +111,6 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge variant="outline">{process.process_type?.name || t('noType')}</Badge>
             <Button 
               size="sm" 
               onClick={() => navigate(`/processes/run/${process.id}`)}
