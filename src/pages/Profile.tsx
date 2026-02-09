@@ -137,6 +137,7 @@ const Profile = () => {
         .from('profiles')
         .update({
           name,
+          email: email || profile?.email || '',
           phone: phone || null,
           position: position || null,
           additional_info: additionalInfo || null,

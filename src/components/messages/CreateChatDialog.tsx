@@ -67,7 +67,7 @@ export const CreateChatDialog = ({
   const fetchProfiles = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, user_id, name, email, avatar_url')
+      .select('id, user_id, name, email, avatar_url, avatar_color')
       .neq('user_id', user?.id);
 
     if (data) {
