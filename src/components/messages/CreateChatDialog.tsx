@@ -23,6 +23,7 @@ interface Profile {
   name: string;
   email: string;
   avatar_url?: string;
+  avatar_color?: string;
 }
 
 interface ChatGroup {
