@@ -53,6 +53,7 @@ const Profile = () => {
   useEffect(() => {
     if (profile) {
       setName(profile.name || '');
+      setEmail(profile.email || '');
       setPhone(profile.phone || '');
       setPosition(profile.position || '');
       setAdditionalInfo(profile.additional_info || '');
