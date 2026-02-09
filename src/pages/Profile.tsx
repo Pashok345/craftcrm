@@ -38,6 +38,7 @@ const Profile = () => {
   const { profile, user, refetchProfile } = useAuth();
   const { t } = useLanguage();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState<UserPosition | ''>('');
   const [additionalInfo, setAdditionalInfo] = useState('');
