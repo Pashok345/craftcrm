@@ -111,7 +111,6 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge variant="outline">{process.process_type?.name || t('noType')}</Badge>
             <Button 
               size="sm" 
               onClick={() => navigate(`/processes/run/${process.id}`)}
@@ -137,11 +136,14 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
           </p>
         )}
         
-        {process.process_fields && process.process_fields.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            {t('fields')}: {process.process_fields.length}
-          </div>
-        )}
+        <div className="flex items-center justify-between">
+          {process.process_fields && process.process_fields.length > 0 && (
+            <div className="text-xs text-muted-foreground">
+              {t('fields')}: {process.process_fields.length}
+            </div>
+          )}
+          <Badge variant="outline" className="ml-auto">{process.process_type?.name || t('noType')}</Badge>
+        </div>
 
         {/* Process Runs Section */}
         {runs.length > 0 && (

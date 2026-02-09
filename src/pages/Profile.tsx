@@ -38,6 +38,7 @@ const Profile = () => {
   const { profile, user, refetchProfile } = useAuth();
   const { t } = useLanguage();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [position, setPosition] = useState<UserPosition | ''>('');
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -52,6 +53,7 @@ const Profile = () => {
   useEffect(() => {
     if (profile) {
       setName(profile.name || '');
+      setEmail(profile.email || '');
       setPhone(profile.phone || '');
       setPosition(profile.position || '');
       setAdditionalInfo(profile.additional_info || '');
@@ -135,6 +137,7 @@ const Profile = () => {
         .from('profiles')
         .update({
           name,
+          email: email || profile?.email || '',
           phone: phone || null,
           position: position || null,
           additional_info: additionalInfo || null,
@@ -246,6 +249,17 @@ const Profile = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('enterFio')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">{t('email')}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('enterEmail')}
               />
             </div>
 

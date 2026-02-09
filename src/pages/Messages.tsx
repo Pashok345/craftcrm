@@ -27,6 +27,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { CreateChatDialog } from '@/components/messages/CreateChatDialog';
 import { ChatMembersDialog } from '@/components/messages/ChatMembersDialog';
 import { EmployeesList } from '@/components/messages/EmployeesList';
+import { MessageReactions } from '@/components/messages/MessageReactions';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -297,10 +298,9 @@ const Messages = () => {
           continue;
         }
 
-        // Use signed URL with 7-day expiry for private bucket access
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('chat-attachments')
-          .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days expiry
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7);
 
         if (signedUrlError || !signedUrlData?.signedUrl) {
           console.error('Signed URL error:', signedUrlError);
@@ -314,7 +314,6 @@ const Messages = () => {
         });
       }
 
-      // Add file info to message content if files were uploaded
       if (uploadedFiles.length > 0) {
         const filesInfo = uploadedFiles.map(f => `[📎 ${f.name}](${f.url})`).join('\n');
         messageContent = messageContent ? `${messageContent}\n\n${filesInfo}` : filesInfo;
@@ -334,6 +333,39 @@ const Messages = () => {
       if (!error) {
         setNewMessage('');
         setFiles([]);
+
+        // Handle @mentions - find @Name patterns and send notifications
+        const mentionPattern = /@(\S+(?:\s+\S+)?)/g;
+        let mentionMatch;
+        const mentionedUserIds = new Set<string>();
+        
+        while ((mentionMatch = mentionPattern.exec(messageContent)) !== null) {
+          const mentionName = mentionMatch[1];
+          // Find profile by name match
+          Object.values(profiles).forEach(p => {
+            if (p.name.toLowerCase().includes(mentionName.toLowerCase())) {
+              if (p.user_id !== user.id) {
+                mentionedUserIds.add(p.user_id);
+              }
+            }
+          });
+        }
+
+        // Send notification for each mention
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .single();
+
+        for (const userId of mentionedUserIds) {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'mention',
+            title: t('mentionInChat') || 'Упоминание в чате',
+            message: `${myProfile?.name || t('user')} ${t('mentionedYou')}: "${messageContent.slice(0, 80)}${messageContent.length > 80 ? '...' : ''}"`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -824,19 +856,36 @@ const Messages = () => {
                         }
                       }
                       
-                      // If no files found, return original content
+                      // If no files found, highlight @mentions in text
                       if (parts.length === 0) {
-                        return <span>{content}</span>;
+                        return highlightMentions(content);
                       }
                       
                       return <div className="space-y-1">{parts}</div>;
+                    };
+
+                    const highlightMentions = (text: string) => {
+                      const mentionRegex = /(@\S+(?:\s+\S+)?)/g;
+                      const segments = text.split(mentionRegex);
+                      if (segments.length === 1) return <span>{text}</span>;
+                      return (
+                        <span>
+                          {segments.map((seg, i) =>
+                            seg.startsWith('@') ? (
+                              <span key={i} className="font-semibold text-accent-foreground bg-accent/30 rounded px-0.5">{seg}</span>
+                            ) : (
+                              <span key={i}>{seg}</span>
+                            )
+                          )}
+                        </span>
+                      );
                     };
 
                     return (
                       <div
                         key={msg.id}
                         className={cn(
-                          'flex gap-2 mb-3',
+                          'flex gap-2 mb-3 group',
                           isOwn ? 'justify-end' : 'justify-start'
                         )}
                       >
@@ -848,28 +897,31 @@ const Messages = () => {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        <div
-                          className={cn(
-                            'max-w-[70%] rounded-2xl px-4 py-2 shadow-sm',
-                            isOwn
-                              ? 'bg-primary text-primary-foreground rounded-br-md'
-                              : 'bg-card border border-border rounded-bl-md'
-                          )}
-                        >
-                          {!isOwn && profile && (
-                            <p className="text-xs font-medium mb-1 opacity-70">
-                              {profile.name}
-                            </p>
-                          )}
-                          <div className="text-sm whitespace-pre-wrap">{renderMessageContent(msg.content)}</div>
-                          <p
+                        <div className="max-w-[70%]">
+                          <div
                             className={cn(
-                              'text-[10px] mt-1',
-                              isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              'rounded-2xl px-4 py-2 shadow-sm',
+                              isOwn
+                                ? 'bg-primary text-primary-foreground rounded-br-md'
+                                : 'bg-card border border-border rounded-bl-md'
                             )}
                           >
-                            {format(new Date(msg.created_at), 'HH:mm')}
-                          </p>
+                            {!isOwn && profile && (
+                              <p className="text-xs font-medium mb-1 opacity-70">
+                                {profile.name}
+                              </p>
+                            )}
+                            <div className="text-sm whitespace-pre-wrap">{renderMessageContent(msg.content)}</div>
+                            <p
+                              className={cn(
+                                'text-[10px] mt-1',
+                                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                              )}
+                            >
+                              {format(new Date(msg.created_at), 'HH:mm')}
+                            </p>
+                          </div>
+                          <MessageReactions messageId={msg.id} isOwn={isOwn} />
                         </div>
                       </div>
                     );

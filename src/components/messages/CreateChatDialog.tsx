@@ -23,6 +23,7 @@ interface Profile {
   name: string;
   email: string;
   avatar_url?: string;
+  avatar_color?: string;
 }
 
 interface ChatGroup {
@@ -66,7 +67,7 @@ export const CreateChatDialog = ({
   const fetchProfiles = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, user_id, name, email, avatar_url')
+      .select('id, user_id, name, email, avatar_url, avatar_color')
       .neq('user_id', user?.id);
 
     if (data) {
@@ -190,9 +191,12 @@ export const CreateChatDialog = ({
                       checked={selectedMembers.includes(profile.user_id)}
                       onCheckedChange={() => toggleMember(profile.user_id)}
                     />
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
+                    <Avatar className="h-8 w-8 rounded-full">
+                      <AvatarImage src={profile.avatar_url || undefined} className="rounded-full" />
+                      <AvatarFallback 
+                        className="text-xs text-white rounded-full"
+                        style={{ backgroundColor: profile.avatar_color || `hsl(${profile.user_id.charCodeAt(0) * 137 % 360}, 60%, 50%)` }}
+                      >
                         {getInitials(profile.name)}
                       </AvatarFallback>
                     </Avatar>

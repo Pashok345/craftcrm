@@ -29,6 +29,23 @@ export const translations: Translations = {
   settingsTitle: { ru: 'Настройки', en: 'Settings', uk: 'Налаштування' },
   settingsDescription: { ru: 'Настройки приложения', en: 'Application settings', uk: 'Налаштування додатку' },
   
+  // Theme
+  themeTitle: { ru: 'Тема оформления', en: 'Theme', uk: 'Тема оформлення' },
+  themeLight: { ru: 'Светлая', en: 'Light', uk: 'Світла' },
+  themeDark: { ru: 'Тёмная', en: 'Dark', uk: 'Темна' },
+  themeSystem: { ru: 'Системная', en: 'System', uk: 'Системна' },
+  
+  // Notification settings
+  notificationSettings: { ru: 'Уведомления', en: 'Notifications', uk: 'Сповіщення' },
+  notifyMeetings: { ru: 'Уведомления о встречах', en: 'Meeting notifications', uk: 'Сповіщення про зустрічі' },
+  notifyTasks: { ru: 'Уведомления о задачах', en: 'Task notifications', uk: 'Сповіщення про завдання' },
+  notifyMessages: { ru: 'Уведомления о сообщениях', en: 'Message notifications', uk: 'Сповіщення про повідомлення' },
+  soundNotifications: { ru: 'Звук уведомлений', en: 'Notification sound', uk: 'Звук сповіщень' },
+  
+  // Email
+  email: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
+  enterEmail: { ru: 'Введите e-mail', en: 'Enter email', uk: 'Введіть e-mail' },
+  
   // Profile
   profileTitle: { ru: 'Профиль', en: 'Profile', uk: 'Профіль' },
   profileDescription: { ru: 'Управление профилем и личными данными', en: 'Manage profile and personal data', uk: 'Керування профілем та особистими даними' },
@@ -485,7 +502,7 @@ export const translations: Translations = {
   invitationSentBadge: { ru: 'Отправлено приглашение', en: 'Invitation sent', uk: 'Надіслано запрошення' },
   verified: { ru: 'Верифицирован', en: 'Verified', uk: 'Верифіковано' },
   notVerified: { ru: 'Не верифицирован', en: 'Not verified', uk: 'Не верифіковано' },
-  email: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
+  userEmail: { ru: 'Почта', en: 'Email', uk: 'Пошта' },
   verification: { ru: 'Верификация', en: 'Verification', uk: 'Верифікація' },
   adminRights: { ru: 'Права администратора', en: 'Admin rights', uk: 'Права адміністратора' },
   resendInvitation: { ru: 'Отправить повторно', en: 'Resend invitation', uk: 'Надіслати повторно' },
@@ -522,6 +539,18 @@ export const translations: Translations = {
   dealDeleted: { ru: 'Сделка удалена', en: 'Deal deleted', uk: 'Угоду видалено' },
   deleteDeal: { ru: 'Удалить сделку', en: 'Delete deal', uk: 'Видалити угоду' },
   deleteDealConfirm: { ru: 'Вы уверены, что хотите удалить эту сделку?', en: 'Are you sure you want to delete this deal?', uk: 'Ви впевнені, що хочете видалити цю угоду?' },
+  
+  // Stages
+  addStage: { ru: 'Добавить этап', en: 'Add stage', uk: 'Додати етап' },
+  editStage: { ru: 'Редактировать этап', en: 'Edit stage', uk: 'Редагувати етап' },
+  stageName: { ru: 'Название этапа', en: 'Stage name', uk: 'Назва етапу' },
+  enterStageName: { ru: 'Введите название этапа', en: 'Enter stage name', uk: 'Введіть назву етапу' },
+  stageColor: { ru: 'Цвет этапа', en: 'Stage color', uk: 'Колір етапу' },
+  stageCreated: { ru: 'Этап создан', en: 'Stage created', uk: 'Етап створено' },
+  stageUpdated: { ru: 'Этап обновлён', en: 'Stage updated', uk: 'Етап оновлено' },
+  
+  // Deal Comments
+  unknownUser: { ru: 'Неизвестный пользователь', en: 'Unknown user', uk: 'Невідомий користувач' },
   
   // Clients
   noClients: { ru: 'Нет клиентов', en: 'No clients', uk: 'Немає клієнтів' },
@@ -579,6 +608,44 @@ export const translations: Translations = {
   commercialProposal: { ru: 'Коммерческое предложение', en: 'Commercial Proposal', uk: 'Комерційна пропозиція' },
   date: { ru: 'Дата', en: 'Date', uk: 'Дата' },
   pdfGenerated: { ru: 'PDF сгенерирован', en: 'PDF generated', uk: 'PDF згенеровано' },
+  
+  // Stage reordering
+  stagesReordered: { ru: 'Порядок этапов изменён', en: 'Stages reordered', uk: 'Порядок етапів змінено' },
+  
+  // Funnel analytics
+  revenueForecast: { ru: 'Прогноз выручки', en: 'Revenue forecast', uk: 'Прогноз виручки' },
+  avgDealCycle: { ru: 'Средний цикл сделки', en: 'Avg deal cycle', uk: 'Середній цикл угоди' },
+  stageConversion: { ru: 'Конверсия по этапам', en: 'Stage conversion', uk: 'Конверсія за етапами' },
+  conversion: { ru: 'Конверсия', en: 'Conversion', uk: 'Конверсія' },
+  amountByStage: { ru: 'Сумма по этапам', en: 'Amount by stage', uk: 'Сума за етапами' },
+  dealDistribution: { ru: 'Распределение сделок', en: 'Deal distribution', uk: 'Розподіл угод' },
+  funnelAnalytics: { ru: 'Аналитика воронки', en: 'Funnel analytics', uk: 'Аналітика воронки' },
+  
+  // Client import/export
+  importCSV: { ru: 'Импорт CSV', en: 'Import CSV', uk: 'Імпорт CSV' },
+  exportCSV: { ru: 'Экспорт CSV', en: 'Export CSV', uk: 'Експорт CSV' },
+  importSuccess: { ru: 'Импорт завершён', en: 'Import completed', uk: 'Імпорт завершено' },
+  importError: { ru: 'Ошибка импорта', en: 'Import error', uk: 'Помилка імпорту' },
+  exportSuccess: { ru: 'Файл экспортирован', en: 'File exported', uk: 'Файл експортовано' },
+  
+  // Subtasks
+  subtasks: { ru: 'Подзадачи', en: 'Subtasks', uk: 'Підзавдання' },
+  addSubtask: { ru: 'Добавить подзадачу...', en: 'Add subtask...', uk: 'Додати підзавдання...' },
+  
+  // Message reactions & mentions
+  reactionAdded: { ru: 'Реакция добавлена', en: 'Reaction added', uk: 'Реакцію додано' },
+  mentionedYou: { ru: 'упомянул вас', en: 'mentioned you', uk: 'згадав вас' },
+  mentionInChat: { ru: 'Упоминание в чате', en: 'Mention in chat', uk: 'Згадка в чаті' },
+  
+  // Proposal enhancements
+  uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
+  uploading: { ru: 'Загрузка...', en: 'Uploading...', uk: 'Завантаження...' },
+  attachmentUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
+  attachmentDeleted: { ru: 'Файл удалён', en: 'File deleted', uk: 'Файл видалено' },
+  sendProposalEmail: { ru: 'Отправить КП на e-mail', en: 'Send proposal via email', uk: 'Надіслати КП на e-mail' },
+  clientEmailRequired: { ru: 'У клиента не указан e-mail', en: 'Client email is required', uk: 'У клієнта не вказано e-mail' },
+  proposalSentSuccess: { ru: 'КП отмечено как отправленное', en: 'Proposal marked as sent', uk: 'КП позначено як надіслане' },
+  sentTo: { ru: 'Отправлено на', en: 'Sent to', uk: 'Надіслано на' },
 };
 
 interface LanguageContextType {
