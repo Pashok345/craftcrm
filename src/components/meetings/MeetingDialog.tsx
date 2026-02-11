@@ -206,9 +206,10 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           try {
             await supabase.functions.invoke('send-notification-email', {
               body: {
-                to: participant.email,
-                subject: `Приглашение на встречу: ${title}`,
-                message: `Вас пригласили на встречу "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} в ${startTime}`,
+                user_id: participant.user_id,
+                type: 'notification',
+                title: `Запрошення на зустріч: ${title}`,
+                message: `Вас запросили на зустріч "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} о ${startTime}`,
               },
             });
           } catch (emailError) {
