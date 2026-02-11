@@ -472,7 +472,7 @@ export const translations: Translations = {
   projectsList: { ru: 'Список проектов', en: 'Projects List', uk: 'Список проектів' },
   timeEntriesList: { ru: 'Записи времени', en: 'Time Entries', uk: 'Записи часу' },
   noDeadline: { ru: 'Без срока', en: 'No deadline', uk: 'Без терміну' },
-  noBudget: { ru: 'Не указан', en: 'Not set', uk: 'Не вказано' },
+  noBudget: { ru: 'Без бюджета', en: 'No budget', uk: 'Без бюджету' },
   noDescription: { ru: 'Без описания', en: 'No description', uk: 'Без опису' },
 
   // User invitations

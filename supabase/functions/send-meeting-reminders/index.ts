@@ -128,11 +128,27 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     
-    // Accept both service role key and anon key for cron compatibility
-    if (!authHeader || (authHeader !== `Bearer ${supabaseServiceKey}` && authHeader !== `Bearer ${anonKey}`)) {
-      console.log("Unauthorized request attempted");
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log("Missing authorization header");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    
+    // Verify the JWT and check for service_role or authenticated role
+    const verifyClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const { data: claimsData, error: claimsError } = await verifyClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.log("Invalid token:", claimsError?.message);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const role = claimsData.claims.role;
+    // Allow service_role (cron), anon (pg_net cron), and authenticated (manual trigger)
+    if (!['service_role', 'anon', 'authenticated'].includes(role)) {
+      console.log("Unauthorized role:", role);
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

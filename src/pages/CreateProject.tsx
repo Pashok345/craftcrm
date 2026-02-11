@@ -27,6 +27,7 @@ const CreateProject = () => {
   const [managerId, setManagerId] = useState<string>('');
   const [reviewerId, setReviewerId] = useState<string>('');
   const [budget, setBudget] = useState('');
+  const [noBudget, setNoBudget] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>();
   const [users, setUsers] = useState<Profile[]>([]);
@@ -85,7 +86,7 @@ const CreateProject = () => {
           status,
           manager_id: managerId || null,
           reviewer_id: reviewerId || null,
-          budget: budget ? parseFloat(budget) : null,
+          budget: noBudget ? null : (budget ? parseFloat(budget) : null),
           start_date: startDate ? format(startDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
           end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
           created_by: user.id,
@@ -95,9 +96,12 @@ const CreateProject = () => {
 
       if (projectError) throw projectError;
 
-      // Add project members
-      if (selectedMembers.length > 0 && projectData) {
-        const membersToInsert = selectedMembers.map(userId => ({
+      // Add project members (always include creator)
+      if (projectData) {
+        const allMembers = new Set(selectedMembers);
+        allMembers.add(user.id); // Always add creator as participant
+        
+        const membersToInsert = Array.from(allMembers).map(userId => ({
           project_id: projectData.id,
           user_id: userId,
           role: 'member',
@@ -212,7 +216,22 @@ const CreateProject = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="budget">{t('budget')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="budget">{t('budget')}</Label>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="noBudget"
+                    checked={noBudget}
+                    onCheckedChange={(checked) => {
+                      setNoBudget(!!checked);
+                      if (checked) setBudget('');
+                    }}
+                  />
+                  <label htmlFor="noBudget" className="text-sm cursor-pointer">
+                    {t('noBudget')}
+                  </label>
+                </div>
+              </div>
               <Input
                 id="budget"
                 type="number"
@@ -221,6 +240,7 @@ const CreateProject = () => {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
+                disabled={noBudget}
               />
             </div>
 

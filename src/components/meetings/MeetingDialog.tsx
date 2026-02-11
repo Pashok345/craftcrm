@@ -121,8 +121,12 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
       fetchUsers();
       // Reset time error when opening
       setTimeError(null);
+      // Auto-select creator as participant
+      if (user) {
+        setParticipants(prev => prev.includes(user.id) ? prev : [user.id]);
+      }
     }
-  }, [open]);
+  }, [open, user]);
 
   // Validate time whenever it changes
   useEffect(() => {
