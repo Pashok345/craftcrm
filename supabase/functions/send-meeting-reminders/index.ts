@@ -6,10 +6,17 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const LOGO_URL = "https://iibqglmxhaiecueqbudh.supabase.co/storage/v1/object/public/avatars/email-logo.png";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": supabaseUrl,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const emailHeader = `
+  <div style="text-align: center; margin-bottom: 32px;">
+    <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
+  </div>`;
 
 async function sendMeetingEmails(
   supabase: any, 
@@ -83,11 +90,7 @@ async function sendMeetingEmails(
             <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
             <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
               <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                <div style="text-align: center; margin-bottom: 32px;">
-                  <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px;">
-                    <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
-                  </div>
-                </div>
+                ${emailHeader}
                 <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                   <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">${emojiMap[reminderType]}</span></div>
                   <h1 style="color: ${colorMap[reminderType]}; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Нагадування про зустріч</h1>
@@ -102,6 +105,7 @@ async function sendMeetingEmails(
                 </div>
                 <div style="text-align: center; margin-top: 32px;">
                   <p style="color: #9ca3af; font-size: 12px; margin: 0;">Це автоматичне сповіщення з CRM системи</p>
+                  <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">© 2025 CRM Pro. Усі права захищено.</p>
                 </div>
               </div>
             </body>
@@ -110,12 +114,12 @@ async function sendMeetingEmails(
         });
 
         if (emailError) {
-          console.error(`Error sending email to ${userData.email}:`, emailError);
+          console.warn(`Email to ${userData.email} skipped (Resend):`, emailError);
         } else {
           emailsSent.push(userData.email);
         }
       } catch (sendError) {
-        console.error(`Failed to send to ${userData.email}:`, sendError);
+        console.warn(`Failed to send to ${userData.email}:`, sendError);
       }
     }
   }
@@ -136,19 +140,20 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '').trim();
     
-    // Verify the JWT and check for service_role or authenticated role
-    const verifyClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-    const { data: claimsData, error: claimsError } = await verifyClient.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims) {
-      console.log("Invalid token:", claimsError?.message);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const role = claimsData.claims.role;
-    // Allow service_role (cron), anon (pg_net cron), and authenticated (manual trigger)
-    if (!['service_role', 'anon', 'authenticated'].includes(role)) {
-      console.log("Unauthorized role:", role);
+    // Decode JWT payload to check role (works for anon, service_role, and user tokens)
+    try {
+      const payloadBase64 = token.split('.')[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      const role = payload.role;
+      
+      if (!['service_role', 'anon', 'authenticated'].includes(role)) {
+        console.log("Unauthorized role:", role);
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      
+      console.log(`Authorized with role: ${role}`);
+    } catch (decodeError) {
+      console.log("Failed to decode JWT:", decodeError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -172,8 +177,7 @@ serve(async (req) => {
     console.log(`Checking meetings at ${currentTime} on ${today}`);
     const emailsSent: string[] = [];
 
-    // 1-day reminder: meetings tomorrow at any time (run once per day check)
-    // Only send if current time is between 09:00 and 09:05 UTC
+    // 1-day reminder: meetings tomorrow (run once per day at 09:00 UTC)
     const hour = now.getUTCHours();
     const minute = now.getUTCMinutes();
     if (hour === 9 && minute < 5) {

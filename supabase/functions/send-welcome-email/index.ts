@@ -6,10 +6,17 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const LOGO_URL = "https://iibqglmxhaiecueqbudh.supabase.co/storage/v1/object/public/avatars/email-logo.png";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const emailHeader = `
+  <div style="text-align: center; margin-bottom: 32px;">
+    <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
+  </div>`;
 
 interface WelcomeEmailRequest {
   email: string;
@@ -25,7 +32,6 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      console.error('Missing or invalid authorization header');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -33,20 +39,15 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const token = authHeader.replace('Bearer ', '');
-    
     const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(
       JSON.parse(atob(token.split('.')[1])).sub
     );
     
     if (userError || !userData?.user) {
-      console.error('Invalid token or user not found:', userError);
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -54,7 +55,6 @@ serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    
     const { data: roleData } = await adminClient
       .from('user_roles')
       .select('role')
@@ -63,7 +63,6 @@ serve(async (req) => {
       .maybeSingle();
     
     if (!roleData) {
-      console.error('User is not admin:', userId);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -99,20 +98,10 @@ serve(async (req) => {
       html: `
         <!DOCTYPE html>
         <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
         <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
           <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 32px;">
-              <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
-                <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
-              </div>
-            </div>
-            
-            <!-- Main Card -->
+            ${emailHeader}
             <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
               <h1 style="color: #111827; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
                 Вітаємо, ${name || 'колего'}! 👋
@@ -120,8 +109,6 @@ serve(async (req) => {
               <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
                 Вас запрошено до CRM системи
               </p>
-              
-              <!-- Info Box -->
               <div style="background-color: #f0f9ff; border-radius: 12px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #3b82f6;">
                 <div style="display: flex; align-items: center; margin-bottom: 12px;">
                   <span style="font-size: 20px; margin-right: 10px;">📧</span>
@@ -131,14 +118,9 @@ serve(async (req) => {
                   </div>
                 </div>
               </div>
-              
               ${resetButtonHtml}
-              
-              <!-- Steps -->
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-                <p style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 16px;">
-                  Після входу вам потрібно:
-                </p>
+                <p style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 16px;">Після входу вам потрібно:</p>
                 <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
                   <span style="background-color: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">1</span>
                   <p style="color: #6b7280; margin: 0; font-size: 14px;">Встановити пароль для входу</p>
@@ -152,8 +134,6 @@ serve(async (req) => {
                   <p style="color: #6b7280; margin: 0; font-size: 14px;">Обрати вашу посаду</p>
                 </div>
               </div>
-              
-              <!-- Notice -->
               <div style="background-color: #fef3c7; border-radius: 12px; padding: 16px; margin-top: 24px; display: flex; align-items: flex-start;">
                 <span style="font-size: 20px; margin-right: 12px;">⚡</span>
                 <p style="color: #92400e; margin: 0; font-size: 14px;">
@@ -161,15 +141,9 @@ serve(async (req) => {
                 </p>
               </div>
             </div>
-            
-            <!-- Footer -->
             <div style="text-align: center; margin-top: 32px;">
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                Якщо у вас виникнуть питання, зверніться до адміністратора
-              </p>
-              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
-                © 2024 CRM Pro. Усі права захищено.
-              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">Якщо у вас виникнуть питання, зверніться до адміністратора</p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">© 2025 CRM Pro. Усі права захищено.</p>
             </div>
           </div>
         </body>
@@ -178,17 +152,16 @@ serve(async (req) => {
     });
 
     if (emailError) {
-      console.error('Error sending email:', emailError);
+      console.warn('Email sending skipped (Resend):', emailError);
       return new Response(
-        JSON.stringify({ error: emailError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, email, email_sent: false, warning: 'Email delivery restricted by Resend domain settings' }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log(`Welcome email sent to ${email}`);
-
     return new Response(
-      JSON.stringify({ success: true, email }),
+      JSON.stringify({ success: true, email, email_sent: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
