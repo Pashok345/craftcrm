@@ -6,10 +6,17 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const LOGO_URL = "https://iibqglmxhaiecueqbudh.supabase.co/storage/v1/object/public/avatars/email-logo.png";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": supabaseUrl,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const emailHeader = `
+  <div style="text-align: center; margin-bottom: 32px;">
+    <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
+  </div>`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,9 +24,24 @@ serve(async (req) => {
   }
 
   try {
+    // Accept both service_role key and anon JWT from pg_cron
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!['service_role', 'anon', 'authenticated'].includes(payload.role)) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find deals that haven't been updated in 7+ days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -29,10 +51,7 @@ serve(async (req) => {
       .lt('updated_at', sevenDaysAgo.toISOString())
       .order('updated_at', { ascending: true });
 
-    if (dealsError) {
-      console.error('Error fetching deals:', dealsError);
-      throw dealsError;
-    }
+    if (dealsError) throw dealsError;
 
     console.log(`Found ${inactiveDeals?.length || 0} inactive deals`);
 
@@ -51,7 +70,6 @@ serve(async (req) => {
         (Date.now() - new Date(deal.updated_at).getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // Get creator's profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('user_id, email, name')
@@ -60,7 +78,6 @@ serve(async (req) => {
 
       if (!profile) continue;
 
-      // Create in-app notification
       await supabase.from('notifications').insert({
         user_id: profile.user_id,
         type: 'deal_reminder',
@@ -69,7 +86,6 @@ serve(async (req) => {
       });
       notificationsSent.push(deal.title);
 
-      // Send email
       if (profile.email) {
         const clientName = (deal.client as any)?.name || 'Невідомий клієнт';
         const amount = deal.amount
@@ -84,14 +100,10 @@ serve(async (req) => {
             html: `
               <!DOCTYPE html>
               <html>
-              <head><meta charset="utf-8"></head>
+              <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
               <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
                 <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-                  <div style="text-align:center;margin-bottom:32px;">
-                    <div style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#2563eb);padding:16px 24px;border-radius:16px;">
-                      <span style="color:white;font-size:28px;font-weight:bold;">CRM Pro</span>
-                    </div>
-                  </div>
+                  ${emailHeader}
                   <div style="background-color:white;border-radius:16px;padding:40px;box-shadow:0 4px 6px rgba(0,0,0,0.05);">
                     <div style="text-align:center;margin-bottom:24px;"><span style="font-size:48px;">🔔</span></div>
                     <h1 style="color:#f59e0b;font-size:24px;margin:0 0 8px;text-align:center;">Follow-up нагадування</h1>
@@ -109,7 +121,8 @@ serve(async (req) => {
                     </p>
                   </div>
                   <div style="text-align:center;margin-top:32px;">
-                    <p style="color:#9ca3af;font-size:12px;margin:0;">Автоматичне сповіщення з CRM системи</p>
+                    <p style="color:#9ca3af;font-size:12px;margin:0;">Це автоматичне сповіщення з CRM системи</p>
+                    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0 0;">© 2025 CRM Pro. Усі права захищено.</p>
                   </div>
                 </div>
               </body>
@@ -118,12 +131,12 @@ serve(async (req) => {
           });
 
           if (emailError) {
-            console.error(`Error sending email to ${profile.email}:`, emailError);
+            console.warn(`Email to ${profile.email} skipped (Resend):`, emailError);
           } else {
             emailsSent.push(profile.email);
           }
         } catch (sendError) {
-          console.error(`Failed to send to ${profile.email}:`, sendError);
+          console.warn(`Failed to send to ${profile.email}:`, sendError);
         }
       }
     }

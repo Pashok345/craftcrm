@@ -6,10 +6,17 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const LOGO_URL = "https://iibqglmxhaiecueqbudh.supabase.co/storage/v1/object/public/avatars/email-logo.png";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": supabaseUrl,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const emailHeader = `
+  <div style="text-align: center; margin-bottom: 32px;">
+    <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
+  </div>`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,15 +24,23 @@ serve(async (req) => {
   }
 
   try {
+    // Accept both service_role key and anon JWT from pg_cron
     const authHeader = req.headers.get("Authorization");
-    const expectedAuth = `Bearer ${supabaseServiceKey}`;
-    
-    if (!authHeader || authHeader !== expectedAuth) {
-      console.log("Unauthorized request attempted");
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!['service_role', 'anon', 'authenticated'].includes(payload.role)) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -43,10 +58,7 @@ serve(async (req) => {
       .eq('deadline', tomorrowDate)
       .neq('status', 'done');
 
-    if (tasksError) {
-      console.error('Error fetching tasks:', tasksError);
-      throw tasksError;
-    }
+    if (tasksError) throw tasksError;
 
     console.log(`Found ${tasks?.length || 0} tasks with upcoming deadlines`);
 
@@ -75,14 +87,8 @@ serve(async (req) => {
         .eq('task_id', task.id);
 
       const usersToNotify = new Set<string>();
-      
-      if (assignees) {
-        assignees.forEach(a => usersToNotify.add(a.user_id));
-      }
-      
-      if (task.created_by) {
-        usersToNotify.add(task.created_by);
-      }
+      if (assignees) assignees.forEach(a => usersToNotify.add(a.user_id));
+      if (task.created_by) usersToNotify.add(task.created_by);
 
       const userIds = Array.from(usersToNotify);
       if (userIds.length === 0) continue;
@@ -93,8 +99,6 @@ serve(async (req) => {
         .in('user_id', userIds);
 
       if (!profiles || profiles.length === 0) continue;
-
-      console.log(`Sending deadline reminders for task "${task.title}" to ${profiles.length} users`);
 
       for (const profile of profiles) {
         if (!profile.email) continue;
@@ -115,61 +119,34 @@ serve(async (req) => {
             html: `
               <!DOCTYPE html>
               <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
+              <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
               <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                  <!-- Header -->
-                  <div style="text-align: center; margin-bottom: 32px;">
-                    <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 16px 24px; border-radius: 16px; margin-bottom: 16px;">
-                      <span style="color: white; font-size: 28px; font-weight: bold;">CRM Pro</span>
-                    </div>
-                  </div>
-                  
-                  <!-- Main Card -->
+                  ${emailHeader}
                   <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                      <span style="font-size: 48px;">⏰</span>
-                    </div>
-                    <h1 style="color: #f59e0b; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
-                      Наближається дедлайн!
-                    </h1>
+                    <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">⏰</span></div>
+                    <h1 style="color: #f59e0b; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Наближається дедлайн!</h1>
                     <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
                       Вітаємо, ${profile.name || 'колего'}! Нагадуємо про завдання.
                     </p>
-                    
-                    <!-- Task Card -->
                     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #f59e0b;">
                       <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${task.title}</h2>
                       <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <span style="font-size: 16px; margin-right: 8px;">📅</span>
-                        <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                          <strong>Дедлайн:</strong> ${tomorrowDate}
-                        </p>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;"><strong>Дедлайн:</strong> ${tomorrowDate}</p>
                       </div>
                       <div style="display: flex; align-items: center;">
                         <span style="font-size: 16px; margin-right: 8px;">📋</span>
-                        <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                          <strong>Статус:</strong> ${getStatusLabel(task.status)}
-                        </p>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;"><strong>Статус:</strong> ${getStatusLabel(task.status)}</p>
                       </div>
                     </div>
-                    
                     <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
                       Термін виконання завдання закінчується завтра. Будь ласка, завершіть його вчасно.
                     </p>
                   </div>
-                  
-                  <!-- Footer -->
                   <div style="text-align: center; margin-top: 32px;">
-                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                      Це автоматичне сповіщення з CRM системи
-                    </p>
-                    <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
-                      © 2024 CRM Pro. Усі права захищено.
-                    </p>
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">Це автоматичне сповіщення з CRM системи</p>
+                    <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">© 2025 CRM Pro. Усі права захищено.</p>
                   </div>
                 </div>
               </body>
@@ -178,22 +155,18 @@ serve(async (req) => {
           });
 
           if (emailError) {
-            console.error(`Error sending email to ${profile.email}:`, emailError);
+            console.warn(`Email to ${profile.email} skipped (Resend):`, emailError);
           } else {
             emailsSent.push(profile.email);
-            console.log(`Deadline reminder sent to ${profile.email}`);
           }
         } catch (sendError) {
-          console.error(`Failed to send to ${profile.email}:`, sendError);
+          console.warn(`Failed to send to ${profile.email}:`, sendError);
         }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: `Sent ${emailsSent.length} deadline reminder emails`,
-        emails: emailsSent 
-      }),
+      JSON.stringify({ message: `Sent ${emailsSent.length} deadline reminder emails`, emails: emailsSent }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
