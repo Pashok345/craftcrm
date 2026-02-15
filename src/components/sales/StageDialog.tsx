@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -10,9 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Trash2 } from 'lucide-react';
 import type { DealStage } from '@/types/sales';
 
 const STAGE_COLORS = [
@@ -29,6 +42,7 @@ interface StageDialogProps {
 
 export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: StageDialogProps) => {
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,6 +93,30 @@ export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: Sta
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!stage) return;
+      // Move deals from this stage or delete them - move deals to null isn't possible since stage_id is required
+      // Delete deals in this stage first
+      await supabase.from('deal_comments').delete().in(
+        'deal_id',
+        (await supabase.from('deals').select('id').eq('stage_id', stage.id)).data?.map(d => d.id) || []
+      );
+      await supabase.from('deals').delete().eq('stage_id', stage.id);
+      const { error } = await supabase.from('deal_stages').delete().eq('id', stage.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deal-stages'] });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      toast({ title: t('stageDeleted') || 'Этап удалён' });
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast({ title: t('error'), variant: 'destructive' });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -120,13 +158,42 @@ export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: Sta
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t('cancel')}
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {stage ? t('save') : t('create')}
-            </Button>
+          <div className="flex justify-between">
+            {stage && isAdmin ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" size="sm" disabled={deleteMutation.isPending}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('delete') || 'Удалить'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('confirmDelete') || 'Подтвердите удаление'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('deleteStageConfirm') || 'Этап и все связанные сделки будут удалены. Продолжить?'}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {t('delete') || 'Удалить'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : <div />}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t('cancel')}
+              </Button>
+              <Button type="submit" disabled={mutation.isPending}>
+                {stage ? t('save') : t('create')}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
