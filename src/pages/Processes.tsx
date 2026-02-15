@@ -170,6 +170,10 @@ const Processes = () => {
         onSaved={handleSaved}
         onTypesChange={fetchData}
         onDepartmentsChange={fetchData}
+        onDeleted={() => {
+          handleDialogClose();
+          fetchData();
+        }}
       />
     </div>
   );

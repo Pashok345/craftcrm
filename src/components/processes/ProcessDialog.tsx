@@ -21,6 +21,18 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ProcessType {
   id: string;
@@ -58,6 +70,7 @@ interface ProcessDialogProps {
   onSaved: () => void;
   onTypesChange: () => void;
   onDepartmentsChange: () => void;
+  onDeleted?: () => void;
 }
 
 const FIELD_TYPES = [
@@ -75,9 +88,11 @@ export const ProcessDialog = ({
   onSaved,
   onTypesChange,
   onDepartmentsChange,
+  onDeleted,
 }: ProcessDialogProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [typeId, setTypeId] = useState<string>('');
@@ -86,6 +101,38 @@ export const ProcessDialog = ({
   const [newTypeName, setNewTypeName] = useState('');
   const [newDeptName, setNewDeptName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!process) return;
+    setDeleting(true);
+    try {
+      // Delete related data in order: attachments, comments, runs, fields, then process
+      const { data: runs } = await supabase
+        .from('process_runs')
+        .select('id')
+        .eq('process_id', process.id);
+
+      if (runs && runs.length > 0) {
+        const runIds = runs.map(r => r.id);
+        await supabase.from('process_run_attachments').delete().in('process_run_id', runIds);
+        await supabase.from('process_run_comments').delete().in('process_run_id', runIds);
+        await supabase.from('process_runs').delete().eq('process_id', process.id);
+      }
+
+      await supabase.from('process_fields').delete().eq('process_id', process.id);
+      const { error } = await supabase.from('processes').delete().eq('id', process.id);
+      if (error) throw error;
+
+      toast({ title: t('processDeleted') || 'Процесс удалён' });
+      onDeleted?.();
+    } catch (error) {
+      console.error('Error deleting process:', error);
+      toast({ title: t('error'), variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (process) {
@@ -387,13 +434,39 @@ export const ProcessDialog = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={onOpenChange}>
-              {t('cancel')}
-            </Button>
-            <Button onClick={handleSave} disabled={saving || !title.trim()}>
-              {saving ? t('loading') : t('save')}
-            </Button>
+          <div className="flex justify-between pt-4">
+            {process && isAdmin ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={deleting}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('deleteProcess') || 'Удалить процесс'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('confirmDelete') || 'Подтвердите удаление'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('deleteProcessConfirm') || 'Процесс и все его запуски будут удалены безвозвратно. Продолжить?'}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      {t('delete') || 'Удалить'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : <div />}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onOpenChange}>
+                {t('cancel')}
+              </Button>
+              <Button onClick={handleSave} disabled={saving || !title.trim()}>
+                {saving ? t('loading') : t('save')}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
