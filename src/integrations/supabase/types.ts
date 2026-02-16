@@ -822,6 +822,7 @@ export type Database = {
           budget: number | null
           created_at: string
           created_by: string
+          currency: string
           description: string | null
           end_date: string | null
           id: string
@@ -836,6 +837,7 @@ export type Database = {
           budget?: number | null
           created_at?: string
           created_by: string
+          currency?: string
           description?: string | null
           end_date?: string | null
           id?: string
@@ -850,6 +852,7 @@ export type Database = {
           budget?: number | null
           created_at?: string
           created_by?: string
+          currency?: string
           description?: string | null
           end_date?: string | null
           id?: string

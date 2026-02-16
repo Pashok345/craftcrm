@@ -35,6 +35,7 @@ export const ProjectEditDialog = ({ project, open, onOpenChange, onSuccess }: Pr
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<ProjectStatus>('planning');
+  const [currency, setCurrency] = useState('USD');
   const [managerId, setManagerId] = useState<string>('');
   const [budget, setBudget] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -56,6 +57,7 @@ export const ProjectEditDialog = ({ project, open, onOpenChange, onSuccess }: Pr
       setTitle(project.title);
       setDescription(project.description || '');
       setStatus(project.status);
+      setCurrency(project.currency || 'USD');
       setManagerId(project.manager_id || '');
       setBudget(project.budget?.toString() || '');
       setStartDate(project.start_date || '');
@@ -85,6 +87,7 @@ export const ProjectEditDialog = ({ project, open, onOpenChange, onSuccess }: Pr
           status,
           manager_id: managerId || null,
           budget: budget ? parseFloat(budget) : null,
+          currency,
           start_date: startDate || null,
           end_date: endDate || null,
         })
@@ -164,12 +167,28 @@ export const ProjectEditDialog = ({ project, open, onOpenChange, onSuccess }: Pr
 
           <div className="space-y-2">
             <Label>{t('budget')}</Label>
-            <Input
-              type="number"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-              placeholder="0"
-            />
+            <div className="flex gap-2">
+              <Input
+                className="flex-1"
+                type="number"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="0"
+              />
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="UAH">UAH</SelectItem>
+                  <SelectItem value="RUB">RUB</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="PLN">PLN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

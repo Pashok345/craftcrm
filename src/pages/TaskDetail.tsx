@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { linkifyText } from '@/utils/linkifyText';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
@@ -504,7 +505,7 @@ const TaskDetail = () => {
             <div>
               <h1 className="text-2xl font-bold text-foreground">{task.title}</h1>
               {task.description && (
-                <p className="text-muted-foreground mt-2">{task.description}</p>
+                <p className="text-muted-foreground mt-2 whitespace-pre-wrap">{linkifyText(task.description)}</p>
               )}
             </div>
             <div className="flex items-center gap-2">

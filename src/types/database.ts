@@ -154,6 +154,7 @@ export interface Project {
   manager_id?: string;
   reviewer_id?: string;
   budget?: number;
+  currency: string;
   start_date?: string;
   end_date?: string;
   created_by: string;
