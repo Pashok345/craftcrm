@@ -165,11 +165,18 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, name, position, phone } = await req.json()
+    const { email, name, password, position, phone } = await req.json()
 
-    if (!email || !name) {
+    if (!email || !name || !password) {
       return new Response(
-        JSON.stringify({ error: 'Email and name are required' }),
+        JSON.stringify({ error: 'Email, name and password are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (password.length < 6) {
+      return new Response(
+        JSON.stringify({ error: 'Пароль повинен бути не менше 6 символів' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -206,12 +213,10 @@ serve(async (req) => {
     // Get the origin for redirect URL
     const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
 
-    // Create user with a temporary password (they will reset it)
-    const tempPassword = crypto.randomUUID() + crypto.randomUUID()
-    
+    // Create user with the provided password
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
-      password: tempPassword,
+      password: password,
       email_confirm: true, // Auto-confirm email so they can use magic link
       user_metadata: {
         name: name.trim(),
