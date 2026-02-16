@@ -79,11 +79,12 @@ const Projects = () => {
     }
   };
 
-  const formatBudget = (budget?: number) => {
+  const formatBudget = (budget?: number, currency?: string) => {
     if (!budget) return null;
+    const cur = currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: cur,
       maximumFractionDigits: 0,
     }).format(budget);
   };
@@ -237,7 +238,7 @@ const Projects = () => {
                     {project.budget && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <DollarSign className="h-4 w-4" />
-                        <span>{formatBudget(project.budget)}</span>
+                        <span>{formatBudget(project.budget, project.currency)}</span>
                       </div>
                     )}
 

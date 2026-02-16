@@ -27,6 +27,7 @@ const CreateProject = () => {
   const [managerId, setManagerId] = useState<string>('');
   const [reviewerId, setReviewerId] = useState<string>('');
   const [budget, setBudget] = useState('');
+  const [currency, setCurrency] = useState('USD');
   const [noBudget, setNoBudget] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>();
@@ -87,6 +88,7 @@ const CreateProject = () => {
           manager_id: managerId || null,
           reviewer_id: reviewerId || null,
           budget: noBudget ? null : (budget ? parseFloat(budget) : null),
+          currency,
           start_date: startDate ? format(startDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
           end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
           created_by: user.id,
@@ -232,16 +234,33 @@ const CreateProject = () => {
                   </label>
                 </div>
               </div>
-              <Input
-                id="budget"
-                type="number"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-                disabled={noBudget}
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    id="budget"
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    disabled={noBudget}
+                  />
+                </div>
+                <Select value={currency} onValueChange={setCurrency} disabled={noBudget}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="UAH">UAH</SelectItem>
+                    <SelectItem value="RUB">RUB</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="PLN">PLN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

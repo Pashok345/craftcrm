@@ -37,6 +37,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { linkifyText } from '@/utils/linkifyText';
 
 // Collapsible description component
 const CollapsibleDescription = ({ description }: { description: string }) => {
@@ -45,7 +46,6 @@ const CollapsibleDescription = ({ description }: { description: string }) => {
   const lines = description.split('\n');
   const hasMoreThanSevenLines = description.length > 350 || lines.length > 7;
   
-  // Approximate 7 lines worth of text (about 350 characters or 7 actual lines)
   const truncatedText = hasMoreThanSevenLines && !expanded
     ? description.slice(0, 350) + '...'
     : description;
@@ -53,7 +53,7 @@ const CollapsibleDescription = ({ description }: { description: string }) => {
   return (
     <div className="mt-1">
       <p className="text-muted-foreground whitespace-pre-wrap">
-        {truncatedText}
+        {linkifyText(truncatedText)}
       </p>
       {hasMoreThanSevenLines && (
         <Button
@@ -244,8 +244,8 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="pr-10">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+          <DialogHeader className="pr-12">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl">{project.title}</DialogTitle>
