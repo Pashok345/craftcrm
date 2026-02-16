@@ -54,6 +54,8 @@ interface AddUserDialogProps {
 export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [position, setPosition] = useState<UserPosition>('other');
   const [phone, setPhone] = useState('+38');
   const [loading, setLoading] = useState(false);
@@ -67,10 +69,28 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !email.trim()) {
+    if (!name.trim() || !email.trim() || !password) {
       toast({
         title: 'Ошибка',
         description: 'Заполните все обязательные поля',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: 'Ошибка',
+        description: 'Пароль должен быть не менее 6 символов',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Ошибка',
+        description: 'Пароли не совпадают',
         variant: 'destructive',
       });
       return;
@@ -84,6 +104,7 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
         body: { 
           email: email.trim(), 
           name: name.trim(),
+          password: password,
           position: position,
           phone: phone.trim() !== '+38' ? phone.trim() : null,
         }
@@ -137,6 +158,8 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
   const resetForm = () => {
     setName('');
     setEmail('');
+    setPassword('');
+    setConfirmPassword('');
     setPosition('other');
     setPhone('+38');
   };
@@ -168,6 +191,30 @@ export const AddUserDialog = ({ open, onOpenChange, onSuccess }: AddUserDialogPr
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ivan@company.com"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Пароль *</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Минимум 6 символов"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Повторите пароль *</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Повторите пароль"
               required
             />
           </div>
