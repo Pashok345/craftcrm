@@ -10,15 +10,31 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (isMounted && data) {
+        setProfile(data as Profile);
+      }
+    };
+
+    // Listener for ONGOING auth changes — does NOT control loading
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
 
         if (session?.user) {
+          // Use setTimeout to avoid Supabase deadlock inside the callback
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            if (isMounted) fetchProfile(session.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -26,20 +42,32 @@ export const useAuth = () => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    // INITIAL load — controls loading state, awaits profile before finishing
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
 
-      if (session?.user) {
-        fetchProfile(session.user.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfileExternal = async (userId: string) => {
     const { data } = await supabase
       .from('profiles')
       .select('*')
@@ -63,5 +91,6 @@ export const useAuth = () => {
     setProfile(null);
   };
 
-  return { user, session, profile, loading, signOut, refetchProfile: () => user && fetchProfile(user.id) };
+  return { user, session, profile, loading, signOut, refetchProfile: () => user && fetchProfileExternal(user.id) };
 };
+
