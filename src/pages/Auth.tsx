@@ -50,10 +50,12 @@ const Auth = () => {
             .eq('user_id', session.user!.id)
             .maybeSingle();
 
-          if (profile?.is_verified) {
-            navigate('/dashboard');
-          } else {
+          // Only redirect to complete-profile if explicitly NOT verified
+          // If profile is null (timing issue), default to dashboard
+          if (profile?.is_verified === false) {
             navigate('/complete-profile');
+          } else {
+            navigate('/dashboard');
           }
         }, 0);
       }
@@ -69,10 +71,11 @@ const Auth = () => {
             .eq('user_id', session.user!.id)
             .maybeSingle();
 
-          if (profile?.is_verified) {
-            navigate('/dashboard');
-          } else {
+          // Only redirect to complete-profile if explicitly NOT verified
+          if (profile?.is_verified === false) {
             navigate('/complete-profile');
+          } else {
+            navigate('/dashboard');
           }
         }, 0);
       }
