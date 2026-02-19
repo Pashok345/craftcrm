@@ -64,7 +64,7 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
       return;
     }
 
-    // Check verification status
+    // Check verification status — only block if explicitly is_verified === false
     if (data?.user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -72,7 +72,8 @@ export const LoginForm = ({ onSwitchToRegister, onSwitchToForgotPassword }: Logi
         .eq('user_id', data.user.id)
         .maybeSingle();
       
-      if (profile?.is_verified === false) {
+      // If profile is null (timing/RLS issue), allow login — Auth.tsx will handle redirect
+      if (profile !== null && profile?.is_verified === false) {
         await supabase.auth.signOut();
         toast({
           title: "Акаунт не верифіковано",
