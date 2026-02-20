@@ -132,6 +132,15 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     }
   }, [open, user]);
 
+  // Auto-update end time to be 1 hour after start time
+  useEffect(() => {
+    const [h, m] = startTime.split(':').map(Number);
+    const newHour = h + 1;
+    if (newHour <= 23) {
+      setEndTime(`${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }, [startTime]);
+
   // Validate time whenever it changes
   useEffect(() => {
     validateTime();
