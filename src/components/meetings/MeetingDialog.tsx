@@ -268,33 +268,33 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Создать встречу</DialogTitle>
+          <DialogTitle>{t('createMeeting') || 'Создать встречу'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Название встречи *</Label>
+            <Label htmlFor="title">{t('meetingTitle') || 'Название встречи'} *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Введите название"
+              placeholder={t('enterTitle') || 'Введите название'}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Описание</Label>
+            <Label htmlFor="description">{t('description') || 'Описание'}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Опишите встречу"
+              placeholder={t('describeMeeting') || 'Опишите встречу'}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Дата *</Label>
+            <Label>{t('date') || 'Дата'} *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -302,7 +302,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP', { locale: ru }) : 'Выберите дату'}
+                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate') || 'Выберите дату'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -320,7 +320,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">Начало *</Label>
+              <Label htmlFor="startTime">{t('startTime') || 'Начало'} *</Label>
               <Input
                 id="startTime"
                 type="time"
@@ -335,7 +335,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">Окончание</Label>
+              <Label htmlFor="endTime">{t('endTime') || 'Окончание'}</Label>
               <Input
                 id="endTime"
                 type="time"
@@ -347,7 +347,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           </div>
 
           <div className="space-y-2">
-            <Label>Участники</Label>
+            <Label>{t('participants') || 'Участники'}</Label>
             <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
               {users.map((u) => (
                 <label key={u.user_id} className="flex items-center gap-2 cursor-pointer">
@@ -363,11 +363,11 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Отмена
+              {t('cancel') || 'Отмена'}
             </Button>
             <Button type="submit" disabled={loading || !title.trim() || !date || !!timeError} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Создать
+              {t('create') || 'Создать'}
             </Button>
           </div>
         </form>
