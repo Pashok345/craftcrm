@@ -16,10 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Profile } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MeetingDialogProps {
   open: boolean;
