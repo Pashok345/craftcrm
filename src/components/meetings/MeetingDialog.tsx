@@ -226,7 +226,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                 user_id: participant.user_id,
                 type: 'notification',
                 title: `Запрошення на зустріч: ${title}`,
-                message: `Вас запросили на зустріч "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} о ${startTime}`,
+                message: `Вас запросили на зустріч "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} о ${startTime}`,
               },
             });
           } catch (emailError) {
