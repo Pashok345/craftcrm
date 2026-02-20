@@ -16,10 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Profile } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MeetingDialogProps {
   open: boolean;
@@ -74,6 +75,9 @@ const getMinTimeForDate = (selectedDate: Date | undefined): string | undefined =
 };
 
 export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTime, onSuccess }: MeetingDialogProps) => {
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
@@ -128,6 +132,15 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     }
   }, [open, user]);
 
+  // Auto-update end time to be 1 hour after start time
+  useEffect(() => {
+    const [h, m] = startTime.split(':').map(Number);
+    const newHour = h + 1;
+    if (newHour <= 23) {
+      setEndTime(`${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }, [startTime]);
+
   // Validate time whenever it changes
   useEffect(() => {
     validateTime();
@@ -145,7 +158,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
       meetingTime.setHours(h, m, 0, 0);
       
       if (meetingTime < now) {
-        setTimeError('Нельзя назначить встречу на прошедшее время');
+        setTimeError(t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время');
         return false;
       }
     }
@@ -165,7 +178,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     
     // Final time validation before submit
     if (!validateTime()) {
-      toast({ title: 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
+      toast({ title: t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
       return;
     }
 
@@ -198,8 +211,8 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         const notifications = participants.map((userId) => ({
           user_id: userId,
           type: 'meeting_invite',
-          title: 'Приглашение на встречу',
-          message: `Вас пригласили на встречу "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} в ${startTime}`,
+          title: t('meetingInviteTitle') || 'Приглашение на встречу',
+          message: `${t('meetingInviteMessage') || 'Вас пригласили на встречу'} "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} ${t('at') || 'в'} ${startTime}`,
           created_by: user.id,
         }));
         await supabase.from('notifications').insert(notifications);
@@ -213,7 +226,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                 user_id: participant.user_id,
                 type: 'notification',
                 title: `Запрошення на зустріч: ${title}`,
-                message: `Вас запросили на зустріч "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} о ${startTime}`,
+                message: `Вас запросили на зустріч "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} о ${startTime}`,
               },
             });
           } catch (emailError) {
@@ -222,13 +235,13 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         }
       }
 
-      toast({ title: 'Встреча создана' });
+      toast({ title: t('meetingCreated') || 'Встреча создана' });
       resetForm();
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error creating meeting:', error);
-      toast({ title: 'Ошибка при создании встречи', variant: 'destructive' });
+      toast({ title: t('errorCreatingMeeting') || 'Ошибка при создании встречи', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -255,33 +268,33 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Создать встречу</DialogTitle>
+          <DialogTitle>{t('createMeeting') || 'Создать встречу'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Название встречи *</Label>
+            <Label htmlFor="title">{t('meetingTitle') || 'Название встречи'} *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Введите название"
+              placeholder={t('enterTitle') || 'Введите название'}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Описание</Label>
+            <Label htmlFor="description">{t('description') || 'Описание'}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Опишите встречу"
+              placeholder={t('describeMeeting') || 'Опишите встречу'}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Дата *</Label>
+            <Label>{t('date') || 'Дата'} *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -289,7 +302,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP', { locale: ru }) : 'Выберите дату'}
+                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate') || 'Выберите дату'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -307,7 +320,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">Начало *</Label>
+              <Label htmlFor="startTime">{t('startTime') || 'Начало'} *</Label>
               <Input
                 id="startTime"
                 type="time"
@@ -322,7 +335,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">Окончание</Label>
+              <Label htmlFor="endTime">{t('endTime') || 'Окончание'}</Label>
               <Input
                 id="endTime"
                 type="time"
@@ -334,7 +347,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           </div>
 
           <div className="space-y-2">
-            <Label>Участники</Label>
+            <Label>{t('participants') || 'Участники'}</Label>
             <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
               {users.map((u) => (
                 <label key={u.user_id} className="flex items-center gap-2 cursor-pointer">
@@ -350,11 +363,11 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Отмена
+              {t('cancel') || 'Отмена'}
             </Button>
             <Button type="submit" disabled={loading || !title.trim() || !date || !!timeError} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Создать
+              {t('create') || 'Создать'}
             </Button>
           </div>
         </form>
