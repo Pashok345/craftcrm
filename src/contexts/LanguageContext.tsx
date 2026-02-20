@@ -229,7 +229,6 @@ export const translations: Translations = {
   meetingTitle: { ru: 'Название встречи', en: 'Meeting title', uk: 'Назва зустрічі' },
   enterTitle: { ru: 'Введите название', en: 'Enter title', uk: 'Введіть назву' },
   describeMeeting: { ru: 'Опишите встречу', en: 'Describe the meeting', uk: 'Опишіть зустріч' },
-  date: { ru: 'Дата', en: 'Date', uk: 'Дата' },
   selectDate: { ru: 'Выберите дату', en: 'Select date', uk: 'Оберіть дату' },
   startTime: { ru: 'Начало', en: 'Start time', uk: 'Початок' },
   endTime: { ru: 'Окончание', en: 'End time', uk: 'Закінчення' },
