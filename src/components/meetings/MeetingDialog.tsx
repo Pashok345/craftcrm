@@ -235,13 +235,13 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         }
       }
 
-      toast({ title: 'Встреча создана' });
+      toast({ title: t('meetingCreated') || 'Встреча создана' });
       resetForm();
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error creating meeting:', error);
-      toast({ title: 'Ошибка при создании встречи', variant: 'destructive' });
+      toast({ title: t('errorCreatingMeeting') || 'Ошибка при создании встречи', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
