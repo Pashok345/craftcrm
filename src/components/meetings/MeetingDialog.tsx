@@ -211,8 +211,8 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         const notifications = participants.map((userId) => ({
           user_id: userId,
           type: 'meeting_invite',
-          title: 'Приглашение на встречу',
-          message: `Вас пригласили на встречу "${title}" ${format(date, 'd MMMM yyyy', { locale: ru })} в ${startTime}`,
+          title: t('meetingInviteTitle') || 'Приглашение на встречу',
+          message: `${t('meetingInviteMessage') || 'Вас пригласили на встречу'} "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} ${t('at') || 'в'} ${startTime}`,
           created_by: user.id,
         }));
         await supabase.from('notifications').insert(notifications);
