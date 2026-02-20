@@ -75,6 +75,9 @@ const getMinTimeForDate = (selectedDate: Date | undefined): string | undefined =
 };
 
 export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTime, onSuccess }: MeetingDialogProps) => {
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
