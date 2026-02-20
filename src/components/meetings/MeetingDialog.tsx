@@ -178,7 +178,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     
     // Final time validation before submit
     if (!validateTime()) {
-      toast({ title: 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
+      toast({ title: t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
       return;
     }
 
