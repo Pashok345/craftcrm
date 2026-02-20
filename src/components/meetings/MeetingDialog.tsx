@@ -158,7 +158,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
       meetingTime.setHours(h, m, 0, 0);
       
       if (meetingTime < now) {
-        setTimeError('Нельзя назначить встречу на прошедшее время');
+        setTimeError(t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время');
         return false;
       }
     }
