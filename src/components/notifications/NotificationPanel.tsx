@@ -18,6 +18,7 @@ interface Notification {
   title: string;
   message: string;
   task_id: string | null;
+  meeting_id: string | null;
   is_read: boolean;
   created_at: string;
 }
