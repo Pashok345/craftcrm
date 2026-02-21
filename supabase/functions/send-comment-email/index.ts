@@ -45,14 +45,17 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
     
-    if (userError || !user) {
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const user = { id: claimsData.claims.sub as string };
 
     const { task_id, task_title, comment_text, commenter_name, recipient_user_ids }: CommentEmailRequest = await req.json();
 
