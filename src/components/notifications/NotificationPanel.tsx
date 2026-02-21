@@ -231,8 +231,10 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
                   )}
                   onClick={() => {
                     markAsRead(notification.id);
-                    // Navigate to task if task_id exists
-                    if (notification.task_id) {
+                    if (notification.type === 'meeting' && notification.meeting_id) {
+                      onOpenChange(false);
+                      navigate(`/meetings?meeting=${notification.meeting_id}`);
+                    } else if (notification.task_id) {
                       onOpenChange(false);
                       navigate(`/tasks/${notification.task_id}`);
                     }
