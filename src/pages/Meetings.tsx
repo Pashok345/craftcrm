@@ -35,6 +35,7 @@ interface MeetingWithParticipants extends Meeting {
 const Meetings = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [meetings, setMeetings] = useState<MeetingWithParticipants[]>([]);
