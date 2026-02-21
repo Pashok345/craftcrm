@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ interface MeetingWithParticipants extends Meeting {
 const Meetings = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [meetings, setMeetings] = useState<MeetingWithParticipants[]>([]);
@@ -66,6 +68,38 @@ const Meetings = () => {
       fetchMeetings();
     }
   }, [currentDate, user]);
+
+  // Handle ?meeting=<id> query param from notification clicks
+  useEffect(() => {
+    const meetingId = searchParams.get('meeting');
+    if (meetingId && !loading && meetings.length > 0) {
+      const meeting = meetings.find(m => m.id === meetingId);
+      if (meeting) {
+        setActiveTab('calendar');
+        setCurrentDate(new Date(meeting.meeting_date));
+        setSelectedMeeting(meeting);
+        setDetailOpen(true);
+        // Clear the query param
+        setSearchParams({}, { replace: true });
+      } else {
+        // Meeting not in current month range, fetch it directly
+        const fetchMeetingById = async () => {
+          const { data } = await supabase
+            .from('meetings')
+            .select('*')
+            .eq('id', meetingId)
+            .single();
+          if (data) {
+            setCurrentDate(new Date(data.meeting_date));
+            setSelectedMeeting(data as MeetingWithParticipants);
+            setDetailOpen(true);
+            setSearchParams({}, { replace: true });
+          }
+        };
+        fetchMeetingById();
+      }
+    }
+  }, [searchParams, loading, meetings]);
 
   useEffect(() => {
     if (activeTab === 'day' && user) {

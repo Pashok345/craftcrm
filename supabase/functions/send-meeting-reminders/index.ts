@@ -72,10 +72,25 @@ async function sendMeetingEmails(
 
     for (const [userId, userData] of emailMap) {
       try {
+        // Check for existing notification to prevent duplicates
+        const notificationTitle = `${emojiMap[reminderType]} Зустріч ${reminderText[reminderType].subject}`;
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('meeting_id', meeting.id)
+          .eq('title', notificationTitle)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          console.log(`Skipping duplicate notification for user ${userId}, meeting ${meeting.id}, type ${reminderType}`);
+          continue;
+        }
+
         await supabase.from('notifications').insert({
           user_id: userId,
           type: 'meeting',
-          title: `${emojiMap[reminderType]} Зустріч ${reminderText[reminderType].subject}`,
+          title: notificationTitle,
           message: `"${meeting.title}" - ${meeting.start_time.slice(0, 5)}`,
           meeting_id: meeting.id,
         });
