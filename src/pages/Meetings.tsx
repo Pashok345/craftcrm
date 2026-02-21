@@ -69,6 +69,38 @@ const Meetings = () => {
     }
   }, [currentDate, user]);
 
+  // Handle ?meeting=<id> query param from notification clicks
+  useEffect(() => {
+    const meetingId = searchParams.get('meeting');
+    if (meetingId && !loading && meetings.length > 0) {
+      const meeting = meetings.find(m => m.id === meetingId);
+      if (meeting) {
+        setActiveTab('calendar');
+        setCurrentDate(new Date(meeting.meeting_date));
+        setSelectedMeeting(meeting);
+        setDetailOpen(true);
+        // Clear the query param
+        setSearchParams({}, { replace: true });
+      } else {
+        // Meeting not in current month range, fetch it directly
+        const fetchMeetingById = async () => {
+          const { data } = await supabase
+            .from('meetings')
+            .select('*')
+            .eq('id', meetingId)
+            .single();
+          if (data) {
+            setCurrentDate(new Date(data.meeting_date));
+            setSelectedMeeting(data as MeetingWithParticipants);
+            setDetailOpen(true);
+            setSearchParams({}, { replace: true });
+          }
+        };
+        fetchMeetingById();
+      }
+    }
+  }, [searchParams, loading, meetings]);
+
   useEffect(() => {
     if (activeTab === 'day' && user) {
       fetchDayMeetings();
