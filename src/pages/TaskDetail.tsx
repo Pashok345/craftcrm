@@ -29,6 +29,7 @@ import { TagsManager } from '@/components/tasks/TagsManager';
 import { SubtasksList } from '@/components/tasks/SubtasksList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -313,10 +314,31 @@ const TaskDetail = () => {
         await supabase.from('notifications').insert({
           user_id: userId,
           type: 'comment',
-          title: t('newCommentOnTask') || 'Новый комментарий к задаче',
+          title: t('newCommentOnTask') || 'Новий коментар до завдання',
           message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
           task_id: task.id,
         });
+      }
+
+      // Handle @mentions - send separate mention notifications
+      const { data: allProfiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, name');
+      
+      if (allProfiles) {
+        const mentionedIds = parseMentionedUserIds(newComment, allProfiles as { user_id: string; name: string }[], user.id);
+        for (const mentionedUserId of mentionedIds) {
+          // Don't duplicate if already notified as assignee/creator
+          if (!usersToNotify.has(mentionedUserId)) {
+            await supabase.from('notifications').insert({
+              user_id: mentionedUserId,
+              type: 'mention',
+              title: t('mentionInComment') || 'Згадка в коментарі',
+              message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
+              task_id: task.id,
+            });
+          }
+        }
       }
 
       // Send email notifications to all users
@@ -786,11 +808,11 @@ const TaskDetail = () => {
 
           <div className="border-t pt-4 mt-4">
             <div className="flex gap-2">
-              <Input
+              <MentionInput
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={setNewComment}
                 placeholder={t('writeComment')}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitComment()}
+                onSubmit={handleSubmitComment}
               />
               <input
                 type="file"

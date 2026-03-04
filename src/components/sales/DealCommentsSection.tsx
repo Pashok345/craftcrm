@@ -5,11 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Trash2, Send } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 
 interface DealComment {
   id: string;
@@ -25,14 +25,17 @@ interface DealComment {
 
 interface DealCommentsSectionProps {
   dealId: string;
+  dealTitle?: string;
 }
 
-export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
+export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['deal-comments', dealId],
@@ -44,7 +47,6 @@ export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
         .order('created_at', { ascending: true });
       if (error) throw error;
       
-      // Fetch profiles for comments
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -66,6 +68,25 @@ export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
         content,
       });
       if (error) throw error;
+
+      // Handle @mentions
+      const { data: allProfiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, name');
+      
+      if (allProfiles && user) {
+        const mentionedIds = parseMentionedUserIds(content, allProfiles as { user_id: string; name: string }[], user.id);
+        const { data: myProfile } = await supabase.from('profiles').select('name').eq('user_id', user.id).single();
+        
+        for (const mentionedUserId of mentionedIds) {
+          await supabase.from('notifications').insert({
+            user_id: mentionedUserId,
+            type: 'mention',
+            title: t('mentionInComment') || 'Згадка в коментарі',
+            message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`,
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deal-comments', dealId] });
@@ -89,20 +110,15 @@ export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newComment.trim()) return;
     addCommentMutation.mutate(newComment);
   };
 
   const getInitials = (name?: string) => {
     if (!name) return '?';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
@@ -131,7 +147,7 @@ export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
                     {comment.profile?.name || t('unknownUser')}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(comment.created_at), 'd MMM, HH:mm', { locale: ru })}
+                    {format(new Date(comment.created_at), 'd MMM, HH:mm', { locale: dateLocale })}
                   </span>
                   {comment.user_id === user?.id && (
                     <Button
@@ -154,10 +170,12 @@ export const DealCommentsSection = ({ dealId }: DealCommentsSectionProps) => {
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2">
-        <Textarea
+        <MentionInput
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={setNewComment}
           placeholder={t('writeComment')}
+          onSubmit={() => handleSubmit()}
+          variant="textarea"
           className="min-h-[60px] resize-none"
         />
         <Button

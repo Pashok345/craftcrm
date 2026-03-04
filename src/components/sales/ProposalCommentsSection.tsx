@@ -6,11 +6,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { uk } from 'date-fns/locale';
+import { ru, enUS, uk } from 'date-fns/locale';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 
 interface ProposalCommentsSectionProps {
   proposalId: string;
@@ -34,10 +34,12 @@ interface Profile {
 
 export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
+
+  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const { data: comments = [] } = useQuery({
     queryKey: ['proposal-comments', proposalId],
@@ -71,6 +73,21 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
         content,
       });
       if (error) throw error;
+
+      // Handle @mentions
+      if (user) {
+        const mentionedIds = parseMentionedUserIds(content, profiles as { user_id: string; name: string }[], user.id);
+        const { data: myProfile } = await supabase.from('profiles').select('name').eq('user_id', user.id).single();
+        
+        for (const mentionedUserId of mentionedIds) {
+          await supabase.from('notifications').insert({
+            user_id: mentionedUserId,
+            type: 'mention',
+            title: t('mentionInComment') || 'Згадка в коментарі',
+            message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`,
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposal-comments', proposalId] });
@@ -99,16 +116,11 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
   };
 
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(' ').map((word) => word[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newComment.trim()) return;
     addCommentMutation.mutate(newComment.trim());
   };
@@ -144,7 +156,7 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
                           {profile?.name || t('unknownUser')}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: uk })}
+                          {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: dateLocale })}
                         </span>
                       </div>
                       {comment.user_id === user?.id && (
@@ -170,10 +182,12 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
       </ScrollArea>
 
       <form onSubmit={handleSubmit} className="flex gap-2">
-        <Textarea
+        <MentionInput
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={setNewComment}
           placeholder={t('writeComment')}
+          onSubmit={() => handleSubmit()}
+          variant="textarea"
           className="min-h-[60px] resize-none"
         />
         <Button
