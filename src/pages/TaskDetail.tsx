@@ -29,6 +29,7 @@ import { TagsManager } from '@/components/tasks/TagsManager';
 import { SubtasksList } from '@/components/tasks/SubtasksList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 import {
   AlertDialog,
   AlertDialogAction,
