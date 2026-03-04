@@ -652,6 +652,8 @@ export const translations: Translations = {
   reactionAdded: { ru: 'Реакция добавлена', en: 'Reaction added', uk: 'Реакцію додано' },
   mentionedYou: { ru: 'упомянул вас', en: 'mentioned you', uk: 'згадав вас' },
   mentionInChat: { ru: 'Упоминание в чате', en: 'Mention in chat', uk: 'Згадка в чаті' },
+  mentionInComment: { ru: 'Упоминание в комментарии', en: 'Mention in comment', uk: 'Згадка в коментарі' },
+  mentionedYouInComment: { ru: 'упомянул вас в комментарии', en: 'mentioned you in a comment', uk: 'згадав вас у коментарі' },
   
   // Proposal enhancements
   uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
