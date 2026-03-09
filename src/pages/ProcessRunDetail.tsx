@@ -799,12 +799,13 @@ const ProcessRunDetail = () => {
 
               {/* New comment form */}
               <div className="border-t pt-4 space-y-3">
-                <Textarea
+                <MentionInput
+                  variant="textarea"
                   placeholder={t('writeComment')}
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={2}
+                  onChange={setNewComment}
                   disabled={submitting}
+                  onSubmit={handleSubmitComment}
                 />
 
                 {/* Selected files preview */}
