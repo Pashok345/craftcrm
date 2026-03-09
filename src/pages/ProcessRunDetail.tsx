@@ -459,6 +459,23 @@ const ProcessRunDetail = () => {
     if (notifications.length > 0) {
       await supabase.from('notifications').insert(notifications);
     }
+
+    // Send mention notifications
+    const allProfiles = Object.values(profiles).map(p => ({ user_id: p.user_id, name: p.name }));
+    const mentionedIds = parseMentionedUserIds(newComment, allProfiles, user.id);
+    const mentionNotifications = mentionedIds
+      .filter(uid => !usersToNotify.has(uid))
+      .map(uid => ({
+        user_id: uid,
+        type: 'mention',
+        title: t('mentionInComment') || 'Вас упомянули в комментарии',
+        message: `${profiles[user.id]?.name || user.email} ${t('mentionedYouInComment') || 'упомянул(а) вас в комментарии к процессу'}`,
+        created_by: user.id,
+      }));
+
+    if (mentionNotifications.length > 0) {
+      await supabase.from('notifications').insert(mentionNotifications);
+    }
   };
 
   const handleSubmitComment = async () => {
