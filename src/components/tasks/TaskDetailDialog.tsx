@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -184,6 +185,26 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
         });
       }
 
+      // Send mention notifications
+      const { data: allProfiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, name');
+      if (allProfiles) {
+        const mentionedIds = parseMentionedUserIds(newComment, allProfiles as { user_id: string; name: string }[], user.id);
+        for (const uid of mentionedIds) {
+          if (!usersToNotify.has(uid)) {
+            await supabase.from('notifications').insert({
+              user_id: uid,
+              type: 'mention',
+              title: 'Вас упомянули',
+              message: `${userProfile?.name || 'Пользователь'} упомянул(а) вас в комментарии к задаче "${task.title}"`,
+              task_id: task.id,
+              created_by: user.id,
+            });
+          }
+        }
+      }
+
       setNewComment('');
       setFiles([]);
       fetchComments();
@@ -339,11 +360,11 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
 
             <div className="border-t pt-4 mt-4">
               <div className="flex gap-2">
-                <Input
+                <MentionInput
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={setNewComment}
                   placeholder="Написать комментарий..."
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitComment()}
+                  onSubmit={handleSubmitComment}
                 />
                 <input
                   type="file"

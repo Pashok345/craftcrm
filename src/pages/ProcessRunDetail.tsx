@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -459,6 +459,23 @@ const ProcessRunDetail = () => {
     if (notifications.length > 0) {
       await supabase.from('notifications').insert(notifications);
     }
+
+    // Send mention notifications
+    const allProfiles = Object.values(profiles).map(p => ({ user_id: p.user_id, name: p.name }));
+    const mentionedIds = parseMentionedUserIds(newComment, allProfiles, user.id);
+    const mentionNotifications = mentionedIds
+      .filter(uid => !usersToNotify.has(uid))
+      .map(uid => ({
+        user_id: uid,
+        type: 'mention',
+        title: t('mentionInComment') || 'Вас упомянули в комментарии',
+        message: `${profiles[user.id]?.name || user.email} ${t('mentionedYouInComment') || 'упомянул(а) вас в комментарии к процессу'}`,
+        created_by: user.id,
+      }));
+
+    if (mentionNotifications.length > 0) {
+      await supabase.from('notifications').insert(mentionNotifications);
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -782,12 +799,13 @@ const ProcessRunDetail = () => {
 
               {/* New comment form */}
               <div className="border-t pt-4 space-y-3">
-                <Textarea
+                <MentionInput
+                  variant="textarea"
                   placeholder={t('writeComment')}
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={2}
+                  onChange={setNewComment}
                   disabled={submitting}
+                  onSubmit={handleSubmitComment}
                 />
 
                 {/* Selected files preview */}
