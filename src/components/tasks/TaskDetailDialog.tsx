@@ -340,11 +340,11 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
 
             <div className="border-t pt-4 mt-4">
               <div className="flex gap-2">
-                <Input
+                <MentionInput
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={setNewComment}
                   placeholder="Написать комментарий..."
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitComment()}
+                  onSubmit={handleSubmitComment}
                 />
                 <input
                   type="file"
