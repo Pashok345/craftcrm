@@ -185,6 +185,26 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
         });
       }
 
+      // Send mention notifications
+      const { data: allProfiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, name');
+      if (allProfiles) {
+        const mentionedIds = parseMentionedUserIds(newComment, allProfiles as { user_id: string; name: string }[], user.id);
+        for (const uid of mentionedIds) {
+          if (!usersToNotify.has(uid)) {
+            await supabase.from('notifications').insert({
+              user_id: uid,
+              type: 'mention',
+              title: 'Вас упомянули',
+              message: `${userProfile?.name || 'Пользователь'} упомянул(а) вас в комментарии к задаче "${task.title}"`,
+              task_id: task.id,
+              created_by: user.id,
+            });
+          }
+        }
+      }
+
       setNewComment('');
       setFiles([]);
       fetchComments();
