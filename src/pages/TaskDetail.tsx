@@ -801,7 +801,7 @@ const TaskDetail = () => {
                 </p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
+                  <div key={comment.id} className="flex gap-3 group">
                     <Avatar className="h-8 w-8 shrink-0">
                       <AvatarImage src={comment.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
@@ -816,8 +816,52 @@ const TaskDetail = () => {
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: dateLocale })}
                         </span>
+                        {comment.user_id === user?.id && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditingCommentText(comment.content);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setDeleteCommentId(comment.id)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm mt-1">{comment.content}</p>
+                      {editingCommentId === comment.id ? (
+                        <div className="mt-1 space-y-2">
+                          <MentionInput
+                            value={editingCommentText}
+                            onChange={setEditingCommentText}
+                            placeholder={t('writeComment')}
+                            onSubmit={handleEditComment}
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={handleEditComment} disabled={!editingCommentText.trim()}>
+                              <Check className="h-3 w-3 mr-1" />
+                              {t('save')}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setEditingCommentId(null); setEditingCommentText(''); }}>
+                              <X className="h-3 w-3 mr-1" />
+                              {t('cancel')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm mt-1">{comment.content}</p>
+                      )}
                       {comment.attachments && comment.attachments.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {comment.attachments.map((att) => (
