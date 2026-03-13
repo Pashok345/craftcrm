@@ -392,6 +392,38 @@ const TaskDetail = () => {
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      fetchComments();
+      toast({ title: t('commentDeleted') || 'Коментар видалено' });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({ title: t('error'), variant: 'destructive' });
+    } finally {
+      setDeleteCommentId(null);
+    }
+  };
+
+  const handleEditComment = async () => {
+    if (!editingCommentId || !editingCommentText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('task_comments')
+        .update({ content: editingCommentText.trim() })
+        .eq('id', editingCommentId);
+      if (error) throw error;
+      fetchComments();
+      setEditingCommentId(null);
+      setEditingCommentText('');
+      toast({ title: t('commentUpdated') || 'Коментар оновлено' });
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      toast({ title: t('error'), variant: 'destructive' });
+    }
+  };
+
   const handleStatusChange = async (newStatus: "todo" | "in_progress" | "review" | "done") => {
     if (!task || !user) return;
     const oldStatus = task.status;
