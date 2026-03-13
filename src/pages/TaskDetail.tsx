@@ -63,6 +63,9 @@ const TaskDetail = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addAssigneeOpen, setAddAssigneeOpen] = useState(false);
   const [creator, setCreator] = useState<Profile | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
