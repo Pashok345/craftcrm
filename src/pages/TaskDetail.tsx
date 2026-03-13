@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -63,6 +63,9 @@ const TaskDetail = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addAssigneeOpen, setAddAssigneeOpen] = useState(false);
   const [creator, setCreator] = useState<Profile | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -386,6 +389,38 @@ const TaskDetail = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      fetchComments();
+      toast({ title: t('commentDeleted') || 'Коментар видалено' });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({ title: t('error'), variant: 'destructive' });
+    } finally {
+      setDeleteCommentId(null);
+    }
+  };
+
+  const handleEditComment = async () => {
+    if (!editingCommentId || !editingCommentText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('task_comments')
+        .update({ content: editingCommentText.trim() })
+        .eq('id', editingCommentId);
+      if (error) throw error;
+      fetchComments();
+      setEditingCommentId(null);
+      setEditingCommentText('');
+      toast({ title: t('commentUpdated') || 'Коментар оновлено' });
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      toast({ title: t('error'), variant: 'destructive' });
     }
   };
 
@@ -766,7 +801,7 @@ const TaskDetail = () => {
                 </p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
+                  <div key={comment.id} className="flex gap-3 group">
                     <Avatar className="h-8 w-8 shrink-0">
                       <AvatarImage src={comment.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
@@ -781,8 +816,52 @@ const TaskDetail = () => {
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: dateLocale })}
                         </span>
+                        {comment.user_id === user?.id && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditingCommentText(comment.content);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setDeleteCommentId(comment.id)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm mt-1">{comment.content}</p>
+                      {editingCommentId === comment.id ? (
+                        <div className="mt-1 space-y-2">
+                          <MentionInput
+                            value={editingCommentText}
+                            onChange={setEditingCommentText}
+                            placeholder={t('writeComment')}
+                            onSubmit={handleEditComment}
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={handleEditComment} disabled={!editingCommentText.trim()}>
+                              <Check className="h-3 w-3 mr-1" />
+                              {t('save')}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setEditingCommentId(null); setEditingCommentText(''); }}>
+                              <X className="h-3 w-3 mr-1" />
+                              {t('cancel')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm mt-1">{comment.content}</p>
+                      )}
                       {comment.attachments && comment.attachments.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {comment.attachments.map((att) => (
@@ -867,6 +946,21 @@ const TaskDetail = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteCommentId} onOpenChange={(open) => !open && setDeleteCommentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteComment') || 'Видалити коментар'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteCommentConfirm') || 'Ви впевнені, що хочете видалити цей коментар?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteCommentId && handleDeleteComment(deleteCommentId)}>{t('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

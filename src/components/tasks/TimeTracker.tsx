@@ -26,7 +26,7 @@ export const TimeTracker = ({ taskId, userId }: TimeTrackerProps) => {
   const [description, setDescription] = useState('');
   const [manualMinutes, setManualMinutes] = useState('');
   const [showManualAdd, setShowManualAdd] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 

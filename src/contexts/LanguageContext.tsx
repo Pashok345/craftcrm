@@ -168,6 +168,10 @@ export const translations: Translations = {
   writeComment: { ru: 'Написать комментарий...', en: 'Write a comment...', uk: 'Написати коментар...' },
   commentAdded: { ru: 'Комментарий добавлен', en: 'Comment added', uk: 'Коментар додано' },
   errorAddingComment: { ru: 'Ошибка при добавлении комментария', en: 'Error adding comment', uk: 'Помилка додавання коментаря' },
+  commentDeleted: { ru: 'Комментарий удален', en: 'Comment deleted', uk: 'Коментар видалено' },
+  commentUpdated: { ru: 'Комментарий обновлен', en: 'Comment updated', uk: 'Коментар оновлено' },
+  deleteComment: { ru: 'Удалить комментарий', en: 'Delete comment', uk: 'Видалити коментар' },
+  deleteCommentConfirm: { ru: 'Вы уверены, что хотите удалить этот комментарий?', en: 'Are you sure you want to delete this comment?', uk: 'Ви впевнені, що хочете видалити цей коментар?' },
   
   // Task statuses
   statusTodo: { ru: 'К выполнению', en: 'To Do', uk: 'До виконання' },

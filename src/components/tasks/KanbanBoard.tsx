@@ -348,7 +348,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 min-h-[calc(100vh-280px)] pb-4 overflow-x-auto" style={{ touchAction: 'pan-y' }}>
+      <div className="flex gap-4 min-h-[calc(100vh-280px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin" style={{ touchAction: 'pan-y', scrollbarWidth: 'thin' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div
