@@ -950,6 +950,21 @@ const TaskDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={!!deleteCommentId} onOpenChange={(open) => !open && setDeleteCommentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteComment') || 'Видалити коментар'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteCommentConfirm') || 'Ви впевнені, що хочете видалити цей коментар?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteCommentId && handleDeleteComment(deleteCommentId)}>{t('delete')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AddAssigneeDialog
         open={addAssigneeOpen}
         onOpenChange={setAddAssigneeOpen}
