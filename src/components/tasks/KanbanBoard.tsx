@@ -183,9 +183,18 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   }, [taskOrderMap]);
 
   // Create a map of tasks by their status for quick lookup
+  const filteredTasks = useMemo(() => {
+    if (selectedAssigneeIds.length === 0) return tasks;
+    return tasks.filter(task => {
+      const assignees = taskAssignees[task.id];
+      if (!assignees) return false;
+      return assignees.some(a => selectedAssigneeIds.includes(a.user_id));
+    });
+  }, [tasks, selectedAssigneeIds, taskAssignees]);
+
   const tasksByStatus = useMemo(() => {
     const map: Record<string, Task[]> = {};
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const status = task.status;
       if (!map[status]) {
         map[status] = [];
@@ -193,7 +202,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
       map[status].push(task);
     });
     return map;
-  }, [tasks]);
+  }, [filteredTasks]);
 
   // Automatically add new tasks to the beginning of saved orders
   useEffect(() => {
