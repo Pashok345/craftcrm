@@ -208,6 +208,7 @@ export const MentionInput = ({
     value: displayValue,
     onChange: handleChange,
     onKeyDown: handleKeyDown,
+    onPaste: handlePaste,
     placeholder,
     disabled,
     className: inputClassName,
