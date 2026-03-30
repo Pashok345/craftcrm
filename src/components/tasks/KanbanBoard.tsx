@@ -670,12 +670,43 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                                               {task.description}
                                             </p>
                                           )}
-                                          {task.deadline && (
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                              <Calendar className="h-3 w-3" />
-                                              {format(new Date(task.deadline), 'd MMM', { locale: dateLocale })}
-                                            </div>
-                                          )}
+                                          <div className="flex items-center justify-between mt-1">
+                                            {task.deadline && (
+                                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <Calendar className="h-3 w-3" />
+                                                {format(new Date(task.deadline), 'd MMM', { locale: dateLocale })}
+                                              </div>
+                                            )}
+                                            {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
+                                              <TooltipProvider>
+                                                <div className="flex -space-x-1.5 ml-auto">
+                                                  {taskAssignees[task.id].slice(0, 2).map((assignee) => (
+                                                    <Tooltip key={assignee.user_id}>
+                                                      <TooltipTrigger asChild>
+                                                        <Avatar className="h-5 w-5 border border-background">
+                                                          <AvatarImage src={assignee.avatar_url || undefined} />
+                                                          <AvatarFallback
+                                                            style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
+                                                            className="text-[8px] text-white"
+                                                          >
+                                                            {getInitials(assignee.name)}
+                                                          </AvatarFallback>
+                                                        </Avatar>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent><p>{assignee.name}</p></TooltipContent>
+                                                    </Tooltip>
+                                                  ))}
+                                                  {taskAssignees[task.id].length > 2 && (
+                                                    <Avatar className="h-5 w-5 border border-background">
+                                                      <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                                                        +{taskAssignees[task.id].length - 2}
+                                                      </AvatarFallback>
+                                                    </Avatar>
+                                                  )}
+                                                </div>
+                                              </TooltipProvider>
+                                            )}
+                                          </div>
                                         </CardContent>
                                       </Card>
                                     )}
