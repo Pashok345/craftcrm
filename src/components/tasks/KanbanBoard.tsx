@@ -109,22 +109,37 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   // Fetch assignees
   useEffect(() => {
     const fetchAssignees = async () => {
-      const { data } = await supabase
-        .from('task_assignees')
-        .select('task_id, user_id, profiles(*)');
-      if (data) {
-        const map: Record<string, Profile[]> = {};
-        const uniqueUsers = new Map<string, Profile>();
-        (data as any[]).forEach((item) => {
-          if (!map[item.task_id]) map[item.task_id] = [];
-          if (item.profiles) {
-            map[item.task_id].push(item.profiles as Profile);
-            uniqueUsers.set(item.profiles.user_id, item.profiles as Profile);
-          }
-        });
-        setTaskAssignees(map);
-        setAllAssignees(Array.from(uniqueUsers.values()));
+      const taskIds = tasks.map(t => t.id);
+      if (taskIds.length === 0) {
+        setTaskAssignees({});
+        setAllAssignees([]);
+        return;
       }
+      const { data: assigneeRows } = await supabase
+        .from('task_assignees')
+        .select('task_id, user_id')
+        .in('task_id', taskIds);
+      if (!assigneeRows || assigneeRows.length === 0) {
+        setTaskAssignees({});
+        setAllAssignees([]);
+        return;
+      }
+      const uniqueUserIds = [...new Set(assigneeRows.map(a => a.user_id))];
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, name, avatar_url, avatar_color')
+        .in('user_id', uniqueUserIds);
+      const profileMap = new Map<string, Profile>();
+      (profiles || []).forEach(p => profileMap.set(p.user_id!, p as unknown as Profile));
+
+      const map: Record<string, Profile[]> = {};
+      assigneeRows.forEach(item => {
+        if (!map[item.task_id]) map[item.task_id] = [];
+        const profile = profileMap.get(item.user_id);
+        if (profile) map[item.task_id].push(profile);
+      });
+      setTaskAssignees(map);
+      setAllAssignees(Array.from(profileMap.values()));
     };
     fetchAssignees();
   }, [tasks]);
