@@ -21,6 +21,8 @@ interface MentionInputProps {
   /** Returns list of mentioned user_ids from the current value */
   onMentionsChange?: (mentionedUserIds: string[]) => void;
   variant?: 'input' | 'textarea';
+  /** Called when user pastes an image from clipboard */
+  onPasteImage?: (file: File) => void;
 }
 
 export const MentionInput = ({
