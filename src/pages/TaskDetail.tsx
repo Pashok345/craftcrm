@@ -239,7 +239,7 @@ const TaskDetail = () => {
   };
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user || !task) return;
+    if ((!newComment.trim() && files.length === 0) || !user || !task) return;
 
     setSubmitting(true);
     try {
