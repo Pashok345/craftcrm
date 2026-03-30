@@ -239,7 +239,7 @@ const TaskDetail = () => {
   };
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user || !task) return;
+    if ((!newComment.trim() && files.length === 0) || !user || !task) return;
 
     setSubmitting(true);
     try {
@@ -892,6 +892,9 @@ const TaskDetail = () => {
                 onChange={setNewComment}
                 placeholder={t('writeComment')}
                 onSubmit={handleSubmitComment}
+                onPasteImage={(file) => {
+                  setFiles(prev => [...prev, file]);
+                }}
               />
               <input
                 type="file"
@@ -908,15 +911,18 @@ const TaskDetail = () => {
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
-              <Button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()}>
+              <Button onClick={handleSubmitComment} disabled={submitting || (!newComment.trim() && files.length === 0)}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
             {files.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {files.map((f, i) => (
-                  <Badge key={i} variant="secondary" className="text-xs">
-                    {f.name}
+                  <Badge key={i} variant="secondary" className="text-xs gap-1">
+                    {f.type.startsWith('image/') ? '🖼️ ' : ''}{f.name}
+                    <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="ml-1 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
                   </Badge>
                 ))}
               </div>

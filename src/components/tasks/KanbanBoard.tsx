@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,7 +6,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical, Palette } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical, Palette, Filter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +18,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Task, TaskStatus, Project } from '@/types/database';
+import { Task, TaskStatus, Project, Profile } from '@/types/database';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
@@ -58,6 +62,9 @@ const DEFAULT_COLUMNS: Column[] = [
 export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const innerContentRef = useRef<HTMLDivElement>(null);
   
   const [columns, setColumns] = useState<Column[]>(() => {
     const saved = localStorage.getItem('kanban-columns-v2');
@@ -91,8 +98,79 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  
+  // Assignee data & filter
+  const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
+  const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  // Fetch assignees
+  useEffect(() => {
+    const fetchAssignees = async () => {
+      const { data } = await supabase
+        .from('task_assignees')
+        .select('task_id, user_id, profiles(*)');
+      if (data) {
+        const map: Record<string, Profile[]> = {};
+        const uniqueUsers = new Map<string, Profile>();
+        (data as any[]).forEach((item) => {
+          if (!map[item.task_id]) map[item.task_id] = [];
+          if (item.profiles) {
+            map[item.task_id].push(item.profiles as Profile);
+            uniqueUsers.set(item.profiles.user_id, item.profiles as Profile);
+          }
+        });
+        setTaskAssignees(map);
+        setAllAssignees(Array.from(uniqueUsers.values()));
+      }
+    };
+    fetchAssignees();
+  }, [tasks]);
+
+  // Sync top scrollbar with main scrollbar
+  useEffect(() => {
+    const main = scrollContainerRef.current;
+    const top = topScrollRef.current;
+    if (!main || !top) return;
+    
+    let syncing = false;
+    const syncFromMain = () => {
+      if (syncing) return;
+      syncing = true;
+      top.scrollLeft = main.scrollLeft;
+      syncing = false;
+    };
+    const syncFromTop = () => {
+      if (syncing) return;
+      syncing = true;
+      main.scrollLeft = top.scrollLeft;
+      syncing = false;
+    };
+    
+    main.addEventListener('scroll', syncFromMain);
+    top.addEventListener('scroll', syncFromTop);
+    return () => {
+      main.removeEventListener('scroll', syncFromMain);
+      top.removeEventListener('scroll', syncFromTop);
+    };
+  }, []);
+
+  // Update top scroll width
+  useEffect(() => {
+    const updateWidth = () => {
+      if (scrollContainerRef.current && topScrollRef.current) {
+        const inner = scrollContainerRef.current.scrollWidth;
+        const spacer = topScrollRef.current.firstElementChild as HTMLDivElement;
+        if (spacer) spacer.style.width = `${inner}px`;
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (scrollContainerRef.current) observer.observe(scrollContainerRef.current);
+    return () => observer.disconnect();
+  }, [columns]);
 
   // Persist columns
   useEffect(() => {
@@ -105,9 +183,18 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   }, [taskOrderMap]);
 
   // Create a map of tasks by their status for quick lookup
+  const filteredTasks = useMemo(() => {
+    if (selectedAssigneeIds.length === 0) return tasks;
+    return tasks.filter(task => {
+      const assignees = taskAssignees[task.id];
+      if (!assignees) return false;
+      return assignees.some(a => selectedAssigneeIds.includes(a.user_id));
+    });
+  }, [tasks, selectedAssigneeIds, taskAssignees]);
+
   const tasksByStatus = useMemo(() => {
     const map: Record<string, Task[]> = {};
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const status = task.status;
       if (!map[status]) {
         map[status] = [];
@@ -115,7 +202,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
       map[status].push(task);
     });
     return map;
-  }, [tasks]);
+  }, [filteredTasks]);
 
   // Automatically add new tasks to the beginning of saved orders
   useEffect(() => {
@@ -346,9 +433,77 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
     return column.title;
   };
 
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const toggleAssigneeFilter = (userId: string) => {
+    setSelectedAssigneeIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 min-h-[calc(100vh-280px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin" style={{ touchAction: 'pan-y', scrollbarWidth: 'thin' }}>
+      {/* Assignee filter */}
+      <div className="flex items-center gap-2 mb-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              {t('filterByAssignee') || 'Виконавці'}
+              {selectedAssigneeIds.length > 0 && (
+                <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {selectedAssigneeIds.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-2" align="start">
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {allAssignees.map(assignee => (
+                <label
+                  key={assignee.user_id}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                >
+                  <Checkbox
+                    checked={selectedAssigneeIds.includes(assignee.user_id)}
+                    onCheckedChange={() => toggleAssigneeFilter(assignee.user_id)}
+                  />
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={assignee.avatar_url || undefined} />
+                    <AvatarFallback
+                      style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
+                      className="text-[10px] text-white"
+                    >
+                      {getInitials(assignee.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm truncate">{assignee.name}</span>
+                </label>
+              ))}
+              {allAssignees.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">{t('noAssignees') || 'Немає виконавців'}</p>
+              )}
+            </div>
+            {selectedAssigneeIds.length > 0 && (
+              <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => setSelectedAssigneeIds([])}>
+                {t('clearFilter') || 'Скинути фільтр'}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Top scrollbar */}
+      <div
+        ref={topScrollRef}
+        className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        <div style={{ height: '1px' }} />
+      </div>
+
+      <div ref={scrollContainerRef} className="flex gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin" style={{ touchAction: 'pan-y', scrollbarWidth: 'thin' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div
@@ -515,12 +670,43 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
                                               {task.description}
                                             </p>
                                           )}
-                                          {task.deadline && (
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                              <Calendar className="h-3 w-3" />
-                                              {format(new Date(task.deadline), 'd MMM', { locale: dateLocale })}
-                                            </div>
-                                          )}
+                                          <div className="flex items-center justify-between mt-1">
+                                            {task.deadline && (
+                                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <Calendar className="h-3 w-3" />
+                                                {format(new Date(task.deadline), 'd MMM', { locale: dateLocale })}
+                                              </div>
+                                            )}
+                                            {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
+                                              <TooltipProvider>
+                                                <div className="flex -space-x-1.5 ml-auto">
+                                                  {taskAssignees[task.id].slice(0, 2).map((assignee) => (
+                                                    <Tooltip key={assignee.user_id}>
+                                                      <TooltipTrigger asChild>
+                                                        <Avatar className="h-5 w-5 border border-background">
+                                                          <AvatarImage src={assignee.avatar_url || undefined} />
+                                                          <AvatarFallback
+                                                            style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
+                                                            className="text-[8px] text-white"
+                                                          >
+                                                            {getInitials(assignee.name)}
+                                                          </AvatarFallback>
+                                                        </Avatar>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent><p>{assignee.name}</p></TooltipContent>
+                                                    </Tooltip>
+                                                  ))}
+                                                  {taskAssignees[task.id].length > 2 && (
+                                                    <Avatar className="h-5 w-5 border border-background">
+                                                      <AvatarFallback className="bg-muted text-muted-foreground text-[8px]">
+                                                        +{taskAssignees[task.id].length - 2}
+                                                      </AvatarFallback>
+                                                    </Avatar>
+                                                  )}
+                                                </div>
+                                              </TooltipProvider>
+                                            )}
+                                          </div>
                                         </CardContent>
                                       </Card>
                                     )}

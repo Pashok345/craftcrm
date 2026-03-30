@@ -21,6 +21,8 @@ interface MentionInputProps {
   /** Returns list of mentioned user_ids from the current value */
   onMentionsChange?: (mentionedUserIds: string[]) => void;
   variant?: 'input' | 'textarea';
+  /** Called when user pastes an image from clipboard */
+  onPasteImage?: (file: File) => void;
 }
 
 export const MentionInput = ({
@@ -32,6 +34,7 @@ export const MentionInput = ({
   disabled,
   onMentionsChange,
   variant = 'input',
+  onPasteImage,
 }: MentionInputProps) => {
   const { user } = useAuth();
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -172,6 +175,22 @@ export const MentionInput = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (!onPasteImage) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          onPasteImage(file);
+        }
+        return;
+      }
+    }
+  }, [onPasteImage]);
+
   const getInitials = (name: string) =>
     name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -189,6 +208,7 @@ export const MentionInput = ({
     value: displayValue,
     onChange: handleChange,
     onKeyDown: handleKeyDown,
+    onPaste: handlePaste,
     placeholder,
     disabled,
     className: inputClassName,
