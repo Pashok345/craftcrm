@@ -34,6 +34,7 @@ export const MentionInput = ({
   disabled,
   onMentionsChange,
   variant = 'input',
+  onPasteImage,
 }: MentionInputProps) => {
   const { user } = useAuth();
   const [showSuggestions, setShowSuggestions] = useState(false);
