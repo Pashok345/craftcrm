@@ -62,6 +62,9 @@ const DEFAULT_COLUMNS: Column[] = [
 export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const innerContentRef = useRef<HTMLDivElement>(null);
   
   const [columns, setColumns] = useState<Column[]>(() => {
     const saved = localStorage.getItem('kanban-columns-v2');
@@ -95,8 +98,79 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  
+  // Assignee data & filter
+  const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
+  const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  // Fetch assignees
+  useEffect(() => {
+    const fetchAssignees = async () => {
+      const { data } = await supabase
+        .from('task_assignees')
+        .select('task_id, user_id, profiles(*)');
+      if (data) {
+        const map: Record<string, Profile[]> = {};
+        const uniqueUsers = new Map<string, Profile>();
+        (data as any[]).forEach((item) => {
+          if (!map[item.task_id]) map[item.task_id] = [];
+          if (item.profiles) {
+            map[item.task_id].push(item.profiles as Profile);
+            uniqueUsers.set(item.profiles.user_id, item.profiles as Profile);
+          }
+        });
+        setTaskAssignees(map);
+        setAllAssignees(Array.from(uniqueUsers.values()));
+      }
+    };
+    fetchAssignees();
+  }, [tasks]);
+
+  // Sync top scrollbar with main scrollbar
+  useEffect(() => {
+    const main = scrollContainerRef.current;
+    const top = topScrollRef.current;
+    if (!main || !top) return;
+    
+    let syncing = false;
+    const syncFromMain = () => {
+      if (syncing) return;
+      syncing = true;
+      top.scrollLeft = main.scrollLeft;
+      syncing = false;
+    };
+    const syncFromTop = () => {
+      if (syncing) return;
+      syncing = true;
+      main.scrollLeft = top.scrollLeft;
+      syncing = false;
+    };
+    
+    main.addEventListener('scroll', syncFromMain);
+    top.addEventListener('scroll', syncFromTop);
+    return () => {
+      main.removeEventListener('scroll', syncFromMain);
+      top.removeEventListener('scroll', syncFromTop);
+    };
+  }, []);
+
+  // Update top scroll width
+  useEffect(() => {
+    const updateWidth = () => {
+      if (scrollContainerRef.current && topScrollRef.current) {
+        const inner = scrollContainerRef.current.scrollWidth;
+        const spacer = topScrollRef.current.firstElementChild as HTMLDivElement;
+        if (spacer) spacer.style.width = `${inner}px`;
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (scrollContainerRef.current) observer.observe(scrollContainerRef.current);
+    return () => observer.disconnect();
+  }, [columns]);
 
   // Persist columns
   useEffect(() => {
