@@ -185,6 +185,9 @@ export const translations: Translations = {
   editColumn: { ru: 'Редактировать', en: 'Edit', uk: 'Редагувати' },
   deleteColumn: { ru: 'Удалить', en: 'Delete', uk: 'Видалити' },
   saveColumn: { ru: 'Сохранить', en: 'Save', uk: 'Зберегти' },
+  filterByAssignee: { ru: 'Исполнители', en: 'Assignees', uk: 'Виконавці' },
+  noAssignees: { ru: 'Нет исполнителей', en: 'No assignees', uk: 'Немає виконавців' },
+  clearFilter: { ru: 'Сбросить фильтр', en: 'Clear filter', uk: 'Скинути фільтр' },
   
   // Projects
   projectsTitle: { ru: 'Проекты', en: 'Projects', uk: 'Проекти' },
