@@ -460,7 +460,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       {/* Assignee filter */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center justify-end gap-2 mb-3">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
