@@ -452,10 +452,6 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const toggleAssigneeFilter = (userId: string) => {
-    setSelectedAssigneeIds(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
   };
 
   return (
