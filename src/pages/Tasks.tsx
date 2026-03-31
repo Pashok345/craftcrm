@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Calendar, List, BarChart3, Columns, Search, User } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter } from 'lucide-react';
 import { Task, Project, Profile, Tag } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { GanttChart } from '@/components/tasks/GanttChart';
@@ -44,7 +46,7 @@ const Tasks = () => {
   const [activeTab, setActiveTab] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
-
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const statusLabels: Record<string, string> = {
@@ -194,6 +196,14 @@ const Tasks = () => {
     });
   }, [tasks, searchQuery, sortBy]);
 
+  const allAssignees = useMemo(() => {
+    const seen = new Map<string, Profile>();
+    Object.values(taskAssignees).flat().forEach(p => {
+      if (p.user_id && !seen.has(p.user_id)) seen.set(p.user_id, p);
+    });
+    return Array.from(seen.values());
+  }, [taskAssignees]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -239,20 +249,77 @@ const Tasks = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="list" className="gap-2">
-            <List className="h-4 w-4" />
-            {t('list')}
-          </TabsTrigger>
-          <TabsTrigger value="kanban" className="gap-2">
-            <Columns className="h-4 w-4" />
-            {t('kanban')}
-          </TabsTrigger>
-          <TabsTrigger value="gantt" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            {t('ganttChart')}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="list" className="gap-2">
+              <List className="h-4 w-4" />
+              {t('list')}
+            </TabsTrigger>
+            <TabsTrigger value="kanban" className="gap-2">
+              <Columns className="h-4 w-4" />
+              {t('kanban')}
+            </TabsTrigger>
+            <TabsTrigger value="gantt" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              {t('ganttChart')}
+            </TabsTrigger>
+          </TabsList>
+
+          {activeTab === 'kanban' && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  {t('filterByAssignee') || 'Виконавці'}
+                  {selectedAssigneeIds.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {selectedAssigneeIds.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                  {allAssignees.map(assignee => (
+                    <label
+                      key={assignee.user_id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selectedAssigneeIds.includes(assignee.user_id)}
+                        onCheckedChange={() => {
+                          setSelectedAssigneeIds(prev =>
+                            prev.includes(assignee.user_id)
+                              ? prev.filter(id => id !== assignee.user_id)
+                              : [...prev, assignee.user_id]
+                          );
+                        }}
+                      />
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={assignee.avatar_url || undefined} />
+                        <AvatarFallback
+                          style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
+                          className="text-[10px] text-white"
+                        >
+                          {getInitials(assignee.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm truncate">{assignee.name}</span>
+                    </label>
+                  ))}
+                  {allAssignees.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">{t('noAssignees') || 'Немає виконавців'}</p>
+                  )}
+                </div>
+                {selectedAssigneeIds.length > 0 && (
+                  <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => setSelectedAssigneeIds([])}>
+                    {t('clearFilter') || 'Скинути фільтр'}
+                  </Button>
+                )}
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
 
         <TabsContent value="list" className="mt-4">
           {filteredAndSortedTasks.length === 0 ? (
@@ -382,6 +449,7 @@ const Tasks = () => {
               projects={projects} 
               onTaskClick={handleTaskClick}
               onTaskUpdate={fetchTasks}
+              selectedAssigneeIds={selectedAssigneeIds}
             />
           </div>
         </TabsContent>

@@ -36,6 +36,7 @@ interface KanbanBoardProps {
   projects: Record<string, Project>;
   onTaskClick: (task: Task) => void;
   onTaskUpdate: () => void;
+  selectedAssigneeIds?: string[];
 }
 
 const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
@@ -59,7 +60,7 @@ const DEFAULT_COLUMNS: Column[] = [
   { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR },
 ];
 
-export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
+export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, selectedAssigneeIds: externalSelectedAssigneeIds }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -102,7 +103,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   // Assignee data & filter
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
-  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const selectedAssigneeIds = externalSelectedAssigneeIds || [];
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -451,63 +452,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: Kanb
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const toggleAssigneeFilter = (userId: string) => {
-    setSelectedAssigneeIds(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      {/* Assignee filter */}
-      <div className="flex items-center justify-end gap-2 mb-3">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              {t('filterByAssignee') || 'Виконавці'}
-              {selectedAssigneeIds.length > 0 && (
-                <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {selectedAssigneeIds.length}
-                </Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-2" align="start">
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {allAssignees.map(assignee => (
-                <label
-                  key={assignee.user_id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedAssigneeIds.includes(assignee.user_id)}
-                    onCheckedChange={() => toggleAssigneeFilter(assignee.user_id)}
-                  />
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={assignee.avatar_url || undefined} />
-                    <AvatarFallback
-                      style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
-                      className="text-[10px] text-white"
-                    >
-                      {getInitials(assignee.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm truncate">{assignee.name}</span>
-                </label>
-              ))}
-              {allAssignees.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-2">{t('noAssignees') || 'Немає виконавців'}</p>
-              )}
-            </div>
-            {selectedAssigneeIds.length > 0 && (
-              <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => setSelectedAssigneeIds([])}>
-                {t('clearFilter') || 'Скинути фільтр'}
-              </Button>
-            )}
-          </PopoverContent>
-        </Popover>
-      </div>
 
       {/* Top scrollbar */}
       <div
