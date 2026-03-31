@@ -103,7 +103,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   // Assignee data & filter
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
-  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const selectedAssigneeIds = externalSelectedAssigneeIds || [];
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
