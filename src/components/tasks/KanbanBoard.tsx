@@ -36,6 +36,7 @@ interface KanbanBoardProps {
   projects: Record<string, Project>;
   onTaskClick: (task: Task) => void;
   onTaskUpdate: () => void;
+  selectedAssigneeIds?: string[];
 }
 
 const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
