@@ -46,7 +46,7 @@ const Tasks = () => {
   const [activeTab, setActiveTab] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
-
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const statusLabels: Record<string, string> = {
