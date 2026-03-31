@@ -460,55 +460,6 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      {/* Assignee filter */}
-      <div className="flex items-center justify-end gap-2 mb-3">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              {t('filterByAssignee') || 'Виконавці'}
-              {selectedAssigneeIds.length > 0 && (
-                <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {selectedAssigneeIds.length}
-                </Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-2" align="start">
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {allAssignees.map(assignee => (
-                <label
-                  key={assignee.user_id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedAssigneeIds.includes(assignee.user_id)}
-                    onCheckedChange={() => toggleAssigneeFilter(assignee.user_id)}
-                  />
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={assignee.avatar_url || undefined} />
-                    <AvatarFallback
-                      style={{ backgroundColor: assignee.avatar_color || '#6366f1' }}
-                      className="text-[10px] text-white"
-                    >
-                      {getInitials(assignee.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm truncate">{assignee.name}</span>
-                </label>
-              ))}
-              {allAssignees.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-2">{t('noAssignees') || 'Немає виконавців'}</p>
-              )}
-            </div>
-            {selectedAssigneeIds.length > 0 && (
-              <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => setSelectedAssigneeIds([])}>
-                {t('clearFilter') || 'Скинути фільтр'}
-              </Button>
-            )}
-          </PopoverContent>
-        </Popover>
-      </div>
 
       {/* Top scrollbar */}
       <div
