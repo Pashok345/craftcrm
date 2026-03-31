@@ -196,7 +196,14 @@ const Tasks = () => {
     });
   }, [tasks, searchQuery, sortBy]);
 
-  if (loading) {
+  const allAssignees = useMemo(() => {
+    const seen = new Map<string, Profile>();
+    Object.values(taskAssignees).flat().forEach(p => {
+      if (p.user_id && !seen.has(p.user_id)) seen.set(p.user_id, p);
+    });
+    return Array.from(seen.values());
+  }, [taskAssignees]);
+
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
