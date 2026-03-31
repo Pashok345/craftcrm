@@ -60,7 +60,7 @@ const DEFAULT_COLUMNS: Column[] = [
   { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR },
 ];
 
-export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate }: KanbanBoardProps) => {
+export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, selectedAssigneeIds: externalSelectedAssigneeIds }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
