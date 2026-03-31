@@ -449,6 +449,7 @@ const Tasks = () => {
               projects={projects} 
               onTaskClick={handleTaskClick}
               onTaskUpdate={fetchTasks}
+              selectedAssigneeIds={selectedAssigneeIds}
             />
           </div>
         </TabsContent>
