@@ -623,7 +623,11 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                           borderLeftColor: task.color || '#3b82f6',
                                           borderLeftWidth: '4px',
                                         }}
-                                        onClick={() => onTaskClick(task)}
+                                        onClick={() => {
+                                          if (!isDraggingRef.current) {
+                                            onTaskClick(task);
+                                          }
+                                        }}
                                       >
                                         <CardContent className="p-3">
                                           <h4 className="font-medium text-foreground mb-1 line-clamp-2">
