@@ -281,7 +281,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     return sortedTasks;
   }, [tasksByStatus, taskOrderMap]);
 
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = async (result: DropResult) => {
+    // Reset drag flag after a short delay so onClick can check it
+    setTimeout(() => { isDraggingRef.current = false; }, 0);
     const { destination, source, draggableId, type } = result;
 
     // No destination - dropped outside
