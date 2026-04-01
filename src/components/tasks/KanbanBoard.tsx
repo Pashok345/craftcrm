@@ -105,6 +105,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
   const selectedAssigneeIds = externalSelectedAssigneeIds || [];
 
+  const isDraggingRef = useRef(false);
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   // Fetch assignees
