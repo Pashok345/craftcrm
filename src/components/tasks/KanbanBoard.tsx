@@ -461,7 +461,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 
       {/* Top scrollbar */}
       <div
