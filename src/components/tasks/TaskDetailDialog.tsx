@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Paperclip, Calendar, User, Loader2, Pencil, Link2 } from 'lucide-react';
+import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Task, TaskComment, TaskAttachment, Profile, STATUS_LABELS, STATUS_COLORS, TaskLink } from '@/types/database';
