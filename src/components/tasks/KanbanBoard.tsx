@@ -105,6 +105,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
   const selectedAssigneeIds = externalSelectedAssigneeIds || [];
 
+  const isDraggingRef = useRef(false);
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   // Fetch assignees
@@ -280,7 +281,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     return sortedTasks;
   }, [tasksByStatus, taskOrderMap]);
 
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
   const handleDragEnd = async (result: DropResult) => {
+    // Reset drag flag after a short delay so onClick can check it
+    setTimeout(() => { isDraggingRef.current = false; }, 0);
     const { destination, source, draggableId, type } = result;
 
     // No destination - dropped outside
@@ -454,7 +461,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 
       {/* Top scrollbar */}
       <div
@@ -616,7 +623,11 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                           borderLeftColor: task.color || '#3b82f6',
                                           borderLeftWidth: '4px',
                                         }}
-                                        onClick={() => onTaskClick(task)}
+                                        onClick={() => {
+                                          if (!isDraggingRef.current) {
+                                            onTaskClick(task);
+                                          }
+                                        }}
                                       >
                                         <CardContent className="p-3">
                                           <h4 className="font-medium text-foreground mb-1 line-clamp-2">
