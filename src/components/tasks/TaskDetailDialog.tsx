@@ -338,18 +338,26 @@ export const TaskDetailDialog = ({ open, onOpenChange, task, onUpdate }: TaskDet
                         <p className="text-sm mt-1">{comment.content}</p>
                         {comment.attachments && comment.attachments.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {comment.attachments.map((att) => (
-                              <a
-                                key={att.id}
-                                href={att.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline flex items-center gap-1"
-                              >
-                                <Paperclip className="h-3 w-3" />
-                                {att.file_name}
-                              </a>
-                            ))}
+                            {comment.attachments.map((att) =>
+                              isImageFile(att.file_type, att.file_name) ? (
+                                <ImageThumbnail
+                                  key={att.id}
+                                  src={att.file_url}
+                                  alt={att.file_name}
+                                />
+                              ) : (
+                                <a
+                                  key={att.id}
+                                  href={att.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                                >
+                                  <Paperclip className="h-3 w-3" />
+                                  {att.file_name}
+                                </a>
+                              )
+                            )}
                           </div>
                         )}
                       </div>
