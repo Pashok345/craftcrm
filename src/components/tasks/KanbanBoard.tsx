@@ -60,6 +60,11 @@ const DEFAULT_COLUMNS: Column[] = [
   { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR },
 ];
 
+const BUILT_IN_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'review', 'done'];
+
+const isBuiltInStatus = (status: string): status is TaskStatus =>
+  BUILT_IN_STATUSES.includes(status as TaskStatus);
+
 export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, selectedAssigneeIds: externalSelectedAssigneeIds }: KanbanBoardProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
@@ -85,6 +90,18 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem('kanban-task-order-v2');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  const [taskColumnOverrides, setTaskColumnOverrides] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('kanban-task-column-overrides-v1');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -199,6 +216,32 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     localStorage.setItem('kanban-task-order-v2', JSON.stringify(taskOrderMap));
   }, [taskOrderMap]);
 
+  // Persist task custom column placement
+  useEffect(() => {
+    localStorage.setItem('kanban-task-column-overrides-v1', JSON.stringify(taskColumnOverrides));
+  }, [taskColumnOverrides]);
+
+  // Remove invalid custom placements when tasks or columns change
+  useEffect(() => {
+    const validTaskIds = new Set(tasks.map(task => task.id));
+    const validColumnIds = new Set(columns.map(column => column.id));
+
+    setTaskColumnOverrides(prev => {
+      let changed = false;
+      const next: Record<string, string> = {};
+
+      Object.entries(prev).forEach(([taskId, columnId]) => {
+        if (validTaskIds.has(taskId) && validColumnIds.has(columnId)) {
+          next[taskId] = columnId;
+        } else {
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks, columns]);
+
   // Create a map of tasks by their status for quick lookup
   const filteredTasks = useMemo(() => {
     if (selectedAssigneeIds.length === 0) return tasks;
@@ -209,49 +252,62 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     });
   }, [tasks, selectedAssigneeIds, taskAssignees]);
 
-  const tasksByStatus = useMemo(() => {
-    const map: Record<string, Task[]> = {};
-    filteredTasks.forEach(task => {
-      const status = task.status;
-      if (!map[status]) {
-        map[status] = [];
+  const getBaseTasksForColumn = useCallback((column: Column): Task[] => {
+    return filteredTasks.filter(task => {
+      const overriddenColumnId = taskColumnOverrides[task.id];
+
+      if (overriddenColumnId) {
+        return overriddenColumnId === column.id;
       }
-      map[status].push(task);
+
+      return task.status === column.status;
     });
-    return map;
-  }, [filteredTasks]);
+  }, [filteredTasks, taskColumnOverrides]);
 
   // Automatically add new tasks to the beginning of saved orders
   useEffect(() => {
-    const newOrderMap = { ...taskOrderMap };
-    let updated = false;
+    setTaskOrderMap(prev => {
+      const next = { ...prev };
+      const validColumnIds = new Set(columns.map(column => column.id));
+      let updated = false;
 
-    columns.forEach(column => {
-      const columnTasks = tasksByStatus[column.status] || [];
-      const currentOrder = newOrderMap[column.id] || [];
-      
-      // Find tasks not in the current order
-      const newTasks = columnTasks.filter(task => !currentOrder.includes(task.id));
-      
-      if (newTasks.length > 0) {
-        // Sort new tasks by created_at descending and prepend to order
-        const sortedNewTaskIds = newTasks
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .map(t => t.id);
-        
-        newOrderMap[column.id] = [...sortedNewTaskIds, ...currentOrder];
-        updated = true;
-      }
+      Object.keys(next).forEach(columnId => {
+        if (!validColumnIds.has(columnId)) {
+          delete next[columnId];
+          updated = true;
+        }
+      });
+
+      columns.forEach(column => {
+        const columnTasks = getBaseTasksForColumn(column);
+        const currentOrder = next[column.id] || [];
+        const columnTaskIds = new Set(columnTasks.map(task => task.id));
+        const sanitizedOrder = currentOrder.filter(taskId => columnTaskIds.has(taskId));
+
+        if (sanitizedOrder.length !== currentOrder.length) {
+          next[column.id] = sanitizedOrder;
+          updated = true;
+        }
+
+        const newTasks = columnTasks.filter(task => !sanitizedOrder.includes(task.id));
+
+        if (newTasks.length > 0) {
+          const sortedNewTaskIds = newTasks
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .map(task => task.id);
+
+          next[column.id] = [...sortedNewTaskIds, ...sanitizedOrder];
+          updated = true;
+        }
+      });
+
+      return updated ? next : prev;
     });
-
-    if (updated) {
-      setTaskOrderMap(newOrderMap);
-    }
-  }, [tasks, columns]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [columns, getBaseTasksForColumn]);
 
   // Get tasks for a column, sorted by saved order (new tasks at the beginning)
   const getTasksForColumn = useCallback((column: Column): Task[] => {
-    const columnTasks = tasksByStatus[column.status] || [];
+    const columnTasks = getBaseTasksForColumn(column);
     const order = taskOrderMap[column.id];
     
     if (!order || order.length === 0) {
@@ -279,7 +335,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     });
 
     return sortedTasks;
-  }, [tasksByStatus, taskOrderMap]);
+  }, [getBaseTasksForColumn, taskOrderMap]);
 
   const handleDragStart = () => {
     isDraggingRef.current = true;
@@ -316,8 +372,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
     const sourceColumn = columns.find(c => c.id === sourceColumnId);
     const destColumn = columns.find(c => c.id === destColumnId);
+    const movedTask = tasks.find(task => task.id === taskId);
 
-    if (!sourceColumn || !destColumn) return;
+    if (!sourceColumn || !destColumn || !movedTask) return;
 
     // Get current tasks for both columns
     const sourceColumnTasks = getTasksForColumn(sourceColumn);
@@ -359,9 +416,29 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         [destColumnId]: newDestOrder
       }));
 
+      if (!isBuiltInStatus(destColumn.status)) {
+        setTaskColumnOverrides(prev => ({
+          ...prev,
+          [taskId]: destColumnId,
+        }));
+        return;
+      }
+
+      setTaskColumnOverrides(prev => {
+        if (!prev[taskId]) return prev;
+
+        const next = { ...prev };
+        delete next[taskId];
+        return next;
+      });
+
+      if (movedTask.status === destColumn.status) {
+        return;
+      }
+
       // Update task status in database
       const newStatus = destColumn.status as TaskStatus;
-      const oldStatus = sourceColumn.status;
+      const oldStatus = movedTask.status;
       
       try {
         const { error } = await supabase
@@ -425,6 +502,19 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       const newMap = { ...prev };
       delete newMap[columnId];
       return newMap;
+    });
+    setTaskColumnOverrides(prev => {
+      let changed = false;
+      const next = { ...prev };
+
+      Object.entries(next).forEach(([taskId, targetColumnId]) => {
+        if (targetColumnId === columnId) {
+          delete next[taskId];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
     });
   };
 
