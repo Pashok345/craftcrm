@@ -43,7 +43,7 @@ const Tasks = () => {
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('list');
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tasks-active-tab') || 'list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
@@ -248,7 +248,7 @@ const Tasks = () => {
         </Select>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); sessionStorage.setItem('tasks-active-tab', v); }}>
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="list" className="gap-2">
