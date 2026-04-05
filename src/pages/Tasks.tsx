@@ -248,7 +248,7 @@ const Tasks = () => {
         </Select>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); sessionStorage.setItem('tasks-active-tab', v); }}>
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="list" className="gap-2">
