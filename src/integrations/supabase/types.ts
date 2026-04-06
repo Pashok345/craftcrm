@@ -310,6 +310,78 @@ export type Database = {
         }
         Relationships: []
       }
+      kanban_columns: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_default: boolean
+          sort_order: number
+          status: string
+          title: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_default?: boolean
+          sort_order?: number
+          status: string
+          title: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_default?: boolean
+          sort_order?: number
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      kanban_task_placements: {
+        Row: {
+          column_id: string
+          created_at: string
+          id: string
+          sort_order: number
+          task_id: string
+        }
+        Insert: {
+          column_id: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          task_id: string
+        }
+        Update: {
+          column_id?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_task_placements_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_task_placements_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_participants: {
         Row: {
           created_at: string
