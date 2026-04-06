@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical, Palette, Filter } from 'lucide-react';
+import { Plus, MoreVertical, X, Check, Calendar, Trash2, Edit2, GripVertical, Palette } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +27,8 @@ interface Column {
   title: string;
   status: string;
   color?: string;
+  is_default?: boolean;
+  db_id?: string; // UUID from kanban_columns table (only for custom columns)
 }
 
 interface KanbanBoardProps {
@@ -41,7 +41,6 @@ interface KanbanBoardProps {
 
 const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
 
-// Colors that work for both light and dark modes
 const COLUMN_COLORS = [
   { name: 'Default', value: 'hsl(var(--muted))' },
   { name: 'Blue', value: 'hsl(210 60% 85% / 0.5)' },
@@ -54,10 +53,10 @@ const COLUMN_COLORS = [
 ];
 
 const DEFAULT_COLUMNS: Column[] = [
-  { id: 'col-todo', title: 'statusTodo', status: 'todo', color: DEFAULT_COLUMN_COLOR },
-  { id: 'col-in_progress', title: 'statusInProgress', status: 'in_progress', color: DEFAULT_COLUMN_COLOR },
-  { id: 'col-review', title: 'statusReview', status: 'review', color: DEFAULT_COLUMN_COLOR },
-  { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR },
+  { id: 'col-todo', title: 'statusTodo', status: 'todo', color: DEFAULT_COLUMN_COLOR, is_default: true },
+  { id: 'col-in_progress', title: 'statusInProgress', status: 'in_progress', color: DEFAULT_COLUMN_COLOR, is_default: true },
+  { id: 'col-review', title: 'statusReview', status: 'review', color: DEFAULT_COLUMN_COLOR, is_default: true },
+  { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR, is_default: true },
 ];
 
 const BUILT_IN_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'review', 'done'];
@@ -70,60 +69,75 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const { user } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
-  const innerContentRef = useRef<HTMLDivElement>(null);
-  
-  const [columns, setColumns] = useState<Column[]>(() => {
-    const saved = localStorage.getItem('kanban-columns-v2');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.map((col: Column) => ({
-          ...col,
-          color: col.color || DEFAULT_COLUMN_COLOR
-        }));
-      } catch {
-        return DEFAULT_COLUMNS;
-      }
-    }
-    return DEFAULT_COLUMNS;
-  });
 
+  const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem('kanban-task-order-v2');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
+    if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
     return {};
   });
-
-  const [taskColumnOverrides, setTaskColumnOverrides] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('kanban-task-column-overrides-v1');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [taskColumnOverrides, setTaskColumnOverrides] = useState<Record<string, string>>({});
+  const [columnsLoaded, setColumnsLoaded] = useState(false);
 
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  
-  // Assignee data & filter
+
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [allAssignees, setAllAssignees] = useState<Profile[]>([]);
   const selectedAssigneeIds = externalSelectedAssigneeIds || [];
 
   const isDraggingRef = useRef(false);
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  // Load custom columns from DB
+  useEffect(() => {
+    const fetchColumns = async () => {
+      const { data } = await supabase
+        .from('kanban_columns')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (data && data.length > 0) {
+        const customCols: Column[] = data.map((row: any) => ({
+          id: `col-db-${row.id}`,
+          db_id: row.id,
+          title: row.title,
+          status: row.status,
+          color: row.color || DEFAULT_COLUMN_COLOR,
+          is_default: false,
+        }));
+        setColumns([...DEFAULT_COLUMNS, ...customCols]);
+      } else {
+        setColumns(DEFAULT_COLUMNS);
+      }
+      setColumnsLoaded(true);
+    };
+    fetchColumns();
+  }, []);
+
+  // Load task placements from DB
+  useEffect(() => {
+    if (!columnsLoaded) return;
+    const fetchPlacements = async () => {
+      const { data } = await supabase
+        .from('kanban_task_placements')
+        .select('*');
+
+      if (data && data.length > 0) {
+        const overrides: Record<string, string> = {};
+        data.forEach((row: any) => {
+          const col = columns.find(c => c.db_id === row.column_id);
+          if (col) {
+            overrides[row.task_id] = col.id;
+          }
+        });
+        setTaskColumnOverrides(overrides);
+      }
+    };
+    fetchPlacements();
+  }, [columnsLoaded, columns.length]);
 
   // Fetch assignees
   useEffect(() => {
@@ -163,32 +177,17 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     fetchAssignees();
   }, [tasks]);
 
-  // Sync top scrollbar with main scrollbar
+  // Sync top scrollbar
   useEffect(() => {
     const main = scrollContainerRef.current;
     const top = topScrollRef.current;
     if (!main || !top) return;
-    
     let syncing = false;
-    const syncFromMain = () => {
-      if (syncing) return;
-      syncing = true;
-      top.scrollLeft = main.scrollLeft;
-      syncing = false;
-    };
-    const syncFromTop = () => {
-      if (syncing) return;
-      syncing = true;
-      main.scrollLeft = top.scrollLeft;
-      syncing = false;
-    };
-    
+    const syncFromMain = () => { if (syncing) return; syncing = true; top.scrollLeft = main.scrollLeft; syncing = false; };
+    const syncFromTop = () => { if (syncing) return; syncing = true; main.scrollLeft = top.scrollLeft; syncing = false; };
     main.addEventListener('scroll', syncFromMain);
     top.addEventListener('scroll', syncFromTop);
-    return () => {
-      main.removeEventListener('scroll', syncFromMain);
-      top.removeEventListener('scroll', syncFromTop);
-    };
+    return () => { main.removeEventListener('scroll', syncFromMain); top.removeEventListener('scroll', syncFromTop); };
   }, []);
 
   // Update top scroll width
@@ -206,30 +205,18 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     return () => observer.disconnect();
   }, [columns]);
 
-  // Persist columns
-  useEffect(() => {
-    localStorage.setItem('kanban-columns-v2', JSON.stringify(columns));
-  }, [columns]);
-
-  // Persist task order
+  // Persist task order locally
   useEffect(() => {
     localStorage.setItem('kanban-task-order-v2', JSON.stringify(taskOrderMap));
   }, [taskOrderMap]);
 
-  // Persist task custom column placement
-  useEffect(() => {
-    localStorage.setItem('kanban-task-column-overrides-v1', JSON.stringify(taskColumnOverrides));
-  }, [taskColumnOverrides]);
-
-  // Remove invalid custom placements when tasks or columns change
+  // Remove invalid overrides
   useEffect(() => {
     const validTaskIds = new Set(tasks.map(task => task.id));
     const validColumnIds = new Set(columns.map(column => column.id));
-
     setTaskColumnOverrides(prev => {
       let changed = false;
       const next: Record<string, string> = {};
-
       Object.entries(prev).forEach(([taskId, columnId]) => {
         if (validTaskIds.has(taskId) && validColumnIds.has(columnId)) {
           next[taskId] = columnId;
@@ -237,12 +224,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           changed = true;
         }
       });
-
       return changed ? next : prev;
     });
   }, [tasks, columns]);
 
-  // Create a map of tasks by their status for quick lookup
   const filteredTasks = useMemo(() => {
     if (selectedAssigneeIds.length === 0) return tasks;
     return tasks.filter(task => {
@@ -255,214 +240,139 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const getBaseTasksForColumn = useCallback((column: Column): Task[] => {
     return filteredTasks.filter(task => {
       const overriddenColumnId = taskColumnOverrides[task.id];
-
-      if (overriddenColumnId) {
-        return overriddenColumnId === column.id;
-      }
-
+      if (overriddenColumnId) return overriddenColumnId === column.id;
       return task.status === column.status;
     });
   }, [filteredTasks, taskColumnOverrides]);
 
-  // Automatically add new tasks to the beginning of saved orders
+  // Auto-add new tasks to order
   useEffect(() => {
     setTaskOrderMap(prev => {
       const next = { ...prev };
       const validColumnIds = new Set(columns.map(column => column.id));
       let updated = false;
-
       Object.keys(next).forEach(columnId => {
-        if (!validColumnIds.has(columnId)) {
-          delete next[columnId];
-          updated = true;
-        }
+        if (!validColumnIds.has(columnId)) { delete next[columnId]; updated = true; }
       });
-
       columns.forEach(column => {
         const columnTasks = getBaseTasksForColumn(column);
         const currentOrder = next[column.id] || [];
         const columnTaskIds = new Set(columnTasks.map(task => task.id));
         const sanitizedOrder = currentOrder.filter(taskId => columnTaskIds.has(taskId));
-
-        if (sanitizedOrder.length !== currentOrder.length) {
-          next[column.id] = sanitizedOrder;
-          updated = true;
-        }
-
+        if (sanitizedOrder.length !== currentOrder.length) { next[column.id] = sanitizedOrder; updated = true; }
         const newTasks = columnTasks.filter(task => !sanitizedOrder.includes(task.id));
-
         if (newTasks.length > 0) {
           const sortedNewTaskIds = newTasks
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .map(task => task.id);
-
           next[column.id] = [...sortedNewTaskIds, ...sanitizedOrder];
           updated = true;
         }
       });
-
       return updated ? next : prev;
     });
   }, [columns, getBaseTasksForColumn]);
 
-  // Get tasks for a column, sorted by saved order (new tasks at the beginning)
   const getTasksForColumn = useCallback((column: Column): Task[] => {
     const columnTasks = getBaseTasksForColumn(column);
     const order = taskOrderMap[column.id];
-    
     if (!order || order.length === 0) {
-      // No saved order - sort by created_at descending (newest first)
-      return [...columnTasks].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      return [...columnTasks].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
-
-    // Sort tasks by their position in the order array
-    const sortedTasks = [...columnTasks].sort((a, b) => {
+    return [...columnTasks].sort((a, b) => {
       const indexA = order.indexOf(a.id);
       const indexB = order.indexOf(b.id);
-      
-      // If neither is in order, sort by created_at (newest first)
-      if (indexA === -1 && indexB === -1) {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      // If only a is not in order, put it at the BEGINNING
+      if (indexA === -1 && indexB === -1) return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (indexA === -1) return -1;
-      // If only b is not in order, put it at the BEGINNING
       if (indexB === -1) return 1;
-      
       return indexA - indexB;
     });
-
-    return sortedTasks;
   }, [getBaseTasksForColumn, taskOrderMap]);
 
-  const handleDragStart = () => {
-    isDraggingRef.current = true;
-  };
+  const handleDragStart = () => { isDraggingRef.current = true; };
 
   const handleDragEnd = async (result: DropResult) => {
-    // Reset drag flag after a short delay so onClick can check it
     setTimeout(() => { isDraggingRef.current = false; }, 0);
     const { destination, source, draggableId, type } = result;
-
-    // No destination - dropped outside
     if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // Same position - no change needed
-    if (destination.droppableId === source.droppableId && destination.index === source.index) {
-      return;
-    }
-
-    // Handle column reordering
     if (type === 'COLUMN') {
       setColumns(prevColumns => {
         const newColumns = [...prevColumns];
         const [movedColumn] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, movedColumn);
+        // Update sort_order for custom columns in DB
+        const customCols = newColumns.filter(c => c.db_id);
+        customCols.forEach((col, idx) => {
+          supabase.from('kanban_columns').update({ sort_order: idx }).eq('id', col.db_id!).then(() => {});
+        });
         return newColumns;
       });
       return;
     }
 
-    // Handle task reordering
     const taskId = draggableId;
     const sourceColumnId = source.droppableId;
     const destColumnId = destination.droppableId;
-
     const sourceColumn = columns.find(c => c.id === sourceColumnId);
     const destColumn = columns.find(c => c.id === destColumnId);
     const movedTask = tasks.find(task => task.id === taskId);
-
     if (!sourceColumn || !destColumn || !movedTask) return;
 
-    // Get current tasks for both columns
     const sourceColumnTasks = getTasksForColumn(sourceColumn);
-    const destColumnTasks = sourceColumnId === destColumnId 
-      ? sourceColumnTasks 
-      : getTasksForColumn(destColumn);
+    const destColumnTasks = sourceColumnId === destColumnId ? sourceColumnTasks : getTasksForColumn(destColumn);
 
     if (sourceColumnId === destColumnId) {
-      // Reordering within the same column
       const newOrder = sourceColumnTasks.map(t => t.id);
       const taskIndex = newOrder.indexOf(taskId);
-      
-      if (taskIndex !== -1) {
-        newOrder.splice(taskIndex, 1);
-      }
+      if (taskIndex !== -1) newOrder.splice(taskIndex, 1);
       newOrder.splice(destination.index, 0, taskId);
-
-      setTaskOrderMap(prev => ({
-        ...prev,
-        [sourceColumnId]: newOrder
-      }));
+      setTaskOrderMap(prev => ({ ...prev, [sourceColumnId]: newOrder }));
     } else {
-      // Moving to a different column
-      // Remove from source order
-      const newSourceOrder = sourceColumnTasks
-        .filter(t => t.id !== taskId)
-        .map(t => t.id);
-
-      // Add to destination order
-      const newDestOrder = destColumnTasks
-        .filter(t => t.id !== taskId)
-        .map(t => t.id);
+      const newSourceOrder = sourceColumnTasks.filter(t => t.id !== taskId).map(t => t.id);
+      const newDestOrder = destColumnTasks.filter(t => t.id !== taskId).map(t => t.id);
       newDestOrder.splice(destination.index, 0, taskId);
-
-      // Update local state immediately
-      setTaskOrderMap(prev => ({
-        ...prev,
-        [sourceColumnId]: newSourceOrder,
-        [destColumnId]: newDestOrder
-      }));
+      setTaskOrderMap(prev => ({ ...prev, [sourceColumnId]: newSourceOrder, [destColumnId]: newDestOrder }));
 
       if (!isBuiltInStatus(destColumn.status)) {
-        setTaskColumnOverrides(prev => ({
-          ...prev,
-          [taskId]: destColumnId,
-        }));
+        // Moving to a custom column — save placement in DB
+        setTaskColumnOverrides(prev => ({ ...prev, [taskId]: destColumnId }));
+        if (destColumn.db_id) {
+          await supabase.from('kanban_task_placements').upsert({
+            task_id: taskId,
+            column_id: destColumn.db_id,
+            sort_order: destination.index,
+          }, { onConflict: 'task_id' });
+        }
         return;
       }
 
+      // Moving to a built-in column — remove placement
       setTaskColumnOverrides(prev => {
         if (!prev[taskId]) return prev;
-
         const next = { ...prev };
         delete next[taskId];
         return next;
       });
+      // Remove from DB placements
+      await supabase.from('kanban_task_placements').delete().eq('task_id', taskId);
 
-      if (movedTask.status === destColumn.status) {
-        return;
-      }
+      if (movedTask.status === destColumn.status) return;
 
-      // Update task status in database
       const newStatus = destColumn.status as TaskStatus;
       const oldStatus = movedTask.status;
-      
       try {
-        const { error } = await supabase
-          .from('tasks')
-          .update({ status: newStatus })
-          .eq('id', taskId);
-
+        const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
         if (error) {
           console.error('Error updating task status:', error);
-          // Revert on error
           onTaskUpdate();
         } else {
-          // Record status change history
           if (user) {
-            await supabase
-              .from('task_status_history')
-              .insert({
-                task_id: taskId,
-                old_status: oldStatus,
-                new_status: newStatus,
-                changed_by: user.id,
-              });
+            await supabase.from('task_status_history').insert({
+              task_id: taskId, old_status: oldStatus, new_status: newStatus, changed_by: user.id,
+            });
           }
-          // Refresh to sync with server
           onTaskUpdate();
         }
       } catch (error) {
@@ -477,43 +387,50 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     return colorOptions[Math.floor(Math.random() * colorOptions.length)].value;
   };
 
-  const addColumn = () => {
-    if (!newColumnName.trim()) return;
-    
-    const uniqueId = `col-custom-${Date.now()}`;
+  const addColumn = async () => {
+    if (!newColumnName.trim() || !user) return;
     const uniqueStatus = `custom_${Date.now()}`;
-    
-    const newColumn: Column = {
-      id: uniqueId,
+    const color = getRandomColor();
+    const sortOrder = columns.filter(c => c.db_id).length;
+
+    const { data, error } = await supabase.from('kanban_columns').insert({
       title: newColumnName.trim(),
       status: uniqueStatus,
-      color: getRandomColor(),
-    };
-    
-    setColumns(prev => [...prev, newColumn]);
+      color,
+      sort_order: sortOrder,
+      is_default: false,
+      created_by: user.id,
+    }).select().single();
+
+    if (!error && data) {
+      const newColumn: Column = {
+        id: `col-db-${data.id}`,
+        db_id: data.id,
+        title: data.title,
+        status: data.status,
+        color: data.color || DEFAULT_COLUMN_COLOR,
+        is_default: false,
+      };
+      setColumns(prev => [...prev, newColumn]);
+    }
     setNewColumnName('');
     setIsAddingColumn(false);
   };
 
-  const deleteColumn = (columnId: string) => {
+  const deleteColumn = async (columnId: string) => {
     if (columns.length <= 1) return;
+    const column = columns.find(c => c.id === columnId);
+    if (column?.db_id) {
+      await supabase.from('kanban_columns').delete().eq('id', column.db_id);
+    }
     setColumns(prev => prev.filter(c => c.id !== columnId));
-    setTaskOrderMap(prev => {
-      const newMap = { ...prev };
-      delete newMap[columnId];
-      return newMap;
-    });
+    setTaskOrderMap(prev => { const m = { ...prev }; delete m[columnId]; return m; });
     setTaskColumnOverrides(prev => {
       let changed = false;
       const next = { ...prev };
-
       Object.entries(next).forEach(([taskId, targetColumnId]) => {
-        if (targetColumnId === columnId) {
-          delete next[taskId];
-          changed = true;
-        }
+        if (targetColumnId === columnId) { delete next[taskId]; changed = true; }
       });
-
       return changed ? next : prev;
     });
   };
@@ -523,36 +440,35 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     setEditingName(column.title.startsWith('status') ? t(column.title) : column.title);
   };
 
-  const saveColumnEdit = (columnId: string) => {
+  const saveColumnEdit = async (columnId: string) => {
     if (!editingName.trim()) return;
-    
-    setColumns(prev => prev.map(c => 
-      c.id === columnId ? { ...c, title: editingName.trim() } : c
-    ));
+    const column = columns.find(c => c.id === columnId);
+    if (column?.db_id) {
+      await supabase.from('kanban_columns').update({ title: editingName.trim() }).eq('id', column.db_id);
+    }
+    setColumns(prev => prev.map(c => c.id === columnId ? { ...c, title: editingName.trim() } : c));
     setEditingColumn(null);
     setEditingName('');
   };
 
-  const setColumnColor = (columnId: string, color: string) => {
-    setColumns(prev => prev.map(c =>
-      c.id === columnId ? { ...c, color } : c
-    ));
+  const setColumnColor = async (columnId: string, color: string) => {
+    const column = columns.find(c => c.id === columnId);
+    if (column?.db_id) {
+      await supabase.from('kanban_columns').update({ color }).eq('id', column.db_id);
+    }
+    setColumns(prev => prev.map(c => c.id === columnId ? { ...c, color } : c));
   };
 
   const getColumnTitle = (column: Column) => {
-    if (column.title.startsWith('status')) {
-      return t(column.title);
-    }
+    if (column.title.startsWith('status')) return t(column.title);
     return column.title;
   };
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-
       {/* Top scrollbar */}
       <div
         ref={topScrollRef}
@@ -565,28 +481,16 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       <div ref={scrollContainerRef} className="flex gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin" style={{ touchAction: 'pan-y', scrollbarWidth: 'thin' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className="flex gap-4"
-            >
+            <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-4">
               {columns.map((column, columnIndex) => {
                 const columnTasks = getTasksForColumn(column);
-                
                 return (
-                  <Draggable 
-                    key={column.id} 
-                    draggableId={`column-${column.id}`} 
-                    index={columnIndex}
-                  >
+                  <Draggable key={column.id} draggableId={`column-${column.id}`} index={columnIndex}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={cn(
-                          "flex-shrink-0 w-80",
-                          snapshot.isDragging && "opacity-90"
-                        )}
+                        className={cn("flex-shrink-0 w-80", snapshot.isDragging && "opacity-90")}
                       >
                         <div
                           className="rounded-lg p-4 h-full flex flex-col border-2 border-border/50"
@@ -606,20 +510,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                   className="h-8 bg-background"
                                   autoFocus
                                 />
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  className="h-8 w-8" 
-                                  onClick={() => saveColumnEdit(column.id)}
-                                >
+                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => saveColumnEdit(column.id)}>
                                   <Check className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  className="h-8 w-8" 
-                                  onClick={() => setEditingColumn(null)}
-                                >
+                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingColumn(null)}>
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -627,12 +521,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                               <>
                                 <div className="flex items-center gap-2">
                                   <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                  <h3 className="font-semibold text-foreground">
-                                    {getColumnTitle(column)}
-                                  </h3>
-                                  <Badge variant="secondary" className="rounded-full bg-background">
-                                    {columnTasks.length}
-                                  </Badge>
+                                  <h3 className="font-semibold text-foreground">{getColumnTitle(column)}</h3>
+                                  <Badge variant="secondary" className="rounded-full bg-background">{columnTasks.length}</Badge>
                                 </div>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -669,10 +559,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                       </div>
                                     </div>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => deleteColumn(column.id)}
-                                      className="text-destructive"
-                                    >
+                                    <DropdownMenuItem onClick={() => deleteColumn(column.id)} className="text-destructive">
                                       <Trash2 className="h-4 w-4 mr-2" />
                                       {t('deleteColumn')}
                                     </DropdownMenuItem>
@@ -694,11 +581,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                 )}
                               >
                                 {columnTasks.map((task, taskIndex) => (
-                                  <Draggable
-                                    key={task.id}
-                                    draggableId={task.id}
-                                    index={taskIndex}
-                                  >
+                                  <Draggable key={task.id} draggableId={task.id} index={taskIndex}>
                                     {(provided, snapshot) => (
                                       <Card
                                         ref={provided.innerRef}
@@ -713,25 +596,15 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                           borderLeftColor: task.color || '#3b82f6',
                                           borderLeftWidth: '4px',
                                         }}
-                                        onClick={() => {
-                                          if (!isDraggingRef.current) {
-                                            onTaskClick(task);
-                                          }
-                                        }}
+                                        onClick={() => { if (!isDraggingRef.current) onTaskClick(task); }}
                                       >
                                         <CardContent className="p-3">
-                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2">
-                                            {task.title}
-                                          </h4>
+                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2">{task.title}</h4>
                                           {task.project_id && projects[task.project_id] && (
-                                            <Badge variant="outline" className="mb-2 text-xs">
-                                              {projects[task.project_id].title}
-                                            </Badge>
+                                            <Badge variant="outline" className="mb-2 text-xs">{projects[task.project_id].title}</Badge>
                                           )}
                                           {task.description && (
-                                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                                              {task.description}
-                                            </p>
+                                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{task.description}</p>
                                           )}
                                           <div className="flex items-center justify-between mt-1">
                                             {task.deadline && (
@@ -807,24 +680,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                   <Plus className="h-4 w-4 mr-1" />
                   {t('add')}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsAddingColumn(false);
-                    setNewColumnName('');
-                  }}
-                >
+                <Button size="sm" variant="ghost" onClick={() => { setIsAddingColumn(false); setNewColumnName(''); }}>
                   {t('cancel')}
                 </Button>
               </div>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              className="w-full h-12 border-dashed"
-              onClick={() => setIsAddingColumn(true)}
-            >
+            <Button variant="outline" className="w-full h-12 border-dashed" onClick={() => setIsAddingColumn(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t('addColumn')}
             </Button>
