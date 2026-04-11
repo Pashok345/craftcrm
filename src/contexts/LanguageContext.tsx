@@ -671,6 +671,21 @@ export const translations: Translations = {
   clientEmailRequired: { ru: 'У клиента не указан e-mail', en: 'Client email is required', uk: 'У клієнта не вказано e-mail' },
   proposalSentSuccess: { ru: 'КП отмечено как отправленное', en: 'Proposal marked as sent', uk: 'КП позначено як надіслане' },
   sentTo: { ru: 'Отправлено на', en: 'Sent to', uk: 'Надіслано на' },
+  // Global search
+  globalSearchPlaceholder: { ru: 'Поиск по задачам, проектам, клиентам, сделкам...', en: 'Search tasks, projects, clients, deals...', uk: 'Пошук по завданнях, проектах, клієнтах, угодах...' },
+  noResults: { ru: 'Ничего не найдено', en: 'No results found', uk: 'Нічого не знайдено' },
+  clients: { ru: 'Клиенты', en: 'Clients', uk: 'Клієнти' },
+  deals: { ru: 'Сделки', en: 'Deals', uk: 'Угоди' },
+  
+  // Favorites
+  noFavorites: { ru: 'Нет избранных элементов', en: 'No favorites yet', uk: 'Немає обраних елементів' },
+  addToFavorites: { ru: 'Добавить в избранное', en: 'Add to favorites', uk: 'Додати до обраного' },
+  removeFromFavorites: { ru: 'Убрать из избранного', en: 'Remove from favorites', uk: 'Видалити з обраного' },
+  
+  // Dashboard customization
+  customize: { ru: 'Настроить', en: 'Customize', uk: 'Налаштувати' },
+  done: { ru: 'Готово', en: 'Done', uk: 'Готово' },
+  toggleWidgets: { ru: 'Включить/выключить виджеты', en: 'Toggle widgets', uk: 'Увімкнути/вимкнути віджети' },
 };
 
 interface LanguageContextType {
