@@ -674,7 +674,6 @@ export const translations: Translations = {
   // Global search
   globalSearchPlaceholder: { ru: 'Поиск по задачам, проектам, клиентам, сделкам...', en: 'Search tasks, projects, clients, deals...', uk: 'Пошук по завданнях, проектах, клієнтах, угодах...' },
   noResults: { ru: 'Ничего не найдено', en: 'No results found', uk: 'Нічого не знайдено' },
-  clients: { ru: 'Клиенты', en: 'Clients', uk: 'Клієнти' },
   deals: { ru: 'Сделки', en: 'Deals', uk: 'Угоди' },
   
   // Favorites
@@ -684,7 +683,6 @@ export const translations: Translations = {
   
   // Dashboard customization
   customize: { ru: 'Настроить', en: 'Customize', uk: 'Налаштувати' },
-  done: { ru: 'Готово', en: 'Done', uk: 'Готово' },
   toggleWidgets: { ru: 'Включить/выключить виджеты', en: 'Toggle widgets', uk: 'Увімкнути/вимкнути віджети' },
 };
 
