@@ -683,6 +683,7 @@ export const translations: Translations = {
   
   // Dashboard customization
   customize: { ru: 'Настроить', en: 'Customize', uk: 'Налаштувати' },
+  done: { ru: 'Готово', en: 'Done', uk: 'Готово' },
   toggleWidgets: { ru: 'Включить/выключить виджеты', en: 'Toggle widgets', uk: 'Увімкнути/вимкнути віджети' },
 };
 
