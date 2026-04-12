@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, LogOut, User, Bell, MessageSquare, Sun, Moon, Search } from 'lucide-react';
+import { Settings, LogOut, User, Bell, MessageSquare, Sun, Moon } from 'lucide-react';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { Button } from '@/components/ui/button';
 import {
