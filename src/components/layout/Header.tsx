@@ -147,7 +147,6 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
 
   return (
     <>
-      <GlobalSearch />
       <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between gap-4">
         <GlobalSearch />
         <div className="flex items-center gap-2">
