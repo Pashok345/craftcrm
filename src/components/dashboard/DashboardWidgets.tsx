@@ -281,11 +281,11 @@ export const DashboardWidgets = () => {
     switch (widget.widget_type) {
       case 'stats':
         return (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {stats.map((stat, index) => (
               <Card key={index}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground truncate pr-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
                   <div className={`p-2 rounded-lg shrink-0 ${stat.color}`}>
