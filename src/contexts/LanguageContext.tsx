@@ -696,32 +696,7 @@ export const translations: Translations = {
   weekly: { ru: 'Еженедельно', en: 'Weekly', uk: 'Щотижнево' },
   monthly: { ru: 'Ежемесячно', en: 'Monthly', uk: 'Щомісяця' },
   interval: { ru: 'Интервал', en: 'Interval', uk: 'Інтервал' },
-  active: { ru: 'Активный', en: 'Active', uk: 'Активний' },
-  inactive: { ru: 'Неактивный', en: 'Inactive', uk: 'Неактивний' },
-  templateCreated: { ru: 'Шаблон создан', en: 'Template created', uk: 'Шаблон створено' },
-  templateUpdated: { ru: 'Шаблон обновлён', en: 'Template updated', uk: 'Шаблон оновлено' },
-  templateDeleted: { ru: 'Шаблон удалён', en: 'Template deleted', uk: 'Шаблон видалено' },
-  generateTask: { ru: 'Создать задачу', en: 'Generate task', uk: 'Створити завдання' },
-  taskGenerated: { ru: 'Задача создана из шаблона', en: 'Task generated from template', uk: 'Завдання створено з шаблону' },
-  noTemplates: { ru: 'Нет шаблонов', en: 'No templates', uk: 'Немає шаблонів' },
-  createFirstTemplate: { ru: 'Создайте первый шаблон повторяющейся задачи', en: 'Create your first recurring task template', uk: 'Створіть перший шаблон повторюваного завдання' },
-  
-  // Task dependencies
-  dependencies: { ru: 'Зависимости', en: 'Dependencies', uk: 'Залежності' },
-  addDependency: { ru: 'Добавить зависимость', en: 'Add dependency', uk: 'Додати залежність' },
-  blockedBy: { ru: 'Блокируется', en: 'Blocked by', uk: 'Блокується' },
-  blocks: { ru: 'Блокирует', en: 'Blocks', uk: 'Блокує' },
-  selectTask: { ru: 'Выберите задачу', en: 'Select task', uk: 'Оберіть завдання' },
-  dependencyAdded: { ru: 'Зависимость добавлена', en: 'Dependency added', uk: 'Залежність додано' },
-  dependencyRemoved: { ru: 'Зависимость удалена', en: 'Dependency removed', uk: 'Залежність видалено' },
-  noDependencies: { ru: 'Нет зависимостей', en: 'No dependencies', uk: 'Немає залежностей' },
-  taskBlocked: { ru: 'Задача заблокирована', en: 'Task is blocked', uk: 'Завдання заблоковано' },
-  
-  // Export reports
-  exportPDF: { ru: 'Экспорт PDF', en: 'Export PDF', uk: 'Експорт PDF' },
-  exportExcel: { ru: 'Экспорт Excel', en: 'Export Excel', uk: 'Експорт Excel' },
-  exportReport: { ru: 'Экспорт отчёта', en: 'Export report', uk: 'Експорт звіту' },
-  reportGenerated: { ru: 'Отчёт сгенерирован', en: 'Report generated', uk: 'Звіт згенеровано' },
+  templateActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
 };
 
 interface LanguageContextType {
