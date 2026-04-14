@@ -222,10 +222,17 @@ const Tasks = () => {
           <h1 className="text-2xl font-bold text-foreground">{t('tasksTitle')}</h1>
           <p className="text-muted-foreground">{t('tasksDescription')}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('addTask')}
-        </Button>
+        <div className="flex gap-2">
+          <TasksExport tasks={filteredAndSortedTasks} projects={projects} />
+          <Button variant="outline" onClick={() => setTemplatesOpen(true)} className="gap-2">
+            <Repeat className="h-4 w-4" />
+            {t('recurringTasks')}
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('addTask')}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
