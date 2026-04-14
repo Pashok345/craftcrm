@@ -430,7 +430,7 @@ export const DashboardWidgets = () => {
                       <span className="text-sm truncate">{entity.title}</span>
                       {entity.status && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ml-auto shrink-0 ${STATUS_COLORS[entity.status] || 'bg-muted text-muted-foreground'}`}>
-                          {entity.status}
+                          {getStatusLabel(entity.status)}
                         </span>
                       )}
                     </div>
