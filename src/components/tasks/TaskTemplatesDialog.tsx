@@ -192,7 +192,7 @@ export const TaskTemplatesDialog = ({ open, onOpenChange, onTaskGenerated }: Pro
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={isActive} onCheckedChange={setIsActive} />
-                <Label>{isActive ? t('active') : t('inactive')}</Label>
+                <Label>{isActive ? t('templateActive') : t('inactive')}</Label>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSubmit} disabled={!title.trim()}>
@@ -218,7 +218,7 @@ export const TaskTemplatesDialog = ({ open, onOpenChange, onTaskGenerated }: Pro
                   <div className="flex items-center gap-2">
                     <h4 className="font-medium truncate">{tpl.title}</h4>
                     <Badge variant={tpl.is_active ? 'default' : 'secondary'}>
-                      {tpl.is_active ? t('active') : t('inactive')}
+                      {tpl.is_active ? t('templateActive') : t('inactive')}
                     </Badge>
                     <Badge variant="outline">
                       {recurrenceLabel(tpl.recurrence_type, tpl.recurrence_interval)}
