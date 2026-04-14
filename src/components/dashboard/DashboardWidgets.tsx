@@ -268,15 +268,24 @@ export const DashboardWidgets = () => {
     done: 'bg-crm-success/10 text-crm-success',
   };
 
+  const STATUS_LABELS_MAP: Record<string, Record<string, string>> = {
+    todo: { ru: 'К выполнению', en: 'To Do', uk: 'До виконання' },
+    in_progress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
+    review: { ru: 'На проверке', en: 'In Review', uk: 'На перевірці' },
+    done: { ru: 'Выполнено', en: 'Done', uk: 'Виконано' },
+  };
+
+  const getStatusLabel = (status: string) => STATUS_LABELS_MAP[status]?.[language] || status;
+
   const renderWidget = (widget: WidgetConfig) => {
     switch (widget.widget_type) {
       case 'stats':
         return (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {stats.map((stat, index) => (
               <Card key={index}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground truncate pr-2">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
                   <div className={`p-2 rounded-lg shrink-0 ${stat.color}`}>
@@ -421,7 +430,7 @@ export const DashboardWidgets = () => {
                       <span className="text-sm truncate">{entity.title}</span>
                       {entity.status && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ml-auto shrink-0 ${STATUS_COLORS[entity.status] || 'bg-muted text-muted-foreground'}`}>
-                          {entity.status}
+                          {getStatusLabel(entity.status)}
                         </span>
                       )}
                     </div>
@@ -457,7 +466,7 @@ export const DashboardWidgets = () => {
                       <CheckSquare className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="text-sm truncate">{task.title}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ml-auto shrink-0 ${STATUS_COLORS[task.status] || 'bg-muted'}`}>
-                        {task.status}
+                        {getStatusLabel(task.status)}
                       </span>
                     </div>
                   ))}
