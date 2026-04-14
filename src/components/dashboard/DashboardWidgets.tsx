@@ -466,7 +466,7 @@ export const DashboardWidgets = () => {
                       <CheckSquare className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="text-sm truncate">{task.title}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ml-auto shrink-0 ${STATUS_COLORS[task.status] || 'bg-muted'}`}>
-                        {task.status}
+                        {getStatusLabel(task.status)}
                       </span>
                     </div>
                   ))}
