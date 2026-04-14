@@ -268,6 +268,15 @@ export const DashboardWidgets = () => {
     done: 'bg-crm-success/10 text-crm-success',
   };
 
+  const STATUS_LABELS_MAP: Record<string, Record<string, string>> = {
+    todo: { ru: 'К выполнению', en: 'To Do', uk: 'До виконання' },
+    in_progress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
+    review: { ru: 'На проверке', en: 'In Review', uk: 'На перевірці' },
+    done: { ru: 'Выполнено', en: 'Done', uk: 'Виконано' },
+  };
+
+  const getStatusLabel = (status: string) => STATUS_LABELS_MAP[status]?.[language] || status;
+
   const renderWidget = (widget: WidgetConfig) => {
     switch (widget.widget_type) {
       case 'stats':
