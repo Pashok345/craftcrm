@@ -11,9 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter } from 'lucide-react';
+import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter, Repeat, Download } from 'lucide-react';
 import { Task, Project, Profile, Tag } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
+import { TaskTemplatesDialog } from '@/components/tasks/TaskTemplatesDialog';
+import { TasksExport } from '@/components/tasks/TasksExport';
 import { GanttChart } from '@/components/tasks/GanttChart';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { format } from 'date-fns';
@@ -43,6 +45,7 @@ const Tasks = () => {
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tasks-active-tab') || 'list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
@@ -219,10 +222,17 @@ const Tasks = () => {
           <h1 className="text-2xl font-bold text-foreground">{t('tasksTitle')}</h1>
           <p className="text-muted-foreground">{t('tasksDescription')}</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('addTask')}
-        </Button>
+        <div className="flex gap-2">
+          <TasksExport tasks={filteredAndSortedTasks} projects={projects} />
+          <Button variant="outline" onClick={() => setTemplatesOpen(true)} className="gap-2">
+            <Repeat className="h-4 w-4" />
+            {t('recurringTasks')}
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('addTask')}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -467,6 +477,12 @@ const Tasks = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={fetchTasks}
+      />
+
+      <TaskTemplatesDialog
+        open={templatesOpen}
+        onOpenChange={setTemplatesOpen}
+        onTaskGenerated={fetchTasks}
       />
     </div>
   );

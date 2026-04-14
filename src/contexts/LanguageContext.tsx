@@ -685,6 +685,18 @@ export const translations: Translations = {
   customize: { ru: 'Настроить', en: 'Customize', uk: 'Налаштувати' },
   done: { ru: 'Готово', en: 'Done', uk: 'Готово' },
   toggleWidgets: { ru: 'Включить/выключить виджеты', en: 'Toggle widgets', uk: 'Увімкнути/вимкнути віджети' },
+  
+  // Recurring tasks
+  recurringTasks: { ru: 'Повторяющиеся задачи', en: 'Recurring tasks', uk: 'Повторювані завдання' },
+  createTemplate: { ru: 'Создать шаблон', en: 'Create template', uk: 'Створити шаблон' },
+  editTemplate: { ru: 'Редактировать шаблон', en: 'Edit template', uk: 'Редагувати шаблон' },
+  templateTitle: { ru: 'Название шаблона', en: 'Template title', uk: 'Назва шаблону' },
+  recurrenceType: { ru: 'Периодичность', en: 'Recurrence', uk: 'Періодичність' },
+  daily: { ru: 'Ежедневно', en: 'Daily', uk: 'Щоденно' },
+  weekly: { ru: 'Еженедельно', en: 'Weekly', uk: 'Щотижнево' },
+  monthly: { ru: 'Ежемесячно', en: 'Monthly', uk: 'Щомісяця' },
+  interval: { ru: 'Интервал', en: 'Interval', uk: 'Інтервал' },
+  templateActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
 };
 
 interface LanguageContextType {
