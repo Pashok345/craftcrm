@@ -478,6 +478,12 @@ const Tasks = () => {
         onOpenChange={setDialogOpen}
         onSuccess={fetchTasks}
       />
+
+      <TaskTemplatesDialog
+        open={templatesOpen}
+        onOpenChange={setTemplatesOpen}
+        onTaskGenerated={fetchTasks}
+      />
     </div>
   );
 };
