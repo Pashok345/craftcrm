@@ -173,13 +173,31 @@ const Tasks = () => {
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks;
     
-    // Filter by search query
+    // Filter by search query — searches across title, description, status, project, creator, assignees, tags
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(task => 
-        task.title.toLowerCase().includes(query) ||
-        task.description?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter(task => {
+        // Title
+        if (task.title.toLowerCase().includes(query)) return true;
+        // Description
+        if (task.description?.toLowerCase().includes(query)) return true;
+        // Status (localized label)
+        const statusLabel = statusLabels[task.status];
+        if (statusLabel?.toLowerCase().includes(query)) return true;
+        // Raw status
+        if (task.status.toLowerCase().includes(query)) return true;
+        // Project name
+        if (task.project_id && projects[task.project_id]?.title?.toLowerCase().includes(query)) return true;
+        // Creator name
+        if (creators[task.created_by]?.name?.toLowerCase().includes(query)) return true;
+        // Assignees
+        const assignees = taskAssignees[task.id];
+        if (assignees?.some(a => a.name?.toLowerCase().includes(query))) return true;
+        // Tags
+        const tags = taskTags[task.id];
+        if (tags?.some(tag => tag.name?.toLowerCase().includes(query))) return true;
+        return false;
+      });
     }
     
     // Sort tasks
