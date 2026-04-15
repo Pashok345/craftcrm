@@ -215,7 +215,7 @@ const Tasks = () => {
           return 0;
       }
     });
-  }, [tasks, searchQuery, sortBy]);
+  }, [tasks, searchQuery, sortBy, statusLabels, projects, creators, taskAssignees, taskTags]);
 
   const allAssignees = useMemo(() => {
     const seen = new Map<string, Profile>();
