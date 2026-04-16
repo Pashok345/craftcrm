@@ -11,6 +11,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -27,19 +29,19 @@ const generateInvitationEmail = (name: string, email: string, resetLink: string)
       <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">🔄</span></div>
       <h1 style="color: #111827; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Повторне запрошення</h1>
       <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
-        Вітаємо, ${name || 'колего'}! Вас знову запрошено до CRM системи.
+        Вітаємо, ${escapeHtml(name) || 'колего'}! Вас знову запрошено до CRM системи.
       </p>
       <div style="background-color: #f0f9ff; border-radius: 12px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #3b82f6;">
         <div style="display: flex; align-items: center; margin-bottom: 12px;">
           <span style="font-size: 20px; margin-right: 10px;">📧</span>
           <div>
             <p style="color: #6b7280; margin: 0; font-size: 14px;">Ваша пошта</p>
-            <p style="color: #111827; margin: 0; font-weight: 600;">${email}</p>
+            <p style="color: #111827; margin: 0; font-weight: 600;">${escapeHtml(email)}</p>
           </div>
         </div>
       </div>
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${resetLink}" 
+        <a href="${escapeHtml(resetLink)}" 
            style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
           Увійти та встановити пароль
         </a>
@@ -93,22 +95,23 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+    const token = authHeader.replace('Bearer ', '')
+
+    // Verify JWT signature via Supabase SDK instead of manual decode
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     })
 
-    const token = authHeader.replace('Bearer ', '')
-    let callerId: string;
-    
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      callerId = payload.sub;
-    } catch {
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
+
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    const callerId = claimsData.claims.sub as string
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 

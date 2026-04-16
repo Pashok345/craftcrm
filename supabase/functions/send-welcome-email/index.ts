@@ -5,6 +5,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const LOGO_URL = "https://iibqglmxhaiecueqbudh.supabase.co/storage/v1/object/public/avatars/email-logo.png";
 
@@ -12,6 +13,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
@@ -38,23 +41,27 @@ serve(async (req) => {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
     const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(
-      JSON.parse(atob(token.split('.')[1])).sub
-    );
-    
-    if (userError || !userData?.user) {
+
+    // Verify JWT signature via Supabase SDK instead of manual decode
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub as string;
+
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
     const { data: roleData } = await adminClient
       .from('user_roles')
       .select('role')
@@ -78,9 +85,12 @@ serve(async (req) => {
       );
     }
 
+    const safeName = escapeHtml(name || '');
+    const safeEmail = escapeHtml(email);
+
     const resetButtonHtml = resetLink ? `
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${resetLink}" 
+        <a href="${escapeHtml(resetLink)}" 
            style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
           Увійти та встановити пароль
         </a>
@@ -104,7 +114,7 @@ serve(async (req) => {
             ${emailHeader}
             <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
               <h1 style="color: #111827; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
-                Вітаємо, ${name || 'колего'}! 👋
+                Вітаємо, ${safeName || 'колего'}! 👋
               </h1>
               <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
                 Вас запрошено до CRM системи
@@ -114,7 +124,7 @@ serve(async (req) => {
                   <span style="font-size: 20px; margin-right: 10px;">📧</span>
                   <div>
                     <p style="color: #6b7280; margin: 0; font-size: 14px;">Ваша пошта</p>
-                    <p style="color: #111827; margin: 0; font-weight: 600;">${email}</p>
+                    <p style="color: #111827; margin: 0; font-weight: 600;">${safeEmail}</p>
                   </div>
                 </div>
               </div>

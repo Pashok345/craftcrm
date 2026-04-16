@@ -14,6 +14,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -101,7 +103,10 @@ serve(async (req) => {
     }
 
     const emailsSent: string[] = [];
-    const truncatedComment = comment_text.length > 200 ? comment_text.slice(0, 200) + '...' : comment_text;
+    const safeTaskTitle = escapeHtml(task_title || '');
+    const safeCommenterName = escapeHtml(commenter_name || '');
+    const rawComment = comment_text?.length > 200 ? comment_text.slice(0, 200) + '...' : (comment_text || '');
+    const safeComment = escapeHtml(rawComment);
 
     for (const profile of profiles) {
       if (!profile.email) continue;
@@ -110,7 +115,7 @@ serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `💬 Новий коментар до завдання "${task_title}"`,
+          subject: `💬 Новий коментар до завдання "${safeTaskTitle}"`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -122,14 +127,14 @@ serve(async (req) => {
                   <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">💬</span></div>
                   <h1 style="color: #3b82f6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Новий коментар</h1>
                   <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
-                    Вітаємо, ${profile.name || 'колего'}! У завданні є новий коментар.
+                    Вітаємо, ${escapeHtml(profile.name || 'колего')}! У завданні є новий коментар.
                   </p>
                   <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #3b82f6;">
                     <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;"><strong>Завдання:</strong></p>
-                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${task_title}</h2>
-                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;"><strong>${commenter_name}</strong> залишив коментар:</p>
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${safeTaskTitle}</h2>
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;"><strong>${safeCommenterName}</strong> залишив коментар:</p>
                     <div style="background-color: white; padding: 16px; border-radius: 8px; margin-top: 12px;">
-                      <p style="color: #374151; margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6;">${truncatedComment}</p>
+                      <p style="color: #374151; margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6;">${safeComment}</p>
                     </div>
                   </div>
                   <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">

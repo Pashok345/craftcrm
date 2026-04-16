@@ -14,6 +14,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -93,6 +95,11 @@ serve(async (req) => {
     const entityTypeTitle = entity_type === 'task' ? 'Завдання' : 'Проект';
     const emoji = entity_type === 'task' ? '📋' : '📁';
 
+    const safeEntityTitle = escapeHtml(entity_title || '');
+    const safeChangedByName = escapeHtml(changed_by_name || '');
+    const safeOldStatus = escapeHtml(oldStatusLabel);
+    const safeNewStatus = escapeHtml(newStatusLabel);
+
     const emailsSent: string[] = [];
 
     for (const profile of profiles) {
@@ -103,7 +110,7 @@ serve(async (req) => {
           user_id: profile.user_id,
           type: 'status_change',
           title: `Статус ${entityTypeLabel} змінено`,
-          message: `${changed_by_name} змінив статус ${entityTypeLabel} "${entity_title}": ${oldStatusLabel} → ${newStatusLabel}`,
+          message: `${safeChangedByName} змінив статус ${entityTypeLabel} "${safeEntityTitle}": ${safeOldStatus} → ${safeNewStatus}`,
           task_id: entity_type === 'task' ? entity_id : null,
           created_by: user.id,
         });
@@ -111,7 +118,7 @@ serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "CRM <onboarding@resend.dev>",
           to: [profile.email],
-          subject: `${emoji} Статус ${entityTypeLabel} "${entity_title}" змінено`,
+          subject: `${emoji} Статус ${entityTypeLabel} "${safeEntityTitle}" змінено`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -122,15 +129,15 @@ serve(async (req) => {
                 <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                   <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">${emoji}</span></div>
                   <h1 style="color: #8b5cf6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Зміна статусу</h1>
-                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">Вітаємо, ${profile.name || 'колего'}!</p>
+                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">Вітаємо, ${escapeHtml(profile.name || 'колего')}!</p>
                   <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #8b5cf6;">
                     <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">${entityTypeTitle}:</p>
-                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${entity_title}</h2>
-                    <p style="color: #6b7280; margin: 0 0 16px 0; font-size: 14px;"><strong>${changed_by_name}</strong> змінив статус:</p>
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${safeEntityTitle}</h2>
+                    <p style="color: #6b7280; margin: 0 0 16px 0; font-size: 14px;"><strong>${safeChangedByName}</strong> змінив статус:</p>
                     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                      <span style="background-color: #e5e7eb; padding: 8px 16px; border-radius: 20px; font-size: 14px; color: #6b7280;">${oldStatusLabel}</span>
+                      <span style="background-color: #e5e7eb; padding: 8px 16px; border-radius: 20px; font-size: 14px; color: #6b7280;">${safeOldStatus}</span>
                       <span style="color: #6b7280; font-size: 20px;">→</span>
-                      <span style="background-color: #22c55e; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${newStatusLabel}</span>
+                      <span style="background-color: #22c55e; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${safeNewStatus}</span>
                     </div>
                   </div>
                   <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
