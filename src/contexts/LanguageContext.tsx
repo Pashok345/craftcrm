@@ -497,6 +497,13 @@ export const translations: Translations = {
   noDeadline: { ru: 'Без срока', en: 'No deadline', uk: 'Без терміну' },
   noBudget: { ru: 'Без бюджета', en: 'No budget', uk: 'Без бюджету' },
   noDescription: { ru: 'Без описания', en: 'No description', uk: 'Без опису' },
+  filters: { ru: 'Фильтры', en: 'Filters', uk: 'Фільтри' },
+  activeFilters: { ru: 'Фильтры', en: 'Filters', uk: 'Фільтри' },
+  tags: { ru: 'Теги', en: 'Tags', uk: 'Теги' },
+  from: { ru: 'От', en: 'From', uk: 'Від' },
+  to: { ru: 'До', en: 'To', uk: 'До' },
+  manualSort: { ru: 'Вручную', en: 'Manual', uk: 'Вручну' },
+  hotkeys: { ru: 'Горячие клавиши', en: 'Hotkeys', uk: 'Гарячі клавіші' },
 
   // User invitations
   sendInvitation: { ru: 'Отправить приглашение', en: 'Send invitation', uk: 'Надіслати запрошення' },
