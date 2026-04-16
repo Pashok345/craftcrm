@@ -154,21 +154,9 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '').trim();
-    
-    // Decode JWT payload to check role (works for anon, service_role, and user tokens)
-    try {
-      const payloadBase64 = token.split('.')[1];
-      const payload = JSON.parse(atob(payloadBase64));
-      const role = payload.role;
-      
-      if (!['service_role', 'anon', 'authenticated'].includes(role)) {
-        console.log("Unauthorized role:", role);
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      
-      console.log(`Authorized with role: ${role}`);
-    } catch (decodeError) {
-      console.log("Failed to decode JWT:", decodeError);
+    const expectedServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!expectedServiceKey || token !== expectedServiceKey) {
+      console.log("Unauthorized: not service_role key");
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
