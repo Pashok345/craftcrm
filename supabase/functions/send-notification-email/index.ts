@@ -14,6 +14,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -114,6 +116,10 @@ serve(async (req) => {
       );
     }
 
+    const safeTitle = escapeHtml(title || '');
+    const safeMessage = escapeHtml(message || '');
+    const safeName = escapeHtml(profile.name || 'колего');
+
     let subject = '';
     let htmlContent = '';
 
@@ -129,7 +135,7 @@ serve(async (req) => {
             <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
               <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">🎉</span></div>
               <h1 style="color: #22c55e; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Ласкаво просимо!</h1>
-              <p style="color: #6b7280; font-size: 16px; margin: 0 0 24px 0; text-align: center;">Вітаємо, ${profile.name || 'колего'}!</p>
+              <p style="color: #6b7280; font-size: 16px; margin: 0 0 24px 0; text-align: center;">Вітаємо, ${safeName}!</p>
               <div style="background-color: #f0fdf4; border-radius: 12px; padding: 24px; border-left: 4px solid #22c55e;">
                 <p style="color: #374151; margin: 0 0 8px 0;">Ваш акаунт у CRM системі успішно створено.</p>
                 <p style="color: #374151; margin: 0;">Тепер ви можете увійти в систему та розпочати роботу.</p>
@@ -144,7 +150,7 @@ serve(async (req) => {
         </html>
       `;
     } else {
-      subject = title || 'Нове сповіщення';
+      subject = safeTitle || 'Нове сповіщення';
       htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -154,9 +160,9 @@ serve(async (req) => {
             ${emailHeader}
             <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
               <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">🔔</span></div>
-              <h1 style="color: #3b82f6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">${title}</h1>
+              <h1 style="color: #3b82f6; font-size: 24px; margin: 0 0 8px 0; text-align: center;">${safeTitle}</h1>
               <div style="background-color: #eff6ff; border-radius: 12px; padding: 24px; margin-top: 24px; border-left: 4px solid #3b82f6;">
-                <p style="color: #374151; margin: 0;">${message}</p>
+                <p style="color: #374151; margin: 0;">${safeMessage}</p>
               </div>
             </div>
             <div style="text-align: center; margin-top: 32px;">
@@ -177,7 +183,6 @@ serve(async (req) => {
     });
 
     if (emailError) {
-      // Graceful: log warning but return success so UI doesn't break
       console.warn('Email sending skipped (Resend):', emailError);
       return new Response(
         JSON.stringify({ success: true, email: profile.email, email_sent: false, warning: 'Email delivery restricted by Resend domain settings' }),
