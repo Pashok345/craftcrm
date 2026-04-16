@@ -31,12 +31,8 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '').trim();
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (!['service_role', 'anon', 'authenticated'].includes(payload.role)) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    } catch {
+    const expectedServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!expectedServiceKey || token !== expectedServiceKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
