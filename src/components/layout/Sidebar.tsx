@@ -6,7 +6,6 @@ import {
   Users,
   Folder,
   ChevronLeft,
-  ChevronRight,
   Menu,
   GitBranch,
   BarChart3,
@@ -14,16 +13,21 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import logo from '@/assets/logo.png';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
-export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenChange }: SidebarProps) => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   
   const menuItems = [
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
@@ -36,10 +40,50 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     { icon: Users, label: t('users'), path: '/users' },
   ];
 
+  const renderNav = (onClickItem?: () => void) => (
+    <nav className="flex-1 p-2 space-y-1">
+      {menuItems.map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          onClick={onClickItem}
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+              'hover:bg-muted',
+              isActive
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'text-muted-foreground',
+              !isMobile && collapsed && 'justify-center px-2'
+            )
+          }
+        >
+          <item.icon className="h-5 w-5 shrink-0" />
+          {(isMobile || !collapsed) && <span>{item.label}</span>}
+        </NavLink>
+      ))}
+    </nav>
+  );
+
+  // Mobile: render as Sheet/drawer
+  if (isMobile) {
+    return (
+      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent side="left" className="w-64 p-0 flex flex-col">
+          <div className="p-3 flex items-center justify-between border-b border-border min-h-[65px]">
+            <img src={logo} alt="CraftCRM" className="h-10 object-contain" />
+          </div>
+          {renderNav(() => onMobileOpenChange?.(false))}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: classic sidebar
   return (
     <aside
       className={cn(
-        'h-screen bg-card border-r border-border flex flex-col transition-all duration-300',
+        'h-screen bg-card border-r border-border flex flex-col transition-all duration-300 shrink-0',
         collapsed ? 'w-16' : 'w-52'
       )}
     >
@@ -68,27 +112,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         )}
       </div>
 
-      <nav className="flex-1 p-2 space-y-1">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-                'hover:bg-muted',
-                isActive
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground',
-                collapsed && 'justify-center px-2'
-              )
-            }
-          >
-            <item.icon className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        ))}
-      </nav>
+      {renderNav()}
     </aside>
   );
 };

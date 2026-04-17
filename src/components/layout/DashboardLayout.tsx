@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export const DashboardLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { user, profile, loading, signOut } = useAuth();
 
   if (loading) {
@@ -25,10 +26,16 @@ export const DashboardLayout = () => {
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        mobileOpen={mobileSidebarOpen}
+        onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header profile={profile} onSignOut={signOut} />
-        <main className="flex-1 overflow-auto p-6">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Header 
+          profile={profile} 
+          onSignOut={signOut} 
+          onMobileMenuClick={() => setMobileSidebarOpen(true)}
+        />
+        <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <Outlet />
         </main>
       </div>

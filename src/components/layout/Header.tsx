@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, LogOut, User, Bell, MessageSquare, Sun, Moon } from 'lucide-react';
+import { Settings, LogOut, User, Bell, MessageSquare, Sun, Moon, Menu } from 'lucide-react';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,9 +21,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface HeaderProps {
   profile: Profile | null;
   onSignOut: () => void;
+  onMobileMenuClick?: () => void;
 }
 
-export const Header = ({ profile, onSignOut }: HeaderProps) => {
+export const Header = ({ profile, onSignOut, onMobileMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -147,9 +148,22 @@ export const Header = ({ profile, onSignOut }: HeaderProps) => {
 
   return (
     <>
-      <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between gap-4">
-        <GlobalSearch />
-        <div className="flex items-center gap-2">
+      <header className="h-16 border-b border-border bg-card px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {onMobileMenuClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMobileMenuClick}
+              className="md:hidden shrink-0"
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <GlobalSearch />
+        </div>
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button 
             variant="ghost" 
             size="icon" 
