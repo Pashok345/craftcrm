@@ -98,10 +98,10 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
   return (
     <TooltipProvider>
       <ScrollArea className="w-full" ref={scrollRef}>
-        <div className="min-w-max">
+        <div className="min-w-max" style={{ touchAction: 'pan-x pan-y', WebkitOverflowScrolling: 'touch' }}>
           {/* Header with dates */}
           <div className="flex border-b border-border sticky top-0 bg-background z-10">
-            <div className="w-64 shrink-0 p-3 border-r border-border font-medium text-sm">
+            <div className="w-40 sm:w-64 shrink-0 p-2 sm:p-3 border-r border-border font-medium text-xs sm:text-sm">
               Задача
             </div>
             <div className="flex">
@@ -132,10 +132,10 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
               return (
                 <div key={task.id} className="flex border-b border-border hover:bg-muted/50">
                   <div
-                    className="w-64 shrink-0 p-3 border-r border-border cursor-pointer"
+                    className="w-40 sm:w-64 shrink-0 p-2 sm:p-3 border-r border-border cursor-pointer"
                     onClick={() => onTaskClick(task)}
                   >
-                    <div className="font-medium text-sm truncate">{task.title}</div>
+                    <div className="font-medium text-xs sm:text-sm truncate">{task.title}</div>
                     <Badge className={`${STATUS_COLORS[task.status]} mt-1 text-xs`}>
                       {STATUS_LABELS[task.status]}
                     </Badge>

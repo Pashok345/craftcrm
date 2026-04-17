@@ -478,10 +478,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         <div style={{ height: '1px' }} />
       </div>
 
-      <div ref={scrollContainerRef} className="flex gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin" style={{ touchAction: 'pan-y', scrollbarWidth: 'thin' }}>
+      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-4">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-3 sm:gap-4">
               {columns.map((column, columnIndex) => {
                 const columnTasks = getTasksForColumn(column);
                 return (
@@ -490,10 +490,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={cn("flex-shrink-0 w-80", snapshot.isDragging && "opacity-90")}
+                        className={cn("flex-shrink-0 w-[280px] sm:w-80", snapshot.isDragging && "opacity-90")}
                       >
                         <div
-                          className="rounded-lg p-4 h-full flex flex-col border-2 border-border/50"
+                          className="rounded-lg p-3 sm:p-4 h-full flex flex-col border-2 border-border/50"
                           style={{ backgroundColor: column.color || DEFAULT_COLUMN_COLOR }}
                         >
                           {/* Column Header */}
@@ -664,7 +664,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         </Droppable>
 
         {/* Add Column Button */}
-        <div className="flex-shrink-0 w-80 min-h-[150px]">
+        <div className="flex-shrink-0 w-[280px] sm:w-80 min-h-[150px]">
           {isAddingColumn ? (
             <div className="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-border">
               <Input
