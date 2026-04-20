@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { AIAssistant } from '@/components/ai/AIAssistant';
 import { useAuth } from '@/hooks/useAuth';
 
 export const DashboardLayout = () => {
@@ -39,6 +40,7 @@ export const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+      <AIAssistant />
     </div>
   );
 };
