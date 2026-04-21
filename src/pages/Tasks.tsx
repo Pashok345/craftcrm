@@ -56,7 +56,7 @@ const Tasks = () => {
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<TaskFiltersState>(emptyFilters);
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(() => localStorage.getItem('tasks-hotkeys-seen') !== '1');
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const statusLabels: Record<string, string> = {
@@ -164,10 +164,18 @@ const Tasks = () => {
     sessionStorage.setItem('tasks-active-tab', view);
   }, []);
 
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts(prev => {
+      if (prev) localStorage.setItem('tasks-hotkeys-seen', '1');
+      return !prev;
+    });
+  }, []);
+
   useTaskShortcuts({
     onCreateTask: useCallback(() => setDialogOpen(true), []),
     onSwitchView: handleSwitchView,
     onToggleTemplates: useCallback(() => setTemplatesOpen(prev => !prev), []),
+    onToggleHelp: toggleShortcuts,
   });
 
   // All unique tags for filter
