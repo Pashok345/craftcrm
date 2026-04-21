@@ -66,23 +66,24 @@ export const TasksExport = ({ tasks, projects }: Props) => {
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`${t('date')}: ${format(new Date(), 'dd.MM.yyyy HH:mm')}`, 14, 28);
-      doc.text(`${t('totalTasks') || 'Всего'}: ${tasks.length}`, 14, 34);
+      doc.text(`${t('totalCount')}: ${tasks.length}`, 14, 34);
 
       const rows = tasks.map(task => [
-        task.title.substring(0, 40) + (task.title.length > 40 ? '...' : ''),
+        task.title.substring(0, 60) + (task.title.length > 60 ? '…' : ''),
         getStatusLabel(task.status),
-        task.project_id && projects[task.project_id] ? projects[task.project_id].title : '-',
-        task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : '-',
+        task.project_id && projects[task.project_id] ? projects[task.project_id].title : '—',
+        task.deadline ? format(parseISO(task.deadline), 'dd.MM.yyyy') : '—',
         format(parseISO(task.created_at), 'dd.MM.yyyy'),
       ]);
 
       autoTable(doc, {
         startY: 42,
-        head: [[t('taskTitle') || 'Задача', t('status'), t('project') || 'Проект', t('deadline'), t('createdAt')]],
+        head: [[t('taskTitle'), t('status'), t('project'), t('deadline'), t('createdAt')]],
         body: rows,
         theme: 'striped',
         styles: { fontSize: 9, font: 'Roboto' },
-        columnStyles: { 0: { cellWidth: 55 } },
+        headStyles: { font: 'Roboto', fontStyle: 'normal', fillColor: [59, 130, 246], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 70 } },
       });
 
       doc.save(`tasks-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
@@ -98,7 +99,7 @@ export const TasksExport = ({ tasks, projects }: Props) => {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet(t('tasksTitle'));
 
-      sheet.addRow([t('taskTitle') || 'Задача', t('status'), t('project') || 'Проект', t('deadline'), t('createdAt'), t('description')]);
+      sheet.addRow([t('taskTitle'), t('status'), t('project'), t('deadline'), t('createdAt'), t('description')]);
       sheet.getRow(1).font = { bold: true };
 
       tasks.forEach(task => {

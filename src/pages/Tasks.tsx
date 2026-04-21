@@ -56,7 +56,7 @@ const Tasks = () => {
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<TaskFiltersState>(emptyFilters);
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(() => localStorage.getItem('tasks-hotkeys-seen') !== '1');
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const statusLabels: Record<string, string> = {
@@ -164,10 +164,18 @@ const Tasks = () => {
     sessionStorage.setItem('tasks-active-tab', view);
   }, []);
 
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts(prev => {
+      if (prev) localStorage.setItem('tasks-hotkeys-seen', '1');
+      return !prev;
+    });
+  }, []);
+
   useTaskShortcuts({
     onCreateTask: useCallback(() => setDialogOpen(true), []),
     onSwitchView: handleSwitchView,
     onToggleTemplates: useCallback(() => setTemplatesOpen(prev => !prev), []),
+    onToggleHelp: toggleShortcuts,
   });
 
   // All unique tags for filter
@@ -278,6 +286,7 @@ const Tasks = () => {
     { key: '2', desc: t('kanban') },
     { key: '3', desc: t('ganttChart') },
     { key: 'T', desc: t('recurringTasks') },
+    { key: '?', desc: t('hotkeys') },
   ];
 
   return (
@@ -291,11 +300,21 @@ const Tasks = () => {
           <TasksExport tasks={filteredAndSortedTasks} projects={projects} />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setShowShortcuts(s => !s)}>
+              <Button
+                variant={showShortcuts ? 'secondary' : 'outline'}
+                size="icon"
+                onClick={toggleShortcuts}
+                aria-label={t('hotkeys')}
+              >
                 <Keyboard className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t('hotkeys') || 'Горячие клавиши'}</TooltipContent>
+            <TooltipContent>
+              <div className="flex items-center gap-1.5 text-xs">
+                {t('hotkeys')}
+                <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] font-mono border">?</kbd>
+              </div>
+            </TooltipContent>
           </Tooltip>
           <Button variant="outline" onClick={() => setTemplatesOpen(true)} className="gap-2">
             <Repeat className="h-4 w-4" />
@@ -310,11 +329,15 @@ const Tasks = () => {
 
       {/* Shortcuts hint bar */}
       {showShortcuts && (
-        <Card className="animate-fade-in">
-          <CardContent className="p-3 flex flex-wrap gap-4">
+        <Card className="animate-fade-in border-primary/30 bg-primary/5">
+          <CardContent className="p-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Keyboard className="h-4 w-4 text-primary" />
+              {t('hotkeys')}:
+            </div>
             {shortcutItems.map(s => (
               <div key={s.key} className="flex items-center gap-1.5 text-sm">
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono border">{s.key}</kbd>
+                <kbd className="px-1.5 py-0.5 bg-background rounded text-xs font-mono border shadow-sm">{s.key}</kbd>
                 <span className="text-muted-foreground">{s.desc}</span>
               </div>
             ))}

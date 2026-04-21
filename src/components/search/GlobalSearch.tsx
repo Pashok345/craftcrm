@@ -45,6 +45,14 @@ export const GlobalSearch = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const translateStatus = useCallback((status: string | null | undefined) => {
+    if (!status) return undefined;
+    const key = `status${status.charAt(0).toUpperCase()}${status.slice(1).replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`;
+    // status_todo -> statusTodo, status_in_progress -> statusInProgress
+    const translated = t(key);
+    return translated === key ? status : translated;
+  }, [t]);
+
   const search = useCallback(async (q: string) => {
     if (!q || q.length < 3) {
       setResults([]);
@@ -63,8 +71,8 @@ export const GlobalSearch = () => {
       ]);
 
       const items: SearchResult[] = [
-        ...(tasksRes.data || []).map((t) => ({ id: t.id, title: t.title, subtitle: t.status, type: 'task' as const })),
-        ...(projectsRes.data || []).map((p) => ({ id: p.id, title: p.title, subtitle: p.status, type: 'project' as const })),
+        ...(tasksRes.data || []).map((t) => ({ id: t.id, title: t.title, subtitle: translateStatus(t.status), type: 'task' as const })),
+        ...(projectsRes.data || []).map((p) => ({ id: p.id, title: p.title, subtitle: translateStatus(p.status), type: 'project' as const })),
         ...(clientsRes.data || []).map((c) => ({ id: c.id, title: c.name, subtitle: c.company || undefined, type: 'client' as const })),
         ...(dealsRes.data || []).map((d) => ({ id: d.id, title: d.title, subtitle: d.amount ? `$${d.amount}` : undefined, type: 'deal' as const })),
       ];
@@ -75,7 +83,7 @@ export const GlobalSearch = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [translateStatus]);
 
   useEffect(() => {
     const timeout = setTimeout(() => search(query), 300);

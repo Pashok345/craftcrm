@@ -178,6 +178,11 @@ export const translations: Translations = {
   statusInProgress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
   statusReview: { ru: 'На проверке', en: 'In Review', uk: 'На перевірці' },
   statusDone: { ru: 'Выполнено', en: 'Done', uk: 'Виконано' },
+  statusPlanning: { ru: 'Планирование', en: 'Planning', uk: 'Планування' },
+  statusActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+  statusOnHold: { ru: 'Приостановлен', en: 'On hold', uk: 'Призупинено' },
+  statusCompleted: { ru: 'Завершён', en: 'Completed', uk: 'Завершено' },
+  statusCancelled: { ru: 'Отменён', en: 'Cancelled', uk: 'Скасовано' },
   
   // Kanban
   addColumn: { ru: 'Добавить колонку', en: 'Add column', uk: 'Додати колонку' },
@@ -504,6 +509,12 @@ export const translations: Translations = {
   to: { ru: 'До', en: 'To', uk: 'До' },
   manualSort: { ru: 'Вручную', en: 'Manual', uk: 'Вручну' },
   hotkeys: { ru: 'Горячие клавиши', en: 'Hotkeys', uk: 'Гарячі клавіші' },
+  hotkeysHint: { ru: 'Нажмите для подсказок по горячим клавишам', en: 'Click to view keyboard shortcuts', uk: 'Натисніть для підказок по гарячих клавішах' },
+  taskTitle: { ru: 'Название задачи', en: 'Task title', uk: 'Назва завдання' },
+  project: { ru: 'Проект', en: 'Project', uk: 'Проект' },
+  deadline: { ru: 'Дедлайн', en: 'Deadline', uk: 'Дедлайн' },
+  createdAt: { ru: 'Дата создания', en: 'Created', uk: 'Дата створення' },
+  totalCount: { ru: 'Всего', en: 'Total', uk: 'Усього' },
 
   // User invitations
   sendInvitation: { ru: 'Отправить приглашение', en: 'Send invitation', uk: 'Надіслати запрошення' },
