@@ -504,6 +504,12 @@ export const translations: Translations = {
   to: { ru: 'До', en: 'To', uk: 'До' },
   manualSort: { ru: 'Вручную', en: 'Manual', uk: 'Вручну' },
   hotkeys: { ru: 'Горячие клавиши', en: 'Hotkeys', uk: 'Гарячі клавіші' },
+  hotkeysHint: { ru: 'Нажмите для подсказок по горячим клавишам', en: 'Click to view keyboard shortcuts', uk: 'Натисніть для підказок по гарячих клавішах' },
+  taskTitle: { ru: 'Название задачи', en: 'Task title', uk: 'Назва завдання' },
+  project: { ru: 'Проект', en: 'Project', uk: 'Проект' },
+  deadline: { ru: 'Дедлайн', en: 'Deadline', uk: 'Дедлайн' },
+  createdAt: { ru: 'Дата создания', en: 'Created', uk: 'Дата створення' },
+  totalCount: { ru: 'Всего', en: 'Total', uk: 'Усього' },
 
   // User invitations
   sendInvitation: { ru: 'Отправить приглашение', en: 'Send invitation', uk: 'Надіслати запрошення' },
