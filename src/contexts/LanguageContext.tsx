@@ -178,6 +178,11 @@ export const translations: Translations = {
   statusInProgress: { ru: 'В работе', en: 'In Progress', uk: 'В роботі' },
   statusReview: { ru: 'На проверке', en: 'In Review', uk: 'На перевірці' },
   statusDone: { ru: 'Выполнено', en: 'Done', uk: 'Виконано' },
+  statusPlanning: { ru: 'Планирование', en: 'Planning', uk: 'Планування' },
+  statusActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+  statusOnHold: { ru: 'Приостановлен', en: 'On hold', uk: 'Призупинено' },
+  statusCompleted: { ru: 'Завершён', en: 'Completed', uk: 'Завершено' },
+  statusCancelled: { ru: 'Отменён', en: 'Cancelled', uk: 'Скасовано' },
   
   // Kanban
   addColumn: { ru: 'Добавить колонку', en: 'Add column', uk: 'Додати колонку' },
