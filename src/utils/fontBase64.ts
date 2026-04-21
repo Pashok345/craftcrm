@@ -1,16 +1,16 @@
-// Provides base64 encoded Roboto font for PDF generation with full Cyrillic support.
-// Loads both Latin and Cyrillic subsets from Google Fonts CDN and caches the result.
-// We pick a TTF that covers Latin + Cyrillic + Cyrillic Extended.
+// Provides base64-encoded Roboto Regular (Cyrillic subset) for jsPDF.
+// The default Roboto v32 Latin-only file does NOT contain Cyrillic glyphs and
+// produces "..." / mojibake in PDFs. We use Google Fonts v51 cyrillic subset
+// which covers Latin + Cyrillic in ~60 KB.
 
 let cachedFont: string | null = null;
 let inflight: Promise<string> | null = null;
 
-// Roboto Regular — full TTF that includes Cyrillic glyphs.
-// Source: jsdelivr mirror of Google Fonts (single TTF, not subsetted).
 const FONT_URLS = [
-  'https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/files/roboto-cyrillic-400-normal.woff',
-  'https://cdn.jsdelivr.net/gh/googlefonts/roboto@main/src/hinted/Roboto-Regular.ttf',
-  'https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf',
+  // Roboto v51 — includes Cyrillic glyphs.
+  'https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbVmQiA8.ttf',
+  // Fallback: cyrillic+latin variant
+  'https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbWmT.ttf',
 ];
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
@@ -32,16 +32,15 @@ export const loadRobotoFontBase64 = async (): Promise<string> => {
     let lastErr: unknown = null;
     for (const url of FONT_URLS) {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const buf = await response.arrayBuffer();
-        // sanity check: TTF/WOFF should be at least a few KB
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
         if (buf.byteLength < 10000) throw new Error('font too small');
         cachedFont = arrayBufferToBase64(buf);
         return cachedFont;
       } catch (e) {
         lastErr = e;
-        console.warn('Font load failed for', url, e);
+        console.warn('[fontBase64] failed:', url, e);
       }
     }
     throw lastErr ?? new Error('Failed to load Roboto font');
