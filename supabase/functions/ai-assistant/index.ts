@@ -487,6 +487,92 @@ async function createClientFn(supabase: any, args: any, userId: string) {
   return { success: true, client: { id: data.id, name: data.name } };
 }
 
+async function createMeetingFn(supabase: any, args: any, userId: string) {
+  if (!args.title || !args.meeting_date || !args.start_time) {
+    return { error: "Нужны title, meeting_date (YYYY-MM-DD) и start_time (HH:MM)" };
+  }
+
+  // Compute end_time default = start + 1h
+  let endTime = args.end_time as string | undefined;
+  if (!endTime) {
+    const [h, m] = args.start_time.split(":").map(Number);
+    const eh = Math.min(23, (h || 0) + 1);
+    endTime = `${String(eh).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
+  }
+
+  const { data: meeting, error } = await supabase.from("meetings").insert({
+    title: args.title,
+    description: args.description || null,
+    meeting_date: args.meeting_date,
+    start_time: args.start_time,
+    end_time: endTime,
+    created_by: userId,
+  }).select().single();
+
+  if (error) return { error: error.message };
+
+  // Resolve participants by name
+  const matched: { user_id: string; name: string }[] = [];
+  const notFound: string[] = [];
+  const names: string[] = Array.isArray(args.participant_names) ? args.participant_names : [];
+
+  for (const rawName of names) {
+    const name = String(rawName).trim();
+    if (!name) continue;
+    const { data: profs } = await supabase
+      .from("public_profiles")
+      .select("user_id, name")
+      .ilike("name", `%${name}%`)
+      .limit(2);
+    if (profs && profs.length > 0) {
+      if (!matched.some((p) => p.user_id === profs[0].user_id)) {
+        matched.push({ user_id: profs[0].user_id, name: profs[0].name });
+      }
+    } else {
+      notFound.push(name);
+    }
+  }
+
+  // Always include creator
+  if (!matched.some((p) => p.user_id === userId)) {
+    matched.push({ user_id: userId, name: "creator" });
+  }
+
+  if (matched.length > 0) {
+    await supabase.from("meeting_participants").insert(
+      matched.map((p) => ({ meeting_id: meeting.id, user_id: p.user_id }))
+    );
+
+    // Notifications for invited participants (skip creator)
+    const invited = matched.filter((p) => p.user_id !== userId);
+    if (invited.length > 0) {
+      await supabase.from("notifications").insert(
+        invited.map((p) => ({
+          user_id: p.user_id,
+          type: "meeting_invite",
+          title: "Приглашение на встречу",
+          message: `Вас пригласили на встречу "${args.title}" ${args.meeting_date} в ${args.start_time}`,
+          created_by: userId,
+          meeting_id: meeting.id,
+        }))
+      );
+    }
+  }
+
+  return {
+    success: true,
+    meeting: {
+      id: meeting.id,
+      title: meeting.title,
+      date: meeting.meeting_date,
+      start_time: meeting.start_time,
+      end_time: endTime,
+    },
+    participants_added: matched.filter((p) => p.user_id !== userId).map((p) => p.name),
+    participants_not_found: notFound,
+  };
+}
+
 // ===== Server =====
 
 Deno.serve(async (req) => {
