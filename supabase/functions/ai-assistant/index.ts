@@ -175,6 +175,29 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "create_meeting",
+      description: "Создать новую встречу. Дата и время обязательны. Если их нет — уточни у пользователя перед вызовом. Место/ссылку на видеозвонок (Google Meet, Zoom) добавляй в description.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Название встречи" },
+          meeting_date: { type: "string", description: "Дата встречи в формате YYYY-MM-DD" },
+          start_time: { type: "string", description: "Время начала в формате HH:MM (24ч)" },
+          end_time: { type: "string", description: "Время окончания HH:MM (опционально, по умолчанию +1 час)" },
+          description: { type: "string", description: "Описание встречи, место проведения, ссылка на Google Meet/Zoom и т.д." },
+          participant_names: {
+            type: "array",
+            items: { type: "string" },
+            description: "Имена участников (как в системе). Бэкенд найдёт пользователей по имени.",
+          },
+        },
+        required: ["title", "meeting_date", "start_time"],
+      },
+    },
+  },
 ];
 
 // ===== Tool implementations =====
