@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, HelpCircle, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MentionInput } from '@/components/ui/mention-input';
 import { ImageThumbnail } from '@/components/ui/image-lightbox';
@@ -102,9 +103,51 @@ export const AIAssistant = () => {
   }[language];
 
   const titles = {
-    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Прикрепляйте скриншоты и используйте @ для упоминания сотрудников.', attach: 'Прикрепить изображение' },
-    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Attach screenshots and use @ to mention teammates.', attach: 'Attach image' },
-    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Прикріпляйте скріншоти та використовуйте @ для згадки співробітників.', attach: 'Прикріпити зображення' },
+    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Прикрепляйте скриншоты и используйте @ для упоминания сотрудников.', attach: 'Прикрепить изображение', help: 'Возможности ассистента' },
+    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Attach screenshots and use @ to mention teammates.', attach: 'Attach image', help: 'Assistant capabilities' },
+    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Прикріпляйте скріншоти та використовуйте @ для згадки співробітників.', attach: 'Прикріпити зображення', help: 'Можливості асистента' },
+  }[language];
+
+  const capabilities = {
+    ru: {
+      heading: 'Что я умею',
+      subtitle: 'Спросите естественным языком — я разберусь',
+      groups: [
+        { icon: ListTodo, title: 'Задачи', items: ['Поиск по статусу, дедлайну, исполнителю', 'Мои задачи на сегодня', 'Создание задач: «создай задачу...»'] },
+        { icon: Briefcase, title: 'Сделки', items: ['Воронка продаж и суммы', 'Прогноз выручки', 'Активные сделки по этапам'] },
+        { icon: Users, title: 'Клиенты', items: ['Поиск клиентов и контактов', 'История взаимодействий', 'Создание клиента: «добавь клиента...»'] },
+        { icon: Calendar, title: 'Встречи', items: ['Расписание на день/неделю', 'Создание встреч с участниками', 'Автоуведомления участникам'] },
+        { icon: BarChart3, title: 'Аналитика', items: ['Сводки по команде и продуктивность', 'Сводка по проекту'] },
+        { icon: AtSign, title: 'Упоминания', items: ['Введите @ чтобы упомянуть сотрудника', 'Я найду его в базе и привяжу'] },
+        { icon: ImagePlus, title: 'Изображения', items: ['Прикрепите до 4 скриншотов (≤5 МБ)', 'Вставка из буфера: Ctrl+V'] },
+      ],
+    },
+    en: {
+      heading: 'What I can do',
+      subtitle: 'Ask in natural language — I’ll figure it out',
+      groups: [
+        { icon: ListTodo, title: 'Tasks', items: ['Search by status, deadline, assignee', 'My tasks for today', 'Create tasks: “create a task...”'] },
+        { icon: Briefcase, title: 'Deals', items: ['Sales funnel and totals', 'Revenue forecast', 'Active deals by stage'] },
+        { icon: Users, title: 'Clients', items: ['Search clients and contacts', 'Interaction history', 'Create client: “add a client...”'] },
+        { icon: Calendar, title: 'Meetings', items: ['Schedule for day/week', 'Create meetings with participants', 'Auto-notifications to attendees'] },
+        { icon: BarChart3, title: 'Analytics', items: ['Team summaries & productivity', 'Project summary'] },
+        { icon: AtSign, title: 'Mentions', items: ['Type @ to mention a teammate', 'I’ll find them in the database'] },
+        { icon: ImagePlus, title: 'Images', items: ['Attach up to 4 screenshots (≤5 MB)', 'Paste from clipboard: Ctrl+V'] },
+      ],
+    },
+    uk: {
+      heading: 'Що я вмію',
+      subtitle: 'Запитайте природною мовою — я розберуся',
+      groups: [
+        { icon: ListTodo, title: 'Завдання', items: ['Пошук за статусом, дедлайном, виконавцем', 'Мої завдання на сьогодні', 'Створення: «створи завдання...»'] },
+        { icon: Briefcase, title: 'Угоди', items: ['Воронка продажів і суми', 'Прогноз виручки', 'Активні угоди за етапами'] },
+        { icon: Users, title: 'Клієнти', items: ['Пошук клієнтів і контактів', 'Історія взаємодій', 'Створення: «додай клієнта...»'] },
+        { icon: Calendar, title: 'Зустрічі', items: ['Розклад на день/тиждень', 'Створення зустрічей з учасниками', 'Автосповіщення учасникам'] },
+        { icon: BarChart3, title: 'Аналітика', items: ['Зведення по команді та продуктивність', 'Зведення по проєкту'] },
+        { icon: AtSign, title: 'Згадки', items: ['Введіть @ щоб згадати співробітника', 'Я знайду його в базі'] },
+        { icon: ImagePlus, title: 'Зображення', items: ['Прикріпіть до 4 скріншотів (≤5 МБ)', 'Вставка з буфера: Ctrl+V'] },
+      ],
+    },
   }[language];
 
   return (
@@ -130,6 +173,42 @@ export const AIAssistant = () => {
               <SheetTitle className="truncate">{titles.title}</SheetTitle>
             </div>
             <div className="flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title={titles.help} aria-label={titles.help}>
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" sideOffset={8} className="w-[340px] p-0 max-h-[70vh] overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gradient-to-br from-primary/10 to-transparent">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">{capabilities.heading}</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{capabilities.subtitle}</p>
+                  </div>
+                  <ScrollArea className="max-h-[55vh]">
+                    <div className="p-3 space-y-3">
+                      {capabilities.groups.map((g, i) => {
+                        const Icon = g.icon;
+                        return (
+                          <div key={i} className="rounded-lg border bg-card p-3">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="h-3.5 w-3.5" />
+                              </div>
+                              <span className="text-sm font-medium">{g.title}</span>
+                            </div>
+                            <ul className="text-xs text-muted-foreground space-y-1 pl-9 list-disc marker:text-primary/60">
+                              {g.items.map((it, j) => <li key={j}>{it}</li>)}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 size="icon"
