@@ -175,8 +175,8 @@ export const AIAssistant = () => {
             <div className="flex items-center gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title={titles.help} aria-label={titles.help}>
-                    <HelpCircle className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title={titles.help} aria-label={titles.help}>
+                    <Info className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" sideOffset={8} className="w-[340px] p-0 max-h-[70vh] overflow-hidden">
