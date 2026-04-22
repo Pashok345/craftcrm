@@ -7,6 +7,8 @@ export interface AIMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  images?: string[]; // signed URLs for display
+  imagePaths?: string[]; // storage paths for re-signing
   created_at?: string;
 }
 
@@ -17,6 +19,26 @@ export interface AIConversation {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+const IMG_MARKER_RE = /^\[IMAGES\]([^\[]+)\[\/IMAGES\]\n?/;
+
+// Encode/decode image paths in content (so we don't change DB schema)
+const encodeContent = (text: string, paths: string[]): string => {
+  if (!paths.length) return text;
+  return `[IMAGES]${paths.join('|')}[/IMAGES]\n${text}`;
+};
+const decodeContent = (raw: string): { text: string; paths: string[] } => {
+  const m = raw.match(IMG_MARKER_RE);
+  if (!m) return { text: raw, paths: [] };
+  return { text: raw.slice(m[0].length), paths: m[1].split('|').filter(Boolean) };
+};
+
+const signPaths = async (paths: string[]): Promise<string[]> => {
+  if (!paths.length) return [];
+  const { data } = await supabase.storage
+    .from('ai-attachments')
+    .createSignedUrls(paths, 60 * 60); // 1 hour
+  return (data || []).map((d) => d.signedUrl);
+};
 
 export const useAIAssistant = () => {
   const { user } = useAuth();
@@ -49,7 +71,14 @@ export const useAIAssistant = () => {
       console.error(error);
       return;
     }
-    setMessages((data as AIMessage[]) || []);
+    const decoded: AIMessage[] = await Promise.all(
+      (data || []).map(async (m: any) => {
+        const { text, paths } = decodeContent(m.content);
+        const images = paths.length ? await signPaths(paths) : [];
+        return { id: m.id, role: m.role, content: text, images, imagePaths: paths, created_at: m.created_at };
+      })
+    );
+    setMessages(decoded);
   }, []);
 
   useEffect(() => {
@@ -86,14 +115,36 @@ export const useAIAssistant = () => {
     loadConversations();
   }, [currentId, loadConversations]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!user || !text.trim() || isStreaming) return;
+  // Upload image files to storage, return paths
+  const uploadImages = useCallback(async (files: File[]): Promise<string[]> => {
+    if (!user || !files.length) return [];
+    const paths: string[] = [];
+    for (const file of files) {
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+      const { error } = await supabase.storage
+        .from('ai-attachments')
+        .upload(path, file, { contentType: file.type || 'image/png', upsert: false });
+      if (error) {
+        console.error(error);
+        toast.error('Не удалось загрузить изображение');
+        continue;
+      }
+      paths.push(path);
+    }
+    return paths;
+  }, [user]);
+
+  const sendMessage = useCallback(async (text: string, files: File[] = []) => {
+    if (!user || isStreaming) return;
+    if (!text.trim() && !files.length) return;
 
     let convId = currentId;
 
     // Create conversation on first message
     if (!convId) {
-      const title = text.length > 50 ? text.slice(0, 50) + '…' : text;
+      const titleSrc = text.trim() || (files.length ? 'Изображение' : 'Новый диалог');
+      const title = titleSrc.length > 50 ? titleSrc.slice(0, 50) + '…' : titleSrc;
       const { data: conv, error } = await supabase
         .from('ai_conversations')
         .insert({ user_id: user.id, title })
@@ -108,18 +159,24 @@ export const useAIAssistant = () => {
       loadConversations();
     }
 
-    // Save user message
+    // Upload attachments
+    const imagePaths = await uploadImages(files);
+    const signedImages = await signPaths(imagePaths);
+
+    // Save user message in UI
     const userMsg: AIMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
+      images: signedImages,
+      imagePaths,
     };
     setMessages((prev) => [...prev, userMsg]);
 
     await supabase.from('ai_messages').insert({
       conversation_id: convId,
       role: 'user',
-      content: text,
+      content: encodeContent(text, imagePaths),
     });
 
     // Stream response
@@ -137,10 +194,24 @@ export const useAIAssistant = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const historyForAPI = [...messages, userMsg].map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
+
+      // Build OpenAI-compatible multimodal messages
+      const historyForAPI = await Promise.all(
+        [...messages, userMsg].map(async (m) => {
+          if (m.role === 'user' && m.images && m.images.length > 0) {
+            // Re-sign for safety (in case stored URL expired)
+            const fresh = m.imagePaths?.length ? await signPaths(m.imagePaths) : m.images;
+            return {
+              role: m.role,
+              content: [
+                ...(m.content ? [{ type: 'text', text: m.content }] : []),
+                ...fresh.map((url) => ({ type: 'image_url', image_url: { url } })),
+              ],
+            };
+          }
+          return { role: m.role, content: m.content };
+        })
+      );
 
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
@@ -220,7 +291,7 @@ export const useAIAssistant = () => {
       setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [user, currentId, messages, isStreaming, loadConversations]);
+  }, [user, currentId, messages, isStreaming, loadConversations, uploadImages]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
