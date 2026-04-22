@@ -173,6 +173,42 @@ export const AIAssistant = () => {
               <SheetTitle className="truncate">{titles.title}</SheetTitle>
             </div>
             <div className="flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title={titles.help} aria-label={titles.help}>
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" sideOffset={8} className="w-[340px] p-0 max-h-[70vh] overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gradient-to-br from-primary/10 to-transparent">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <h4 className="font-semibold text-sm">{capabilities.heading}</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{capabilities.subtitle}</p>
+                  </div>
+                  <ScrollArea className="max-h-[55vh]">
+                    <div className="p-3 space-y-3">
+                      {capabilities.groups.map((g, i) => {
+                        const Icon = g.icon;
+                        return (
+                          <div key={i} className="rounded-lg border bg-card p-3">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="h-3.5 w-3.5" />
+                              </div>
+                              <span className="text-sm font-medium">{g.title}</span>
+                            </div>
+                            <ul className="text-xs text-muted-foreground space-y-1 pl-9 list-disc marker:text-primary/60">
+                              {g.items.map((it, j) => <li key={j}>{it}</li>)}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 size="icon"
