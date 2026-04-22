@@ -103,9 +103,51 @@ export const AIAssistant = () => {
   }[language];
 
   const titles = {
-    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Прикрепляйте скриншоты и используйте @ для упоминания сотрудников.', attach: 'Прикрепить изображение' },
-    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Attach screenshots and use @ to mention teammates.', attach: 'Attach image' },
-    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Прикріпляйте скріншоти та використовуйте @ для згадки співробітників.', attach: 'Прикріпити зображення' },
+    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Прикрепляйте скриншоты и используйте @ для упоминания сотрудников.', attach: 'Прикрепить изображение', help: 'Возможности ассистента' },
+    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Attach screenshots and use @ to mention teammates.', attach: 'Attach image', help: 'Assistant capabilities' },
+    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Прикріпляйте скріншоти та використовуйте @ для згадки співробітників.', attach: 'Прикріпити зображення', help: 'Можливості асистента' },
+  }[language];
+
+  const capabilities = {
+    ru: {
+      heading: 'Что я умею',
+      subtitle: 'Спросите естественным языком — я разберусь',
+      groups: [
+        { icon: ListTodo, title: 'Задачи', items: ['Поиск по статусу, дедлайну, исполнителю', 'Мои задачи на сегодня', 'Создание задач: «создай задачу...»'] },
+        { icon: Briefcase, title: 'Сделки', items: ['Воронка продаж и суммы', 'Прогноз выручки', 'Активные сделки по этапам'] },
+        { icon: Users, title: 'Клиенты', items: ['Поиск клиентов и контактов', 'История взаимодействий', 'Создание клиента: «добавь клиента...»'] },
+        { icon: Calendar, title: 'Встречи', items: ['Расписание на день/неделю', 'Создание встреч с участниками', 'Автоуведомления участникам'] },
+        { icon: BarChart3, title: 'Аналитика', items: ['Сводки по команде и продуктивность', 'Сводка по проекту'] },
+        { icon: AtSign, title: 'Упоминания', items: ['Введите @ чтобы упомянуть сотрудника', 'Я найду его в базе и привяжу'] },
+        { icon: ImagePlus, title: 'Изображения', items: ['Прикрепите до 4 скриншотов (≤5 МБ)', 'Вставка из буфера: Ctrl+V'] },
+      ],
+    },
+    en: {
+      heading: 'What I can do',
+      subtitle: 'Ask in natural language — I’ll figure it out',
+      groups: [
+        { icon: ListTodo, title: 'Tasks', items: ['Search by status, deadline, assignee', 'My tasks for today', 'Create tasks: “create a task...”'] },
+        { icon: Briefcase, title: 'Deals', items: ['Sales funnel and totals', 'Revenue forecast', 'Active deals by stage'] },
+        { icon: Users, title: 'Clients', items: ['Search clients and contacts', 'Interaction history', 'Create client: “add a client...”'] },
+        { icon: Calendar, title: 'Meetings', items: ['Schedule for day/week', 'Create meetings with participants', 'Auto-notifications to attendees'] },
+        { icon: BarChart3, title: 'Analytics', items: ['Team summaries & productivity', 'Project summary'] },
+        { icon: AtSign, title: 'Mentions', items: ['Type @ to mention a teammate', 'I’ll find them in the database'] },
+        { icon: ImagePlus, title: 'Images', items: ['Attach up to 4 screenshots (≤5 MB)', 'Paste from clipboard: Ctrl+V'] },
+      ],
+    },
+    uk: {
+      heading: 'Що я вмію',
+      subtitle: 'Запитайте природною мовою — я розберуся',
+      groups: [
+        { icon: ListTodo, title: 'Завдання', items: ['Пошук за статусом, дедлайном, виконавцем', 'Мої завдання на сьогодні', 'Створення: «створи завдання...»'] },
+        { icon: Briefcase, title: 'Угоди', items: ['Воронка продажів і суми', 'Прогноз виручки', 'Активні угоди за етапами'] },
+        { icon: Users, title: 'Клієнти', items: ['Пошук клієнтів і контактів', 'Історія взаємодій', 'Створення: «додай клієнта...»'] },
+        { icon: Calendar, title: 'Зустрічі', items: ['Розклад на день/тиждень', 'Створення зустрічей з учасниками', 'Автосповіщення учасникам'] },
+        { icon: BarChart3, title: 'Аналітика', items: ['Зведення по команді та продуктивність', 'Зведення по проєкту'] },
+        { icon: AtSign, title: 'Згадки', items: ['Введіть @ щоб згадати співробітника', 'Я знайду його в базі'] },
+        { icon: ImagePlus, title: 'Зображення', items: ['Прикріпіть до 4 скріншотів (≤5 МБ)', 'Вставка з буфера: Ctrl+V'] },
+      ],
+    },
   }[language];
 
   return (
