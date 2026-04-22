@@ -165,21 +165,21 @@ Deno.serve(async (req) => {
     let aiResp = await callAI(messages);
 
     if (!aiResp.ok) {
+      const t = await aiResp.text();
+      console.error("OpenAI error:", aiResp.status, t);
+      if (aiResp.status === 401) {
+        return new Response(JSON.stringify({ error: "Неверный OpenAI API ключ." }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Превышен лимит запросов. Попробуйте позже." }), {
+        return new Response(JSON.stringify({ error: "Превышен лимит OpenAI или закончилась квота." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Недостаточно кредитов AI. Пополните баланс." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      return new Response(JSON.stringify({ error: "Ошибка OpenAI API" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
