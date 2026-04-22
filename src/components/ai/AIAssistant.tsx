@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { MentionInput } from '@/components/ui/mention-input';
+import { ImageThumbnail } from '@/components/ui/image-lightbox';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -12,14 +13,18 @@ import { formatDistanceToNow } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+const MAX_FILES = 4;
+const MAX_FILE_MB = 5;
+
 export const AIAssistant = () => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     conversations,
@@ -39,38 +44,67 @@ export const AIAssistant = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  // Cleanup object URLs on unmount or attachment change
   useEffect(() => {
-    if (open && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 100);
-    }
-  }, [open, currentId]);
+    return () => {
+      attachments.forEach((a) => URL.revokeObjectURL(a.preview));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!user) return null;
 
-  const handleSend = () => {
-    const text = input.trim();
-    if (!text) return;
-    setInput('');
-    sendMessage(text);
+  const addFiles = (files: File[]) => {
+    const valid: { file: File; preview: string }[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith('image/')) continue;
+      if (f.size > MAX_FILE_MB * 1024 * 1024) {
+        // skip oversize
+        continue;
+      }
+      valid.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    setAttachments((prev) => {
+      const merged = [...prev, ...valid].slice(0, MAX_FILES);
+      // revoke any dropped previews
+      [...prev, ...valid].slice(MAX_FILES).forEach((a) => URL.revokeObjectURL(a.preview));
+      return merged;
+    });
   };
 
-  const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => {
+      URL.revokeObjectURL(prev[idx].preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addFiles(Array.from(e.target.files));
+    e.target.value = '';
+  };
+
+  const handleSend = () => {
+    const text = input.trim();
+    if (!text && attachments.length === 0) return;
+    const files = attachments.map((a) => a.file);
+    // Cleanup previews after sending
+    attachments.forEach((a) => URL.revokeObjectURL(a.preview));
+    setInput('');
+    setAttachments([]);
+    sendMessage(text, files);
   };
 
   const placeholder = {
-    ru: 'Спросите AI… (например: «Сделай саммари проекта Лендинг»)',
-    en: 'Ask AI… (e.g. "Summarize the Landing project")',
-    uk: 'Запитайте AI… (наприклад: «Зроби саммарі проєкту Лендинг»)',
+    ru: 'Спросите AI… @имя — упомянуть сотрудника',
+    en: 'Ask AI… @name — mention a teammate',
+    uk: 'Запитайте AI… @ім\'я — згадати співробітника',
   }[language];
 
   const titles = {
-    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Попросите саммари проекта — я подтяну актуальные данные.' },
-    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Ask me to summarize a project — I will pull live data.' },
-    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Попросіть саммарі проєкту — я підтягну актуальні дані.' },
+    ru: { title: 'AI-ассистент', new: 'Новый диалог', history: 'История', empty: 'Пока нет диалогов', greet: 'Чем помочь?', hint: 'Я могу помочь с задачами, проектами, текстами. Прикрепляйте скриншоты и используйте @ для упоминания сотрудников.', attach: 'Прикрепить изображение' },
+    en: { title: 'AI Assistant', new: 'New chat', history: 'History', empty: 'No conversations yet', greet: 'How can I help?', hint: 'I can help with tasks, projects, and texts. Attach screenshots and use @ to mention teammates.', attach: 'Attach image' },
+    uk: { title: 'AI-асистент', new: 'Новий діалог', history: 'Історія', empty: 'Поки немає діалогів', greet: 'Чим допомогти?', hint: 'Я можу допомогти із завданнями, проєктами, текстами. Прикріпляйте скріншоти та використовуйте @ для згадки співробітників.', attach: 'Прикріпити зображення' },
   }[language];
 
   return (
@@ -187,12 +221,19 @@ export const AIAssistant = () => {
                   >
                     <div
                       className={cn(
-                        'max-w-[85%] rounded-2xl px-4 py-2 text-sm',
+                        'max-w-[85%] rounded-2xl px-4 py-2 text-sm space-y-2',
                         m.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-br-sm'
                           : 'bg-muted rounded-bl-sm'
                       )}
                     >
+                      {m.images && m.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {m.images.map((url, i) => (
+                            <ImageThumbnail key={i} src={url} alt={`attachment-${i}`} />
+                          ))}
+                        </div>
+                      )}
                       {m.role === 'assistant' ? (
                         <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-headings:my-2 break-words">
                           {m.content ? (
@@ -202,7 +243,7 @@ export const AIAssistant = () => {
                           ) : null}
                         </div>
                       ) : (
-                        <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                        m.content && <div className="whitespace-pre-wrap break-words">{m.content}</div>
                       )}
                     </div>
                   </div>
@@ -211,25 +252,71 @@ export const AIAssistant = () => {
             </div>
           </ScrollArea>
 
+          {/* Attachment previews */}
+          {attachments.length > 0 && (
+            <div className="border-t px-3 py-2 flex flex-wrap gap-2 bg-muted/30">
+              {attachments.map((a, idx) => (
+                <div key={idx} className="relative group">
+                  <img
+                    src={a.preview}
+                    alt={`preview-${idx}`}
+                    className="h-16 w-16 object-cover rounded-md border border-border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(idx)}
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-90 hover:opacity-100"
+                    aria-label="remove"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Input */}
-          <div className="border-t p-3 space-y-2">
+          <div className="border-t p-3">
             <div className="flex items-end gap-2">
-              <Textarea
-                ref={textareaRef}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFilePick}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                size="icon"
+                variant="ghost"
+                className="shrink-0 h-10 w-10"
+                title={titles.attach}
+                disabled={isStreaming || attachments.length >= MAX_FILES}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <MentionInput
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKey}
+                onChange={setInput}
+                onSubmit={handleSend}
+                onPasteImage={(file) => addFiles([file])}
                 placeholder={placeholder}
-                rows={1}
-                className="min-h-[40px] max-h-32 resize-none"
+                variant="textarea"
                 disabled={isStreaming}
+                className="min-h-[40px] max-h-32"
               />
               {isStreaming ? (
-                <Button onClick={stop} size="icon" variant="outline" className="shrink-0">
+                <Button onClick={stop} size="icon" variant="outline" className="shrink-0 h-10 w-10">
                   <StopCircle className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSend} size="icon" disabled={!input.trim()} className="shrink-0">
+                <Button
+                  onClick={handleSend}
+                  size="icon"
+                  disabled={!input.trim() && attachments.length === 0}
+                  className="shrink-0 h-10 w-10"
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               )}
