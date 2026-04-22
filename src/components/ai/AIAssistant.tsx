@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, HelpCircle, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
+import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, Info, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
