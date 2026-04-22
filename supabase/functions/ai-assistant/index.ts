@@ -617,7 +617,17 @@ Deno.serve(async (req) => {
 
           currentResp = await callAI(currentMessages);
           if (!currentResp.ok) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "\n\n_Ошибка при обработке инструмента._" } }] })}\n\n`));
+            const errText = await currentResp.text().catch(() => "");
+            console.error("OpenAI follow-up error:", currentResp.status, errText);
+            let userMsg = "\n\n_Ошибка при обработке инструмента._";
+            if (currentResp.status === 429) {
+              userMsg = "\n\n_Превышен лимит запросов OpenAI или закончилась квота. Проверьте баланс на platform.openai.com._";
+            } else if (currentResp.status === 401) {
+              userMsg = "\n\n_Неверный OpenAI API ключ._";
+            } else if (currentResp.status >= 500) {
+              userMsg = "\n\n_OpenAI временно недоступен, попробуйте ещё раз._";
+            }
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: userMsg } }] })}\n\n`));
             break;
           }
         }
