@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, HelpCircle, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
+import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, Info, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -175,8 +175,8 @@ export const AIAssistant = () => {
             <div className="flex items-center gap-1">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" title={titles.help} aria-label={titles.help}>
-                    <HelpCircle className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title={titles.help} aria-label={titles.help}>
+                    <Info className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" sideOffset={8} className="w-[340px] p-0 max-h-[70vh] overflow-hidden">
