@@ -98,16 +98,15 @@ const Whiteboards = () => {
       toast.error('Auth session missing');
       return;
     }
-    const { data, error } = await supabase
+    const boardId = crypto.randomUUID();
+    const { error } = await supabase
       .from('whiteboards')
       .insert({
+        id: boardId,
         title: newTitle.trim(),
         description: newDescription.trim() || null,
-        created_by: uid,
         project_id: newProjectId === '__none__' ? null : newProjectId,
-      })
-      .select()
-      .single();
+      });
     setCreating(false);
     if (error) {
       console.error('Whiteboard insert error:', error);
@@ -119,7 +118,7 @@ const Whiteboards = () => {
     setNewTitle('');
     setNewDescription('');
     setNewProjectId('__none__');
-    navigate(`/whiteboards/${data.id}`);
+    navigate(`/whiteboards/${boardId}`);
   };
 
   const confirmDelete = async () => {
