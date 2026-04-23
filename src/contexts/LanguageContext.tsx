@@ -715,6 +715,61 @@ export const translations: Translations = {
   monthly: { ru: 'Ежемесячно', en: 'Monthly', uk: 'Щомісяця' },
   interval: { ru: 'Интервал', en: 'Interval', uk: 'Інтервал' },
   templateActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+
+  // Whiteboards (Доски)
+  whiteboards: { ru: 'Доски', en: 'Boards', uk: 'Дошки' },
+  whiteboardsTitle: { ru: 'Доски', en: 'Boards', uk: 'Дошки' },
+  whiteboardsDescription: {
+    ru: 'Создавайте доски, схемы и диаграммы как в Miro',
+    en: 'Create boards, schemes and diagrams Miro-style',
+    uk: 'Створюйте дошки, схеми та діаграми як у Miro',
+  },
+  newWhiteboard: { ru: 'Новая доска', en: 'New board', uk: 'Нова дошка' },
+  createWhiteboard: { ru: 'Создать доску', en: 'Create board', uk: 'Створити дошку' },
+  whiteboardTitle: { ru: 'Название доски', en: 'Board title', uk: 'Назва дошки' },
+  whiteboardDescriptionLabel: { ru: 'Описание', en: 'Description', uk: 'Опис' },
+  whiteboardLinkProject: { ru: 'Привязать к проекту', en: 'Link to project', uk: 'Привʼязати до проєкту' },
+  whiteboardNoProject: { ru: 'Без проекта (личная)', en: 'No project (personal)', uk: 'Без проєкту (особиста)' },
+  myWhiteboards: { ru: 'Мои доски', en: 'My boards', uk: 'Мої дошки' },
+  projectWhiteboards: { ru: 'Доски проектов', en: 'Project boards', uk: 'Дошки проєктів' },
+  sharedWhiteboards: { ru: 'Совместные', en: 'Shared with me', uk: 'Спільні' },
+  whiteboardEmpty: { ru: 'Досок пока нет', en: 'No boards yet', uk: 'Дошок поки немає' },
+  whiteboardEmptyHint: {
+    ru: 'Создайте первую доску, чтобы начать рисовать схемы',
+    en: 'Create your first board to start drawing',
+    uk: 'Створіть першу дошку, щоб почати малювати',
+  },
+  whiteboardDeleted: { ru: 'Доска удалена', en: 'Board deleted', uk: 'Дошку видалено' },
+  whiteboardCreated: { ru: 'Доска создана', en: 'Board created', uk: 'Дошку створено' },
+  whiteboardSaved: { ru: 'Сохранено', en: 'Saved', uk: 'Збережено' },
+  whiteboardSaving: { ru: 'Сохранение...', en: 'Saving...', uk: 'Збереження...' },
+  whiteboardLoadError: {
+    ru: 'Не удалось загрузить доску',
+    en: 'Failed to load board',
+    uk: 'Не вдалося завантажити дошку',
+  },
+  whiteboardSaveError: {
+    ru: 'Не удалось сохранить изменения',
+    en: 'Failed to save changes',
+    uk: 'Не вдалося зберегти зміни',
+  },
+  whiteboardMembers: { ru: 'Участники', en: 'Members', uk: 'Учасники' },
+  whiteboardAddMember: { ru: 'Добавить участника', en: 'Add member', uk: 'Додати учасника' },
+  whiteboardRoleEditor: { ru: 'Редактор', en: 'Editor', uk: 'Редактор' },
+  whiteboardRoleViewer: { ru: 'Наблюдатель', en: 'Viewer', uk: 'Спостерігач' },
+  whiteboardOwner: { ru: 'Владелец', en: 'Owner', uk: 'Власник' },
+  whiteboardReadOnly: {
+    ru: 'У вас доступ только для просмотра',
+    en: 'You have view-only access',
+    uk: 'У вас доступ лише для перегляду',
+  },
+  whiteboardConfirmDelete: {
+    ru: 'Удалить доску? Это действие необратимо.',
+    en: 'Delete board? This cannot be undone.',
+    uk: 'Видалити дошку? Цю дію неможливо скасувати.',
+  },
+  whiteboardSearchUser: { ru: 'Найти сотрудника...', en: 'Find user...', uk: 'Знайти співробітника...' },
+  whiteboardLastEdited: { ru: 'Изменена', en: 'Edited', uk: 'Змінено' },
 };
 
 interface LanguageContextType {

@@ -1641,6 +1641,111 @@ export type Database = {
         }
         Relationships: []
       }
+      whiteboard_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+          whiteboard_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+          whiteboard_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+          whiteboard_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whiteboard_members_whiteboard_id_fkey"
+            columns: ["whiteboard_id"]
+            isOneToOne: false
+            referencedRelation: "whiteboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whiteboard_snapshots: {
+        Row: {
+          id: string
+          snapshot: Json
+          updated_at: string
+          updated_by: string | null
+          whiteboard_id: string
+        }
+        Insert: {
+          id?: string
+          snapshot?: Json
+          updated_at?: string
+          updated_by?: string | null
+          whiteboard_id: string
+        }
+        Update: {
+          id?: string
+          snapshot?: Json
+          updated_at?: string
+          updated_by?: string | null
+          whiteboard_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whiteboard_snapshots_whiteboard_id_fkey"
+            columns: ["whiteboard_id"]
+            isOneToOne: true
+            referencedRelation: "whiteboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whiteboards: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          project_id: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whiteboards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       public_profiles: {
@@ -1678,6 +1783,14 @@ export type Database = {
       }
     }
     Functions: {
+      can_edit_whiteboard: {
+        Args: { _user_id: string; _whiteboard_id: string }
+        Returns: boolean
+      }
+      can_view_whiteboard: {
+        Args: { _user_id: string; _whiteboard_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1691,6 +1804,10 @@ export type Database = {
       }
       is_chat_member: {
         Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_whiteboard_member: {
+        Args: { _user_id: string; _whiteboard_id: string }
         Returns: boolean
       }
     }

@@ -9,7 +9,8 @@ import {
   Menu,
   GitBranch,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  PenSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
     { icon: GitBranch, label: t('processes'), path: '/processes' },
     { icon: TrendingUp, label: t('sales'), path: '/sales' },
     { icon: Calendar, label: t('meetings'), path: '/meetings' },
+    { icon: PenSquare, label: t('whiteboards'), path: '/whiteboards' },
     { icon: BarChart3, label: t('analytics'), path: '/analytics' },
     { icon: Users, label: t('users'), path: '/users' },
   ];
