@@ -57,9 +57,12 @@ const Whiteboards = () => {
   }, []);
 
   const init = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    setUserId(user.id);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setLoading(false);
+      return;
+    }
+    setUserId(session.user.id);
     await Promise.all([fetchBoards(), fetchProjects()]);
     setLoading(false);
   };
@@ -82,25 +85,33 @@ const Whiteboards = () => {
   };
 
   const handleCreate = async () => {
-    if (!userId) return;
     if (!newTitle.trim()) {
       toast.error(t('whiteboardTitle'));
       return;
     }
     setCreating(true);
+    // Always pull a fresh user id from the session to avoid RLS mismatch
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id ?? userId;
+    if (!uid) {
+      setCreating(false);
+      toast.error('Auth session missing');
+      return;
+    }
     const { data, error } = await supabase
       .from('whiteboards')
       .insert({
         title: newTitle.trim(),
         description: newDescription.trim() || null,
-        created_by: userId,
+        created_by: uid,
         project_id: newProjectId === '__none__' ? null : newProjectId,
       })
       .select()
       .single();
     setCreating(false);
     if (error) {
-      toast.error(error.message);
+      console.error('Whiteboard insert error:', error);
+      toast.error(`${error.message}${error.details ? ` — ${error.details}` : ''}`);
       return;
     }
     toast.success(t('whiteboardCreated'));
