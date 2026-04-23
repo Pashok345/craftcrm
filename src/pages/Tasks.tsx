@@ -280,6 +280,12 @@ const Tasks = () => {
     );
   }
 
+  const shortcutHints = {
+    ru: { title: 'Гарячие клавиши', hint: 'Нажмите клавишу на клавиатуре, когда курсор не находится в поле ввода' },
+    en: { title: 'Hotkeys', hint: 'Press the key on your keyboard when the cursor is not focused on an input field' },
+    uk: { title: 'Гарячі клавіші', hint: 'Натисніть клавішу на клавіатурі, коли курсор не у полі вводу' },
+  }[language];
+
   const shortcutItems = [
     { key: 'N', desc: t('addTask') },
     { key: '1', desc: t('list') },
@@ -330,17 +336,20 @@ const Tasks = () => {
       {/* Shortcuts hint bar */}
       {showShortcuts && (
         <Card className="animate-fade-in border-primary/30 bg-primary/5">
-          <CardContent className="p-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Keyboard className="h-4 w-4 text-primary" />
-              {t('hotkeys')}:
-            </div>
-            {shortcutItems.map(s => (
-              <div key={s.key} className="flex items-center gap-1.5 text-sm">
-                <kbd className="px-1.5 py-0.5 bg-background rounded text-xs font-mono border shadow-sm">{s.key}</kbd>
-                <span className="text-muted-foreground">{s.desc}</span>
+          <CardContent className="p-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Keyboard className="h-4 w-4 text-primary" />
+                {t('hotkeys')}:
               </div>
-            ))}
+              {shortcutItems.map(s => (
+                <div key={s.key} className="flex items-center gap-1.5 text-sm">
+                  <kbd className="px-1.5 py-0.5 bg-background rounded text-xs font-mono border shadow-sm">{s.key}</kbd>
+                  <span className="text-muted-foreground">{s.desc}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground pl-6">{shortcutHints.hint}</p>
           </CardContent>
         </Card>
       )}
@@ -549,8 +558,8 @@ const Tasks = () => {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
-                                  <Badge className={STATUS_COLORS[task.status]}>{statusLabels[task.status]}</Badge>
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                  <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
                                   {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
                                     <TooltipProvider>
                                       <div className="flex -space-x-2">
