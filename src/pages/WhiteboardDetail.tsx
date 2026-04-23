@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Tldraw, Editor, loadSnapshot, getSnapshot, createTLStore, defaultShapeUtils, throttle } from 'tldraw';
+import { Tldraw, Editor, loadSnapshot, getSnapshot } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -181,11 +181,13 @@ const WhiteboardDetail = () => {
     channelRef.current = channel;
   };
 
-  const persistSnapshot = useRef(
-    throttle(async (snapshot: any) => {
-      if (!id || !userId) return;
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistSnapshot = (snapshot: any) => {
+    if (!id || !userId) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setSaving(true);
+    saveTimerRef.current = setTimeout(async () => {
       lastLocalSavedAtRef.current = Date.now();
-      setSaving(true);
       const { error } = await supabase
         .from('whiteboard_snapshots')
         .upsert(
@@ -197,7 +199,6 @@ const WhiteboardDetail = () => {
           },
           { onConflict: 'whiteboard_id' },
         );
-      // also bump whiteboard updated_at
       await supabase.from('whiteboards').update({ updated_at: new Date().toISOString() }).eq('id', id);
       setSaving(false);
       if (error) {
@@ -206,8 +207,8 @@ const WhiteboardDetail = () => {
       } else {
         setSavedAt(new Date());
       }
-    }, 1500),
-  ).current;
+    }, 1500);
+  };
 
   const handleMount = (editor: Editor) => {
     editorRef.current = editor;
@@ -345,7 +346,7 @@ const WhiteboardDetail = () => {
               </>
             ) : savedAt ? (
               <>
-                <Save className="h-3 w-3 mr-1 text-green-500" />
+                <Save className="h-3 w-3 mr-1 text-primary" />
                 {t('whiteboardSaved')}
               </>
             ) : null}
