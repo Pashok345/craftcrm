@@ -23,6 +23,8 @@ import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 import Analytics from "./pages/Analytics";
 import Sales from "./pages/Sales";
+import Whiteboards from "./pages/Whiteboards";
+import WhiteboardDetail from "./pages/WhiteboardDetail";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/sales" element={<Sales />} />
+            <Route path="/whiteboards" element={<Whiteboards />} />
+            <Route path="/whiteboards/:id" element={<WhiteboardDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
