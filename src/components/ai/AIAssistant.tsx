@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Plus, Trash2, MessageSquare, Loader2, X, StopCircle, Paperclip, Image as ImageIcon, Info, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
+import { Sparkles, Send, Plus, Trash2, History, Loader2, X, StopCircle, Paperclip, Info, ListTodo, Briefcase, Users, Calendar, BarChart3, AtSign, ImagePlus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -179,15 +179,15 @@ export const AIAssistant = () => {
                     <Info className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" sideOffset={8} className="w-[340px] p-0 max-h-[70vh] overflow-hidden">
-                  <div className="px-4 py-3 border-b bg-gradient-to-br from-primary/10 to-transparent">
+                <PopoverContent align="end" sideOffset={8} collisionPadding={12} className="w-[min(340px,calc(100vw-24px))] p-0 flex flex-col max-h-[min(70vh,560px)] overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gradient-to-br from-primary/10 to-transparent shrink-0">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-primary" />
                       <h4 className="font-semibold text-sm">{capabilities.heading}</h4>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{capabilities.subtitle}</p>
                   </div>
-                  <ScrollArea className="max-h-[55vh]">
+                  <ScrollArea className="flex-1 min-h-0">
                     <div className="p-3 space-y-3">
                       {capabilities.groups.map((g, i) => {
                         const Icon = g.icon;
@@ -213,10 +213,11 @@ export const AIAssistant = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowHistory((v) => !v)}
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 title={titles.history}
+                aria-label={titles.history}
               >
-                <MessageSquare className="h-4 w-4" />
+                <History className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
