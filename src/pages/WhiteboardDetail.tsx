@@ -431,6 +431,8 @@ const WhiteboardDetail = () => {
           detectScroll={false}
           autoFocus
           handleKeyboardGlobally
+          langCode="uk-UA"
+          libraryReturnUrl={typeof window !== 'undefined' ? window.location.href : undefined}
           UIOptions={{
             canvasActions: {
               changeViewBackgroundColor: canEdit,
