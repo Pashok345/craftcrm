@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Tldraw, Editor, loadSnapshot, getSnapshot } from 'tldraw';
-import 'tldraw/tldraw.css';
+import { Excalidraw, serializeAsJSON, restore } from '@excalidraw/excalidraw';
+import type { AppState, BinaryFiles, ExcalidrawElement, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+import '@excalidraw/excalidraw/index.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,14 @@ interface PresenceUser {
   avatar_color: string | null;
 }
 
+interface ExcalidrawSnapshot {
+  type: 'excalidraw';
+  version: 1;
+  elements: readonly ExcalidrawElement[];
+  appState: Partial<AppState>;
+  files: BinaryFiles;
+}
+
 const WhiteboardDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -43,9 +52,9 @@ const WhiteboardDetail = () => {
   const [membersOpen, setMembersOpen] = useState(false);
   const [presence, setPresence] = useState<PresenceUser[]>([]);
 
-  const editorRef = useRef<Editor | null>(null);
+  const excalidrawApiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const isApplyingRemoteRef = useRef(false);
-  const initialSnapshotRef = useRef<any>(null);
+  const initialSnapshotRef = useRef<ExcalidrawSnapshot | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastLocalSavedAtRef = useRef<number>(0);
 
@@ -114,8 +123,19 @@ const WhiteboardDetail = () => {
       .eq('whiteboard_id', id!)
       .maybeSingle();
 
-    if (snap && (snap as any).snapshot && Object.keys((snap as any).snapshot).length > 0) {
-      initialSnapshotRef.current = (snap as any).snapshot;
+    const rawSnapshot = (snap as any)?.snapshot;
+    if (rawSnapshot && typeof rawSnapshot === 'object') {
+      if ((rawSnapshot as any).type === 'excalidraw') {
+        initialSnapshotRef.current = rawSnapshot as ExcalidrawSnapshot;
+      } else {
+        initialSnapshotRef.current = {
+          type: 'excalidraw',
+          version: 1,
+          elements: [],
+          appState: {},
+          files: {},
+        };
+      }
     }
 
     setLoading(false);
@@ -133,13 +153,19 @@ const WhiteboardDetail = () => {
         },
         (payload) => {
           const newRow: any = payload.new;
-          if (!newRow || !editorRef.current) return;
+          if (!newRow || !excalidrawApiRef.current) return;
           // Ignore our own writes (within 1.5s)
           if (newRow.updated_by === user.id) return;
           if (Date.now() - lastLocalSavedAtRef.current < 1500) return;
+          if (!newRow.snapshot || newRow.snapshot.type !== 'excalidraw') return;
           try {
             isApplyingRemoteRef.current = true;
-            loadSnapshot(editorRef.current.store, newRow.snapshot);
+            excalidrawApiRef.current.updateScene({
+              elements: newRow.snapshot.elements || [],
+              appState: newRow.snapshot.appState || {},
+              collaborators: new Map(),
+              captureUpdate: 'NEVER',
+            });
           } catch (e) {
             console.error('[whiteboard] failed to apply remote snapshot', e);
           } finally {
@@ -182,7 +208,7 @@ const WhiteboardDetail = () => {
   };
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const persistSnapshot = (snapshot: any) => {
+  const persistSnapshot = (snapshot: ExcalidrawSnapshot) => {
     if (!id || !userId) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setSaving(true);
@@ -210,31 +236,58 @@ const WhiteboardDetail = () => {
     }, 1500);
   };
 
-  const handleMount = (editor: Editor) => {
-    editorRef.current = editor;
+  const handleChange = (
+    elements: readonly ExcalidrawElement[],
+    appState: AppState,
+    files: BinaryFiles,
+  ) => {
+    if (isApplyingRemoteRef.current || !canEdit) return;
 
-    if (initialSnapshotRef.current) {
-      try {
-        loadSnapshot(editor.store, initialSnapshotRef.current);
-      } catch (e) {
-        console.error('[whiteboard] failed to load initial snapshot', e);
-      }
-    }
-
-    if (!canEdit) {
-      editor.updateInstanceState({ isReadonly: true });
-    }
-
-    // Listen for store changes
-    editor.store.listen(
-      () => {
-        if (isApplyingRemoteRef.current) return;
-        if (!canEdit) return;
-        const snap = getSnapshot(editor.store);
-        persistSnapshot(snap);
+    const snapshot: ExcalidrawSnapshot = {
+      type: 'excalidraw',
+      version: 1,
+      elements,
+      appState: {
+        viewBackgroundColor: appState.viewBackgroundColor,
+        gridSize: appState.gridSize,
+        zoom: appState.zoom,
+        scrollX: appState.scrollX,
+        scrollY: appState.scrollY,
+        theme: appState.theme,
+        currentItemStrokeColor: appState.currentItemStrokeColor,
+        currentItemBackgroundColor: appState.currentItemBackgroundColor,
+        currentItemFillStyle: appState.currentItemFillStyle,
+        currentItemStrokeWidth: appState.currentItemStrokeWidth,
+        currentItemStrokeStyle: appState.currentItemStrokeStyle,
+        currentItemRoughness: appState.currentItemRoughness,
+        currentItemOpacity: appState.currentItemOpacity,
+        currentItemFontFamily: appState.currentItemFontFamily,
+        currentItemFontSize: appState.currentItemFontSize,
+        currentItemTextAlign: appState.currentItemTextAlign,
+        currentItemStartArrowhead: appState.currentItemStartArrowhead,
+        currentItemEndArrowhead: appState.currentItemEndArrowhead,
+        currentItemRoundness: appState.currentItemRoundness,
       },
-      { source: 'user', scope: 'document' },
-    );
+      files,
+    };
+
+    persistSnapshot(snapshot);
+  };
+
+  const getInitialData = async () => {
+    const snapshot = initialSnapshotRef.current;
+    if (!snapshot) return null;
+
+    try {
+      return restore({
+        elements: snapshot.elements || [],
+        appState: snapshot.appState || {},
+        files: snapshot.files || {},
+      }, null, { repairBindings: true });
+    } catch (e) {
+      console.error('[whiteboard] failed to load initial snapshot', e);
+      return null;
+    }
   };
 
   const saveTitle = async () => {
@@ -360,8 +413,30 @@ const WhiteboardDetail = () => {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative">
-        <Tldraw onMount={handleMount} autoFocus />
+      <div className="flex-1 relative overflow-hidden">
+        <Excalidraw
+          excalidrawAPI={(api) => {
+            excalidrawApiRef.current = api;
+          }}
+          initialData={getInitialData}
+          onChange={handleChange}
+          viewModeEnabled={!canEdit}
+          isCollaborating={presence.length > 0}
+          detectScroll={false}
+          autoFocus
+          handleKeyboardGlobally
+          UIOptions={{
+            canvasActions: {
+              changeViewBackgroundColor: canEdit,
+              clearCanvas: canEdit,
+              export: true,
+              loadScene: false,
+              saveToActiveFile: false,
+              saveAsImage: true,
+              toggleTheme: true,
+            },
+          }}
+        />
       </div>
 
       {userId && (
