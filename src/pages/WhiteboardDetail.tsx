@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Excalidraw, serializeAsJSON, restore } from '@excalidraw/excalidraw';
-import type { AppState, BinaryFiles, ExcalidrawElement, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+import { Excalidraw, restore } from '@excalidraw/excalidraw';
+import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import '@excalidraw/excalidraw/index.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -217,12 +218,12 @@ const WhiteboardDetail = () => {
       const { error } = await supabase
         .from('whiteboard_snapshots')
         .upsert(
-          {
+          [{
             whiteboard_id: id,
-            snapshot,
+            snapshot: snapshot as any,
             updated_by: userId,
             updated_at: new Date().toISOString(),
-          },
+          }],
           { onConflict: 'whiteboard_id' },
         );
       await supabase.from('whiteboards').update({ updated_at: new Date().toISOString() }).eq('id', id);
@@ -279,11 +280,16 @@ const WhiteboardDetail = () => {
     if (!snapshot) return null;
 
     try {
-      return restore({
-        elements: snapshot.elements || [],
-        appState: snapshot.appState || {},
-        files: snapshot.files || {},
-      }, null, { repairBindings: true });
+      return restore(
+        {
+          elements: snapshot.elements || [],
+          appState: snapshot.appState || {},
+          files: snapshot.files || {},
+        },
+        null,
+        null,
+        { repairBindings: true },
+      );
     } catch (e) {
       console.error('[whiteboard] failed to load initial snapshot', e);
       return null;
@@ -429,7 +435,7 @@ const WhiteboardDetail = () => {
             canvasActions: {
               changeViewBackgroundColor: canEdit,
               clearCanvas: canEdit,
-              export: true,
+              export: {},
               loadScene: false,
               saveToActiveFile: false,
               saveAsImage: true,
