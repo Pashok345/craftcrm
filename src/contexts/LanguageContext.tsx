@@ -770,6 +770,12 @@ export const translations: Translations = {
   },
   whiteboardSearchUser: { ru: 'Найти сотрудника...', en: 'Find user...', uk: 'Знайти співробітника...' },
   whiteboardLastEdited: { ru: 'Изменена', en: 'Edited', uk: 'Змінено' },
+  whiteboardArrowHint: {
+    ru: 'Совет: выберите инструмент Стрелка (клавиша 5) и наведите на блок — появятся точки привязки. Стрелка прикрепится к фигуре и будет следовать за ней.',
+    en: 'Tip: pick the Arrow tool (key 5) and hover over a shape — connection points will appear. The arrow will attach to the shape and follow it.',
+    uk: 'Підказка: оберіть інструмент Стрілка (клавіша 5) та наведіть на блок — з’являться точки прив’язки. Стрілка прикріпиться до фігури та слідуватиме за нею.',
+  },
+  whiteboardHintHide: { ru: 'Скрыть', en: 'Hide', uk: 'Приховати' },
 };
 
 interface LanguageContextType {
