@@ -260,10 +260,26 @@ const Tasks = () => {
     return Array.from(seen.values());
   }, [taskAssignees]);
 
+  const [isDragging, setIsDragging] = useState(false);
+
   // DnD handler
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
   const handleDragEnd = (result: DropResult) => {
+    setIsDragging(false);
+    // Suppress click after drag
+    setTimeout(() => { /* no-op, isDragging already false */ }, 0);
     if (!result.destination) return;
-    const items = Array.from(filteredAndSortedTasks);
+    if (result.destination.index === result.source.index) return;
+
+    // Auto switch to manual sort if not already
+    const baseList = sortBy === 'manual' && manualOrder.length > 0
+      ? filteredAndSortedTasks
+      : filteredAndSortedTasks;
+
+    const items = Array.from(baseList);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     const newOrder = items.map(t => t.id);
