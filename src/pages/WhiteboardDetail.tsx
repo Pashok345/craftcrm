@@ -52,6 +52,7 @@ const WhiteboardDetail = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [presence, setPresence] = useState<PresenceUser[]>([]);
+  const [showHint, setShowHint] = useState(() => localStorage.getItem('whiteboard-arrow-hint-hidden') !== '1');
 
   const excalidrawApiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const isApplyingRemoteRef = useRef(false);
