@@ -260,10 +260,26 @@ const Tasks = () => {
     return Array.from(seen.values());
   }, [taskAssignees]);
 
+  const [isDragging, setIsDragging] = useState(false);
+
   // DnD handler
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
   const handleDragEnd = (result: DropResult) => {
+    setIsDragging(false);
+    // Suppress click after drag
+    setTimeout(() => { /* no-op, isDragging already false */ }, 0);
     if (!result.destination) return;
-    const items = Array.from(filteredAndSortedTasks);
+    if (result.destination.index === result.source.index) return;
+
+    // Auto switch to manual sort if not already
+    const baseList = sortBy === 'manual' && manualOrder.length > 0
+      ? filteredAndSortedTasks
+      : filteredAndSortedTasks;
+
+    const items = Array.from(baseList);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     const newOrder = items.map(t => t.id);
@@ -501,39 +517,46 @@ const Tasks = () => {
               </CardContent>
             </Card>
           ) : (
-            <DragDropContext onDragEnd={handleDragEnd}>
+            <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <Droppable droppableId="task-list">
                 {(provided) => (
-                  <div className="grid gap-4" ref={provided.innerRef} {...provided.droppableProps}>
+                  <div className="grid gap-4 min-w-0" ref={provided.innerRef} {...provided.droppableProps}>
                     {filteredAndSortedTasks.map((task, index) => (
                       <Draggable key={task.id} draggableId={task.id} index={index}>
                         {(provided, snapshot) => (
                           <Card
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className={`cursor-pointer hover:shadow-md transition-shadow animate-slide-up ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
+                            className={`cursor-pointer hover:shadow-md transition-shadow animate-slide-up min-w-0 max-w-full ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
                             style={{ ...provided.draggableProps.style, animationDelay: `${index * 0.03}s` }}
-                            onClick={() => handleTaskClick(task)}
+                            onClick={(e) => {
+                              if (isDragging || snapshot.isDragging) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return;
+                              }
+                              handleTaskClick(task);
+                            }}
                           >
                             <CardContent className="p-4">
-                              <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-start justify-between gap-4 min-w-0">
                                 <div className="flex items-start gap-2 flex-1 min-w-0">
-                                  <div {...provided.dragHandleProps} className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors" onClick={e => e.stopPropagation()}>
+                                  <div {...provided.dragHandleProps} className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0" onClick={e => e.stopPropagation()}>
                                     <GripVertical className="h-4 w-4" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <h3 className="font-medium text-foreground truncate">{task.title}</h3>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <h3 className="font-medium text-foreground truncate min-w-0">{task.title}</h3>
                                       {task.project_id && projects[task.project_id] && (
-                                        <Badge variant="outline" className="shrink-0">
+                                        <Badge variant="outline" className="shrink-0 max-w-[140px] truncate">
                                           {projects[task.project_id].title}
                                         </Badge>
                                       )}
                                     </div>
                                     {task.description && (
-                                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words">{task.description}</p>
                                     )}
-                                    <div className="flex items-center gap-4 mt-3">
+                                    <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-3">
                                       {task.deadline && (
                                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                           <Calendar className="h-4 w-4" />
@@ -541,9 +564,9 @@ const Tasks = () => {
                                         </div>
                                       )}
                                       {task.created_by && creators[task.created_by] && (
-                                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                          <User className="h-4 w-4" />
-                                          <span>{t('createdBy')}: {creators[task.created_by].name}</span>
+                                        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                                          <User className="h-4 w-4 shrink-0" />
+                                          <span className="truncate">{t('createdBy')}: {creators[task.created_by].name}</span>
                                         </div>
                                       )}
                                     </div>

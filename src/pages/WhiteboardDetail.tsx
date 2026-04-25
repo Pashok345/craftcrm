@@ -52,6 +52,7 @@ const WhiteboardDetail = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [presence, setPresence] = useState<PresenceUser[]>([]);
+  const [showHint, setShowHint] = useState(() => localStorage.getItem('whiteboard-arrow-hint-hidden') !== '1');
 
   const excalidrawApiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const isApplyingRemoteRef = useRef(false);
@@ -417,6 +418,26 @@ const WhiteboardDetail = () => {
           </Button>
         </div>
       </div>
+
+      {/* Hint banner */}
+      {showHint && canEdit && (
+        <div className="flex items-start gap-2 px-4 py-2 bg-primary/5 border-b border-primary/20 text-sm text-foreground shrink-0">
+          <span className="flex-1">
+            💡 {t('whiteboardArrowHint')}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs shrink-0"
+            onClick={() => {
+              setShowHint(false);
+              localStorage.setItem('whiteboard-arrow-hint-hidden', '1');
+            }}
+          >
+            {t('whiteboardHintHide')}
+          </Button>
+        </div>
+      )}
 
       {/* Canvas */}
       <div className="flex-1 relative overflow-hidden">
