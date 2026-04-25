@@ -14,30 +14,35 @@ export const useTaskShortcuts = ({ onCreateTask, onSwitchView, onToggleTemplates
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target as HTMLElement)?.isContentEditable) return;
 
-      // ? — toggle help panel
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // ? — toggle help panel (Shift+/ on most layouts)
+      if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
         e.preventDefault();
         onToggleHelp?.();
         return;
       }
 
-      // N — new task
-      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.shiftKey) return;
+
+      // N — new task (use e.code so it works on any keyboard layout)
+      if (e.code === 'KeyN') {
         e.preventDefault();
         onCreateTask();
         return;
       }
 
       // 1/2/3 — switch views
-      if (['1', '2', '3'].includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
         e.preventDefault();
         const views = ['list', 'kanban', 'gantt'];
-        onSwitchView(views[parseInt(e.key) - 1]);
+        const idx = parseInt(e.code.replace('Digit', ''), 10) - 1;
+        onSwitchView(views[idx]);
         return;
       }
 
       // T — templates
-      if (e.key === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.code === 'KeyT') {
         e.preventDefault();
         onToggleTemplates();
         return;
