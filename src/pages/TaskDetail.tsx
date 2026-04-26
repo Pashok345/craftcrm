@@ -367,6 +367,7 @@ const TaskDetail = () => {
       setNewComment('');
       setFiles([]);
       fetchComments();
+      fetchTaskAttachments();
       toast({ title: t('commentAdded') });
     } catch (error) {
       console.error('Error adding comment:', error);
