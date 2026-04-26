@@ -279,6 +279,14 @@ export const translations: Translations = {
   attachments: { ru: 'Вложения', en: 'Attachments', uk: 'Вкладення' },
   fileUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
   errorUploadingFile: { ru: 'Ошибка загрузки файла', en: 'Error uploading file', uk: 'Помилка завантаження файлу' },
+  filesGallery: { ru: 'Файлы', en: 'Files', uk: 'Файли' },
+  all: { ru: 'Все', en: 'All', uk: 'Усі' },
+  photos: { ru: 'Фото', en: 'Photos', uk: 'Фото' },
+  documents: { ru: 'Документы', en: 'Documents', uk: 'Документи' },
+  
+  noPhotos: { ru: 'Фото нет', en: 'No photos', uk: 'Фото немає' },
+  noFiles: { ru: 'Файлов нет', en: 'No files', uk: 'Файлів немає' },
+  download: { ru: 'Скачать', en: 'Download', uk: 'Завантажити' },
   
   // Common
   loading: { ru: 'Загрузка...', en: 'Loading...', uk: 'Завантаження...' },
