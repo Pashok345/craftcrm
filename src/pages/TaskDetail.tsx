@@ -744,6 +744,17 @@ const TaskDetail = () => {
       {/* Subtasks */}
       {user && <SubtasksList taskId={task.id} />}
 
+      {/* Files gallery */}
+      <Card>
+        <CardContent className="p-6">
+          <h4 className="text-lg font-medium mb-4 flex items-center gap-2">
+            <Paperclip className="h-5 w-5" />
+            {t('filesGallery') || 'Файлы'}
+          </h4>
+          <TaskFilesGallery attachments={taskAttachments} />
+        </CardContent>
+      </Card>
+
       {/* Dependencies */}
       <Card>
         <CardContent className="p-6">
