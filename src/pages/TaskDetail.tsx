@@ -632,53 +632,7 @@ const TaskDetail = () => {
             </div>
           )}
 
-          {taskAttachments.length > 0 && (
-            <div className="space-y-2 mb-6">
-              <h4 className="text-sm font-medium">{t('attachments')}:</h4>
-              <div className="flex flex-wrap gap-3">
-                {taskAttachments.map((att) => (
-                  <Tooltip key={att.id}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={async () => {
-                          try {
-                            // Fetch file and open in new tab to avoid browser blocking
-                            const response = await fetch(att.file_url);
-                            const blob = await response.blob();
-                            const blobUrl = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = blobUrl;
-                            link.download = att.file_name;
-                            // For PDFs and images, try to open in new tab
-                            if (att.file_type?.includes('pdf') || att.file_type?.includes('image')) {
-                              window.open(blobUrl, '_blank');
-                            } else {
-                              link.click();
-                            }
-                            // Clean up after a delay
-                            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-                          } catch (error) {
-                            console.error('Error opening file:', error);
-                            // Fallback to direct link
-                            window.open(att.file_url, '_blank');
-                          }
-                        }}
-                        className="flex flex-col items-center gap-1 p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors min-w-[60px] cursor-pointer"
-                      >
-                        <FileIcon fileName={att.file_name} className="h-8 w-8" />
-                        <span className="text-xs text-muted-foreground max-w-[60px] truncate">
-                          {att.file_name.length > 8 ? att.file_name.slice(0, 6) + '...' : att.file_name}
-                        </span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{att.file_name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Files moved to dedicated gallery card below */}
 
           <div className="flex flex-wrap gap-6 mb-6">
             <div className="space-y-2">
