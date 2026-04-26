@@ -27,6 +27,7 @@ import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
 import { TagsManager } from '@/components/tasks/TagsManager';
 import { SubtasksList } from '@/components/tasks/SubtasksList';
+import { TaskFilesGallery } from '@/components/tasks/TaskFilesGallery';
 import { TaskDependencies } from '@/components/tasks/TaskDependencies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
