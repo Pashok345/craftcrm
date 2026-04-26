@@ -283,7 +283,7 @@ export const translations: Translations = {
   all: { ru: 'Все', en: 'All', uk: 'Усі' },
   photos: { ru: 'Фото', en: 'Photos', uk: 'Фото' },
   documents: { ru: 'Документы', en: 'Documents', uk: 'Документи' },
-  noAttachments: { ru: 'Файлов пока нет', en: 'No files yet', uk: 'Файлів ще немає' },
+  
   noPhotos: { ru: 'Фото нет', en: 'No photos', uk: 'Фото немає' },
   noFiles: { ru: 'Файлов нет', en: 'No files', uk: 'Файлів немає' },
   download: { ru: 'Скачать', en: 'Download', uk: 'Завантажити' },
