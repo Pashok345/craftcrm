@@ -188,12 +188,13 @@ const TaskDetail = () => {
 
   const fetchTaskAttachments = async () => {
     if (!task) return;
+    // Fetch ALL attachments for this task (both standalone and from comments)
     const { data } = await supabase
       .from('task_attachments')
       .select('*')
       .eq('task_id', task.id)
-      .is('comment_id', null);
-    
+      .order('created_at', { ascending: false });
+
     if (data) {
       setTaskAttachments(data as TaskAttachment[]);
     }
