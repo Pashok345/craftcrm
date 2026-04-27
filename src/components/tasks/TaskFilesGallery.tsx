@@ -25,11 +25,19 @@ const isPreviewable = (att: TaskAttachment) => {
   return PREVIEWABLE_DOC_EXT.includes(ext);
 };
 
-export const TaskFilesGallery = ({ attachments }: TaskFilesGalleryProps) => {
+export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFilesGalleryProps) => {
   const { t } = useLanguage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'images' | 'files'>('all');
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && onUpload) {
+      await onUpload(e.target.files);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const images = useMemo(
     () => attachments.filter(a => isImageFile(a.file_type, a.file_name)),
