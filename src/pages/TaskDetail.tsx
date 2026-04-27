@@ -559,6 +559,7 @@ const TaskDetail = () => {
               </Button>
             </>
           )}
+        </div>
       </div>
 
       <Tabs defaultValue="main" className="w-full">
