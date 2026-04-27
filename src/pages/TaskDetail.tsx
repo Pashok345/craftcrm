@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -561,6 +562,20 @@ const TaskDetail = () => {
         </div>
       </div>
 
+      <Tabs defaultValue="main" className="w-full">
+        <TabsList>
+          <TabsTrigger value="main" className="gap-2">
+            <ListChecks className="h-4 w-4" />
+            {t('taskTabMain')}
+          </TabsTrigger>
+          <TabsTrigger value="files" className="gap-2">
+            <Files className="h-4 w-4" />
+            {t('taskTabFiles')} ({taskAttachments.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="main" className="space-y-6 mt-4">
+
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
@@ -744,17 +759,6 @@ const TaskDetail = () => {
       {/* Subtasks */}
       {user && <SubtasksList taskId={task.id} />}
 
-      {/* Files gallery */}
-      <Card>
-        <CardContent className="p-6">
-          <h4 className="text-lg font-medium mb-4 flex items-center gap-2">
-            <Paperclip className="h-5 w-5" />
-            {t('filesGallery') || 'Файлы'}
-          </h4>
-          <TaskFilesGallery attachments={taskAttachments} />
-        </CardContent>
-      </Card>
-
       {/* Dependencies */}
       <Card>
         <CardContent className="p-6">
@@ -915,6 +919,20 @@ const TaskDetail = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="files" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              <h4 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Paperclip className="h-5 w-5" />
+                {t('filesGallery')}
+              </h4>
+              <TaskFilesGallery attachments={taskAttachments} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <TaskEditDialog
         open={editOpen}

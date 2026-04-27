@@ -287,6 +287,20 @@ export const translations: Translations = {
   noPhotos: { ru: 'Фото нет', en: 'No photos', uk: 'Фото немає' },
   noFiles: { ru: 'Файлов нет', en: 'No files', uk: 'Файлів немає' },
   download: { ru: 'Скачать', en: 'Download', uk: 'Завантажити' },
+
+  // Task tabs
+  taskTabMain: { ru: 'Задача', en: 'Task', uk: 'Завдання' },
+  taskTabFiles: { ru: 'Файлы', en: 'Files', uk: 'Файли' },
+
+  // Dependencies
+  dependencies: { ru: 'Зависимости', en: 'Dependencies', uk: 'Залежності' },
+  addDependency: { ru: 'Добавить зависимость', en: 'Add dependency', uk: 'Додати залежність' },
+  noDependencies: { ru: 'Нет зависимостей', en: 'No dependencies', uk: 'Немає залежностей' },
+  blockedBy: { ru: 'Заблокировано', en: 'Blocked by', uk: 'Заблоковано' },
+  blocks: { ru: 'Блокирует', en: 'Blocks', uk: 'Блокує' },
+  selectTask: { ru: 'Выберите задачу', en: 'Select task', uk: 'Виберіть завдання' },
+  dependencyAdded: { ru: 'Зависимость добавлена', en: 'Dependency added', uk: 'Залежність додано' },
+  dependencyRemoved: { ru: 'Зависимость удалена', en: 'Dependency removed', uk: 'Залежність видалено' },
   
   // Common
   loading: { ru: 'Загрузка...', en: 'Loading...', uk: 'Завантаження...' },
