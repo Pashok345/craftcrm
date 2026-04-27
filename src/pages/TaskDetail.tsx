@@ -935,7 +935,11 @@ const TaskDetail = () => {
                 <Paperclip className="h-5 w-5" />
                 {t('filesGallery')}
               </h4>
-              <TaskFilesGallery attachments={taskAttachments} />
+              <TaskFilesGallery
+                attachments={taskAttachments}
+                onUpload={uploadTaskFiles}
+                uploading={uploadingFile}
+              />
             </CardContent>
           </Card>
         </TabsContent>
