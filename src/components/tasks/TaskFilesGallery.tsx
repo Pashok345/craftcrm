@@ -183,20 +183,38 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
   return (
     <>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all" className="gap-1.5">
-            <Files className="h-3.5 w-3.5" />
-            {t('all') || 'Все'} ({attachments.length})
-          </TabsTrigger>
-          <TabsTrigger value="images" className="gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5" />
-            {t('photos') || 'Фото'} ({images.length})
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            {t('documents') || 'Документы'} ({files.length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <TabsList>
+            <TabsTrigger value="all" className="gap-1.5">
+              <Files className="h-3.5 w-3.5" />
+              {t('all') || 'Все'} ({attachments.length})
+            </TabsTrigger>
+            <TabsTrigger value="images" className="gap-1.5">
+              <ImageIcon className="h-3.5 w-3.5" />
+              {t('photos') || 'Фото'} ({images.length})
+            </TabsTrigger>
+            <TabsTrigger value="files" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              {t('documents') || 'Документы'} ({files.length})
+            </TabsTrigger>
+          </TabsList>
+          {onUpload && (
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-1.5"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {t('addFiles')}
+            </Button>
+          )}
+          {hiddenInput}
+        </div>
 
         <TabsContent value="all" className="mt-0">
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
