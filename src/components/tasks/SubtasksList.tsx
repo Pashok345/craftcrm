@@ -167,16 +167,19 @@ export const SubtasksList = ({ taskId }: SubtasksListProps) => {
                       <div
                         ref={prov.innerRef}
                         {...prov.draggableProps}
-                        className={`flex items-center gap-2 group py-1 px-1 rounded transition-colors ${
-                          snapshot.isDragging ? 'bg-muted shadow-md' : 'hover:bg-muted/40'
+                        className={`flex items-center gap-2 group py-2 px-2 rounded-md border transition-colors ${
+                          snapshot.isDragging
+                            ? 'bg-muted shadow-lg border-primary/50'
+                            : 'border-transparent hover:bg-muted/40 hover:border-border'
                         }`}
                       >
                         <button
                           {...prov.dragHandleProps}
-                          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+                          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 -m-1 rounded hover:bg-muted"
                           aria-label="drag"
+                          title={t('dragToReorder') || 'Перетащите для изменения порядка'}
                         >
-                          <GripVertical className="h-4 w-4" />
+                          <GripVertical className="h-5 w-5" />
                         </button>
                         <Checkbox
                           checked={subtask.is_completed}
