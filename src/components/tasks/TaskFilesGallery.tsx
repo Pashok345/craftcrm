@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Download, X, FileText, Image as ImageIcon, Files } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, X, FileText, Image as ImageIcon, Files, Upload, Loader2, Plus } from 'lucide-react';
 import { isImageFile } from '@/components/ui/image-lightbox';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,6 +10,8 @@ import type { TaskAttachment } from '@/types/database';
 
 interface TaskFilesGalleryProps {
   attachments: TaskAttachment[];
+  onUpload?: (files: FileList) => Promise<void> | void;
+  uploading?: boolean;
 }
 
 const PREVIEWABLE_DOC_EXT = ['pdf', 'txt', 'md', 'log', 'csv', 'json', 'xml', 'html'];
