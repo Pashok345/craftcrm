@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Download, X, FileText, Image as ImageIcon, Files } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, X, FileText, Image as ImageIcon, Files, Upload, Loader2, Plus } from 'lucide-react';
 import { isImageFile } from '@/components/ui/image-lightbox';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,6 +10,8 @@ import type { TaskAttachment } from '@/types/database';
 
 interface TaskFilesGalleryProps {
   attachments: TaskAttachment[];
+  onUpload?: (files: FileList) => Promise<void> | void;
+  uploading?: boolean;
 }
 
 const PREVIEWABLE_DOC_EXT = ['pdf', 'txt', 'md', 'log', 'csv', 'json', 'xml', 'html'];
@@ -23,11 +25,19 @@ const isPreviewable = (att: TaskAttachment) => {
   return PREVIEWABLE_DOC_EXT.includes(ext);
 };
 
-export const TaskFilesGallery = ({ attachments }: TaskFilesGalleryProps) => {
+export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFilesGalleryProps) => {
   const { t } = useLanguage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'images' | 'files'>('all');
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && onUpload) {
+      await onUpload(e.target.files);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const images = useMemo(
     () => attachments.filter(a => isImageFile(a.file_type, a.file_name)),
@@ -83,11 +93,47 @@ export const TaskFilesGallery = ({ attachments }: TaskFilesGalleryProps) => {
     }
   };
 
+  const hiddenInput = onUpload ? (
+    <input
+      ref={fileInputRef}
+      type="file"
+      multiple
+      className="hidden"
+      onChange={handleFilesSelected}
+    />
+  ) : null;
+
   if (attachments.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        {t('noAttachments') || 'Файлов пока нет'}
-      </p>
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Files className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-medium mb-1">
+          {t('noAttachments') || 'Нет вложений'}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          {t('uploadFirstFile')}
+        </p>
+        {onUpload && (
+          <>
+            <Button
+              size="lg"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Upload className="h-5 w-5" />
+              )}
+              {t('addFiles')}
+            </Button>
+            {hiddenInput}
+          </>
+        )}
+      </div>
     );
   }
 
@@ -137,20 +183,38 @@ export const TaskFilesGallery = ({ attachments }: TaskFilesGalleryProps) => {
   return (
     <>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all" className="gap-1.5">
-            <Files className="h-3.5 w-3.5" />
-            {t('all') || 'Все'} ({attachments.length})
-          </TabsTrigger>
-          <TabsTrigger value="images" className="gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5" />
-            {t('photos') || 'Фото'} ({images.length})
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            {t('documents') || 'Документы'} ({files.length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <TabsList>
+            <TabsTrigger value="all" className="gap-1.5">
+              <Files className="h-3.5 w-3.5" />
+              {t('all') || 'Все'} ({attachments.length})
+            </TabsTrigger>
+            <TabsTrigger value="images" className="gap-1.5">
+              <ImageIcon className="h-3.5 w-3.5" />
+              {t('photos') || 'Фото'} ({images.length})
+            </TabsTrigger>
+            <TabsTrigger value="files" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              {t('documents') || 'Документы'} ({files.length})
+            </TabsTrigger>
+          </TabsList>
+          {onUpload && (
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-1.5"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {t('addFiles')}
+            </Button>
+          )}
+          {hiddenInput}
+        </div>
 
         <TabsContent value="all" className="mt-0">
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">

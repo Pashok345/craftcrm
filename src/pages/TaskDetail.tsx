@@ -202,35 +202,37 @@ const TaskDetail = () => {
     }
   };
 
-  const handleAddTaskFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !task) return;
+  const uploadTaskFiles = async (fileList: FileList | File[]) => {
+    if (!user || !task) return;
+    const filesArr = Array.from(fileList);
+    if (filesArr.length === 0) return;
 
     setUploadingFile(true);
     try {
-      // Sanitize file name - replace non-ASCII characters and spaces
-      const sanitizedName = file.name
-        .replace(/[^\w.-]/g, '_')
-        .replace(/__+/g, '_');
-      const fileName = `${task.id}/${Date.now()}-${sanitizedName}`;
-      const { error: uploadError } = await supabase.storage
-        .from('task-attachments')
-        .upload(fileName, file);
+      for (const file of filesArr) {
+        const sanitizedName = file.name
+          .replace(/[^\w.-]/g, '_')
+          .replace(/__+/g, '_');
+        const fileName = `${task.id}/${Date.now()}-${sanitizedName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('task-attachments')
+          .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      const { data: signedUrlData } = await supabase.storage
-        .from('task-attachments')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+        const { data: signedUrlData } = await supabase.storage
+          .from('task-attachments')
+          .createSignedUrl(fileName, 60 * 60 * 24 * 7);
 
-      await supabase.from('task_attachments').insert({
-        task_id: task.id,
-        comment_id: null,
-        file_name: file.name,
-        file_url: signedUrlData?.signedUrl || fileName,
-        file_type: file.type,
-        uploaded_by: user.id,
-      });
+        await supabase.from('task_attachments').insert({
+          task_id: task.id,
+          comment_id: null,
+          file_name: file.name,
+          file_url: signedUrlData?.signedUrl || fileName,
+          file_type: file.type,
+          uploaded_by: user.id,
+        });
+      }
 
       fetchTaskAttachments();
       toast({ title: t('fileUploaded') });
@@ -239,8 +241,13 @@ const TaskDetail = () => {
       toast({ title: t('errorUploadingFile'), variant: 'destructive' });
     } finally {
       setUploadingFile(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleAddTaskFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    await uploadTaskFiles(e.target.files);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmitComment = async () => {
@@ -928,7 +935,11 @@ const TaskDetail = () => {
                 <Paperclip className="h-5 w-5" />
                 {t('filesGallery')}
               </h4>
-              <TaskFilesGallery attachments={taskAttachments} />
+              <TaskFilesGallery
+                attachments={taskAttachments}
+                onUpload={uploadTaskFiles}
+                uploading={uploadingFile}
+              />
             </CardContent>
           </Card>
         </TabsContent>

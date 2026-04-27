@@ -280,6 +280,8 @@ export const translations: Translations = {
   fileUploaded: { ru: 'Файл загружен', en: 'File uploaded', uk: 'Файл завантажено' },
   errorUploadingFile: { ru: 'Ошибка загрузки файла', en: 'Error uploading file', uk: 'Помилка завантаження файлу' },
   filesGallery: { ru: 'Файлы', en: 'Files', uk: 'Файли' },
+  addFiles: { ru: 'Добавить файлы', en: 'Add files', uk: 'Додати файли' },
+  uploadFirstFile: { ru: 'Загрузите первый файл к этой задаче', en: 'Upload your first file to this task', uk: 'Завантажте перший файл до цього завдання' },
   all: { ru: 'Все', en: 'All', uk: 'Усі' },
   photos: { ru: 'Фото', en: 'Photos', uk: 'Фото' },
   documents: { ru: 'Документы', en: 'Documents', uk: 'Документи' },
