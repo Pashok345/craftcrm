@@ -574,7 +574,6 @@ const TaskDetail = () => {
         </TabsList>
 
         <TabsContent value="main" className="space-y-6 mt-4">
-      </div>
 
       <Card>
         <CardContent className="p-6">
