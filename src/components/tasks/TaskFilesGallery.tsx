@@ -93,11 +93,47 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
     }
   };
 
+  const hiddenInput = onUpload ? (
+    <input
+      ref={fileInputRef}
+      type="file"
+      multiple
+      className="hidden"
+      onChange={handleFilesSelected}
+    />
+  ) : null;
+
   if (attachments.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        {t('noAttachments') || 'Файлов пока нет'}
-      </p>
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Files className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-medium mb-1">
+          {t('noAttachments') || 'Нет вложений'}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          {t('uploadFirstFile')}
+        </p>
+        {onUpload && (
+          <>
+            <Button
+              size="lg"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Upload className="h-5 w-5" />
+              )}
+              {t('addFiles')}
+            </Button>
+            {hiddenInput}
+          </>
+        )}
+      </div>
     );
   }
 
