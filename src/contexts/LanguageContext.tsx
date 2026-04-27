@@ -282,7 +282,6 @@ export const translations: Translations = {
   filesGallery: { ru: 'Файлы', en: 'Files', uk: 'Файли' },
   addFiles: { ru: 'Добавить файлы', en: 'Add files', uk: 'Додати файли' },
   uploadFirstFile: { ru: 'Загрузите первый файл к этой задаче', en: 'Upload your first file to this task', uk: 'Завантажте перший файл до цього завдання' },
-  uploading: { ru: 'Загрузка...', en: 'Uploading...', uk: 'Завантаження...' },
   all: { ru: 'Все', en: 'All', uk: 'Усі' },
   photos: { ru: 'Фото', en: 'Photos', uk: 'Фото' },
   documents: { ru: 'Документы', en: 'Documents', uk: 'Документи' },
