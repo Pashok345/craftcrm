@@ -559,7 +559,21 @@ const TaskDetail = () => {
               </Button>
             </>
           )}
-        </div>
+      </div>
+
+      <Tabs defaultValue="main" className="w-full">
+        <TabsList>
+          <TabsTrigger value="main" className="gap-2">
+            <ListChecks className="h-4 w-4" />
+            {t('taskTabMain')}
+          </TabsTrigger>
+          <TabsTrigger value="files" className="gap-2">
+            <Files className="h-4 w-4" />
+            {t('taskTabFiles')} ({taskAttachments.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="main" className="space-y-6 mt-4">
       </div>
 
       <Card>
