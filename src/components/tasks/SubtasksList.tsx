@@ -159,7 +159,7 @@ export const SubtasksList = ({ taskId }: SubtasksListProps) => {
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-1 mb-4"
+                className="space-y-1.5 mb-4"
               >
                 {subtasks.map((subtask, index) => (
                   <Draggable key={subtask.id} draggableId={subtask.id} index={index}>
