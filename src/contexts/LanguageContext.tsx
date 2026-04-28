@@ -293,6 +293,16 @@ export const translations: Translations = {
   // Task tabs
   taskTabMain: { ru: 'Задача', en: 'Task', uk: 'Завдання' },
   taskTabFiles: { ru: 'Файлы', en: 'Files', uk: 'Файли' },
+  taskTabBoards: { ru: 'Доски', en: 'Boards', uk: 'Дошки' },
+  attachBoard: { ru: 'Привязать доску', en: 'Attach board', uk: 'Прикріпити дошку' },
+  detachBoard: { ru: 'Отвязать', en: 'Detach', uk: 'Відкріпити' },
+  noBoardsAttached: { ru: 'К задаче не привязано ни одной доски', en: 'No boards attached to this task', uk: 'До завдання не прикріплено жодної дошки' },
+  selectBoard: { ru: 'Выберите доску', en: 'Select a board', uk: 'Виберіть дошку' },
+  noAvailableBoards: { ru: 'Нет доступных досок', en: 'No available boards', uk: 'Немає доступних дошок' },
+  openBoard: { ru: 'Открыть доску', en: 'Open board', uk: 'Відкрити дошку' },
+  attachedBoards: { ru: 'Привязанные доски', en: 'Attached boards', uk: 'Прикріплені дошки' },
+  createBoard: { ru: 'Создать доску', en: 'Create board', uk: 'Створити дошку' },
+  dragBlock: { ru: 'Перетащите блок', en: 'Drag block', uk: 'Перетягніть блок' },
 
   // Dependencies
   dependencies: { ru: 'Зависимости', en: 'Dependencies', uk: 'Залежності' },
