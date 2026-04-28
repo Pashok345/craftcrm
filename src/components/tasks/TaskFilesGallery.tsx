@@ -172,6 +172,31 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
         </button>
       );
     }
+    if (isVideo(att)) {
+      return (
+        <button
+          key={att.id}
+          onClick={() => openLightbox(att)}
+          className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-black hover:opacity-90 transition-opacity"
+          title={att.file_name}
+        >
+          <video
+            src={att.file_url}
+            className="h-full w-full object-cover"
+            preload="metadata"
+            muted
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+            <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center">
+              <div className="w-0 h-0 border-y-[7px] border-y-transparent border-l-[10px] border-l-black ml-1" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+            <p className="text-[10px] text-white truncate">{att.file_name}</p>
+          </div>
+        </button>
+      );
+    }
     const { label } = getFileIcon(att.file_name);
     return (
       <button
