@@ -621,7 +621,7 @@ const TaskDetail = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="main" className="mt-4">
+        <TabsContent value="main" className="mt-4 md:pl-8">
           {(() => {
             const blocks: Record<string, JSX.Element | null> = {
               details: (
