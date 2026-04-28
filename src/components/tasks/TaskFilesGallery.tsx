@@ -15,11 +15,24 @@ interface TaskFilesGalleryProps {
 }
 
 const PREVIEWABLE_DOC_EXT = ['pdf', 'txt', 'md', 'log', 'csv', 'json', 'xml', 'html'];
+const VIDEO_EXT = ['mp4', 'webm', 'ogg', 'mov', 'm4v'];
+const AUDIO_EXT = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+const OFFICE_EXT = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
 
 const getExt = (name: string) => name.split('.').pop()?.toLowerCase() || '';
 
+const isVideo = (att: TaskAttachment) =>
+  att.file_type?.startsWith('video/') || VIDEO_EXT.includes(getExt(att.file_name));
+
+const isAudio = (att: TaskAttachment) =>
+  att.file_type?.startsWith('audio/') || AUDIO_EXT.includes(getExt(att.file_name));
+
+const isOffice = (att: TaskAttachment) => OFFICE_EXT.includes(getExt(att.file_name));
+
 const isPreviewable = (att: TaskAttachment) => {
   if (isImageFile(att.file_type, att.file_name)) return true;
+  if (isVideo(att) || isAudio(att)) return true;
+  if (isOffice(att)) return true;
   const ext = getExt(att.file_name);
   if (att.file_type?.includes('pdf') || ext === 'pdf') return true;
   return PREVIEWABLE_DOC_EXT.includes(ext);
@@ -159,6 +172,31 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
         </button>
       );
     }
+    if (isVideo(att)) {
+      return (
+        <button
+          key={att.id}
+          onClick={() => openLightbox(att)}
+          className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-black hover:opacity-90 transition-opacity"
+          title={att.file_name}
+        >
+          <video
+            src={att.file_url}
+            className="h-full w-full object-cover"
+            preload="metadata"
+            muted
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+            <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center">
+              <div className="w-0 h-0 border-y-[7px] border-y-transparent border-l-[10px] border-l-black ml-1" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+            <p className="text-[10px] text-white truncate">{att.file_name}</p>
+          </div>
+        </button>
+      );
+    }
     const { label } = getFileIcon(att.file_name);
     return (
       <button
@@ -179,6 +217,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
   const current = visibleList[currentIndex];
   const currentIsImage = current && isImageFile(current.file_type, current.file_name);
   const currentIsPdf = current && (current.file_type?.includes('pdf') || getExt(current.file_name) === 'pdf');
+  const currentIsVideo = current && isVideo(current);
+  const currentIsAudio = current && isAudio(current);
+  const currentIsOffice = current && isOffice(current);
 
   return (
     <>
@@ -309,9 +350,30 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
                     alt={current.file_name}
                     className="max-w-full max-h-full object-contain"
                   />
+                ) : currentIsVideo ? (
+                  <video
+                    src={current.file_url}
+                    controls
+                    autoPlay
+                    className="max-w-full max-h-full"
+                  >
+                    {current.file_name}
+                  </video>
+                ) : currentIsAudio ? (
+                  <div className="flex flex-col items-center gap-4 text-white w-full max-w-md">
+                    <FileIcon fileName={current.file_name} className="h-24 w-24" />
+                    <p className="text-lg text-center break-all">{current.file_name}</p>
+                    <audio src={current.file_url} controls autoPlay className="w-full" />
+                  </div>
                 ) : currentIsPdf ? (
                   <iframe
                     src={current.file_url}
+                    title={current.file_name}
+                    className="w-full h-full bg-white rounded"
+                  />
+                ) : currentIsOffice ? (
+                  <iframe
+                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(current.file_url)}`}
                     title={current.file_name}
                     className="w-full h-full bg-white rounded"
                   />

@@ -10,7 +10,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks, LayoutGrid, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { TaskBoardsTab } from '@/components/tasks/TaskBoardsTab';
 import {
   Select,
   SelectContent,
@@ -75,6 +77,40 @@ const TaskDetail = () => {
   const { user } = useAuth();
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
+
+  // Persisted block order for the main task tab (per user, in localStorage)
+  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'dependencies', 'timeTracker', 'comments'];
+  const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}`;
+  const [blockOrder, setBlockOrder] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}`);
+      if (stored) {
+        const parsed: string[] = JSON.parse(stored);
+        // Ensure all default blocks are present (backwards compat for new blocks)
+        const merged = [...parsed.filter(id => DEFAULT_BLOCK_ORDER.includes(id))];
+        DEFAULT_BLOCK_ORDER.forEach(id => {
+          if (!merged.includes(id)) merged.push(id);
+        });
+        return merged;
+      }
+    } catch {}
+    return DEFAULT_BLOCK_ORDER;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder));
+    } catch {}
+  }, [blockOrder, blockOrderStorageKey]);
+
+  const handleBlocksDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+    const next = Array.from(blockOrder);
+    const [moved] = next.splice(result.source.index, 1);
+    next.splice(result.destination.index, 0, moved);
+    setBlockOrder(next);
+  };
 
   const statusLabels: Record<string, string> = {
     todo: t('statusTodo'),
@@ -579,10 +615,16 @@ const TaskDetail = () => {
             <Files className="h-4 w-4" />
             {t('taskTabFiles')} ({taskAttachments.length})
           </TabsTrigger>
+          <TabsTrigger value="boards" className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            {t('taskTabBoards')}
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="main" className="space-y-6 mt-4">
-
+        <TabsContent value="main" className="mt-4 md:pl-8">
+          {(() => {
+            const blocks: Record<string, JSX.Element | null> = {
+              details: (
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
@@ -654,8 +696,6 @@ const TaskDetail = () => {
               </div>
             </div>
           )}
-
-          {/* Files moved to dedicated gallery card below */}
 
           <div className="flex flex-wrap gap-6 mb-6">
             <div className="space-y-2">
@@ -733,7 +773,6 @@ const TaskDetail = () => {
             </div>
           </div>
 
-          {/* Add participant button */}
           {user?.id === task.created_by && (
             <div className="mb-6">
               <Tooltip>
@@ -754,7 +793,6 @@ const TaskDetail = () => {
             </div>
           )}
 
-          {/* Tags */}
           {user && (
             <div className="mb-6">
               <TagsManager taskId={task.id} userId={user.id} />
@@ -762,22 +800,17 @@ const TaskDetail = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Subtasks */}
-      {user && <SubtasksList taskId={task.id} />}
-
-      {/* Dependencies */}
-      <Card>
-        <CardContent className="p-6">
-          <TaskDependencies taskId={task.id} />
-        </CardContent>
-      </Card>
-
-      {/* Time Tracker */}
-      {user && (
-        <TimeTracker taskId={task.id} userId={user.id} />
-      )}
-
+              ),
+              subtasks: user ? <SubtasksList taskId={task.id} /> : null,
+              dependencies: (
+                <Card>
+                  <CardContent className="p-6">
+                    <TaskDependencies taskId={task.id} />
+                  </CardContent>
+                </Card>
+              ),
+              timeTracker: user ? <TimeTracker taskId={task.id} userId={user.id} /> : null,
+              comments: (
       <Card>
         <CardContent className="p-6">
           <h4 className="text-lg font-medium mb-4">{t('comments')}</h4>
@@ -926,6 +959,60 @@ const TaskDetail = () => {
           </div>
         </CardContent>
       </Card>
+              ),
+            };
+
+            return (
+              <DragDropContext onDragEnd={handleBlocksDragEnd}>
+                <Droppable droppableId="task-blocks">
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="space-y-6"
+                    >
+                      {blockOrder.map((blockId, index) => {
+                        const content = blocks[blockId];
+                        if (!content) return null;
+                        return (
+                          <Draggable key={blockId} draggableId={blockId} index={index}>
+                            {(prov, snapshot) => (
+                              <div
+                                ref={prov.innerRef}
+                                {...prov.draggableProps}
+                                className={`relative group/block rounded-lg ${
+                                  snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
+                                }`}
+                              >
+                                <div
+                                  {...prov.dragHandleProps}
+                                  className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                  title={t('dragBlock')}
+                                  aria-label="drag-block"
+                                >
+                                  <GripVertical className="h-5 w-5" />
+                                </div>
+                                <div
+                                  {...prov.dragHandleProps}
+                                  className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
+                                  title={t('dragBlock')}
+                                  aria-label="drag-block"
+                                >
+                                  <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+                                </div>
+                                {content}
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="files" className="mt-4">
@@ -940,6 +1027,14 @@ const TaskDetail = () => {
                 onUpload={uploadTaskFiles}
                 uploading={uploadingFile}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="boards" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              <TaskBoardsTab taskId={task.id} />
             </CardContent>
           </Card>
         </TabsContent>
