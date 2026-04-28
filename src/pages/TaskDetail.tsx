@@ -78,6 +78,40 @@ const TaskDetail = () => {
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
+  // Persisted block order for the main task tab (per user, in localStorage)
+  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'dependencies', 'timeTracker', 'comments'];
+  const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}`;
+  const [blockOrder, setBlockOrder] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}`);
+      if (stored) {
+        const parsed: string[] = JSON.parse(stored);
+        // Ensure all default blocks are present (backwards compat for new blocks)
+        const merged = [...parsed.filter(id => DEFAULT_BLOCK_ORDER.includes(id))];
+        DEFAULT_BLOCK_ORDER.forEach(id => {
+          if (!merged.includes(id)) merged.push(id);
+        });
+        return merged;
+      }
+    } catch {}
+    return DEFAULT_BLOCK_ORDER;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder));
+    } catch {}
+  }, [blockOrder, blockOrderStorageKey]);
+
+  const handleBlocksDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+    const next = Array.from(blockOrder);
+    const [moved] = next.splice(result.source.index, 1);
+    next.splice(result.destination.index, 0, moved);
+    setBlockOrder(next);
+  };
+
   const statusLabels: Record<string, string> = {
     todo: t('statusTodo'),
     in_progress: t('statusInProgress'),
