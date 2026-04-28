@@ -1529,6 +1529,45 @@ export type Database = {
           },
         ]
       }
+      task_whiteboards: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          task_id: string
+          whiteboard_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          task_id: string
+          whiteboard_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          task_id?: string
+          whiteboard_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_whiteboards_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_whiteboards_whiteboard_id_fkey"
+            columns: ["whiteboard_id"]
+            isOneToOne: false
+            referencedRelation: "whiteboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           color: string | null
