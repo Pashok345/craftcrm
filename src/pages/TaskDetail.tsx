@@ -949,6 +949,14 @@ const TaskDetail = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="boards" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
+              <TaskBoardsTab taskId={task.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <TaskEditDialog
