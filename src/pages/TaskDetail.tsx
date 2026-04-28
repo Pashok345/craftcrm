@@ -581,6 +581,10 @@ const TaskDetail = () => {
             <Files className="h-4 w-4" />
             {t('taskTabFiles')} ({taskAttachments.length})
           </TabsTrigger>
+          <TabsTrigger value="boards" className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            {t('taskTabBoards')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="space-y-6 mt-4">
