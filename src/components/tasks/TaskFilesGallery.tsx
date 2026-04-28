@@ -15,11 +15,24 @@ interface TaskFilesGalleryProps {
 }
 
 const PREVIEWABLE_DOC_EXT = ['pdf', 'txt', 'md', 'log', 'csv', 'json', 'xml', 'html'];
+const VIDEO_EXT = ['mp4', 'webm', 'ogg', 'mov', 'm4v'];
+const AUDIO_EXT = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+const OFFICE_EXT = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
 
 const getExt = (name: string) => name.split('.').pop()?.toLowerCase() || '';
 
+const isVideo = (att: TaskAttachment) =>
+  att.file_type?.startsWith('video/') || VIDEO_EXT.includes(getExt(att.file_name));
+
+const isAudio = (att: TaskAttachment) =>
+  att.file_type?.startsWith('audio/') || AUDIO_EXT.includes(getExt(att.file_name));
+
+const isOffice = (att: TaskAttachment) => OFFICE_EXT.includes(getExt(att.file_name));
+
 const isPreviewable = (att: TaskAttachment) => {
   if (isImageFile(att.file_type, att.file_name)) return true;
+  if (isVideo(att) || isAudio(att)) return true;
+  if (isOffice(att)) return true;
   const ext = getExt(att.file_name);
   if (att.file_type?.includes('pdf') || ext === 'pdf') return true;
   return PREVIEWABLE_DOC_EXT.includes(ext);
