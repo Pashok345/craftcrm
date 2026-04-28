@@ -192,6 +192,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
   const current = visibleList[currentIndex];
   const currentIsImage = current && isImageFile(current.file_type, current.file_name);
   const currentIsPdf = current && (current.file_type?.includes('pdf') || getExt(current.file_name) === 'pdf');
+  const currentIsVideo = current && isVideo(current);
+  const currentIsAudio = current && isAudio(current);
+  const currentIsOffice = current && isOffice(current);
 
   return (
     <>
