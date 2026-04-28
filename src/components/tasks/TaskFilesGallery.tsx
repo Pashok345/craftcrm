@@ -325,9 +325,30 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
                     alt={current.file_name}
                     className="max-w-full max-h-full object-contain"
                   />
+                ) : currentIsVideo ? (
+                  <video
+                    src={current.file_url}
+                    controls
+                    autoPlay
+                    className="max-w-full max-h-full"
+                  >
+                    {current.file_name}
+                  </video>
+                ) : currentIsAudio ? (
+                  <div className="flex flex-col items-center gap-4 text-white w-full max-w-md">
+                    <FileIcon fileName={current.file_name} className="h-24 w-24" />
+                    <p className="text-lg text-center break-all">{current.file_name}</p>
+                    <audio src={current.file_url} controls autoPlay className="w-full" />
+                  </div>
                 ) : currentIsPdf ? (
                   <iframe
                     src={current.file_url}
+                    title={current.file_name}
+                    className="w-full h-full bg-white rounded"
+                  />
+                ) : currentIsOffice ? (
+                  <iframe
+                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(current.file_url)}`}
                     title={current.file_name}
                     className="w-full h-full bg-white rounded"
                   />
