@@ -736,7 +736,24 @@ Deno.serve(async (req) => {
             tool_calls: toolCalls,
           });
 
+          // Дедуп идентичных tool_calls в одном раунде (модель иногда дублирует create_meeting и т.п.)
+          const seen = new Set<string>();
+          const uniqueCalls: any[] = [];
           for (const tc of toolCalls) {
+            const key = `${tc.function?.name}::${tc.function?.arguments || ""}`;
+            if (seen.has(key)) {
+              currentMessages.push({
+                role: "tool",
+                tool_call_id: tc.id,
+                content: JSON.stringify({ skipped: true, reason: "duplicate tool call in the same turn" }),
+              });
+              continue;
+            }
+            seen.add(key);
+            uniqueCalls.push(tc);
+          }
+
+          for (const tc of uniqueCalls) {
             let result: any;
             try {
               const args = JSON.parse(tc.function.arguments || "{}");
