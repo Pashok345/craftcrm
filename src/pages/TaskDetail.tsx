@@ -35,7 +35,9 @@ import { TaskDependencies } from '@/components/tasks/TaskDependencies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
-import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
+import { MentionInput, parseMentionedUserIds, isAIComment, stripAIMarker } from '@/components/ui/mention-input';
+import { maybeInvokeCommentAI } from '@/lib/aiComment';
+import { Sparkles } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -409,11 +411,17 @@ const TaskDetail = () => {
         }
       }
 
+      const commentText = newComment;
       setNewComment('');
       setFiles([]);
       fetchComments();
       fetchTaskAttachments();
       toast({ title: t('commentAdded') });
+
+      // If user mentioned @AI — ask AI to reply
+      if (await maybeInvokeCommentAI(commentText, 'task', task.id)) {
+        fetchComments();
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
       toast({ title: t('errorAddingComment'), variant: 'destructive' });
