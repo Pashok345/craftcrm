@@ -500,6 +500,35 @@ async function createMeetingFn(supabase: any, args: any, userId: string) {
     endTime = `${String(eh).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
   }
 
+  // Защита от дублей: если этим пользователем уже создана встреча с таким же
+  // названием/датой/временем — вернём её, не создавая новую.
+  const startHHMM = String(args.start_time).slice(0, 5);
+  const { data: existing } = await supabase
+    .from("meetings")
+    .select("id, title, meeting_date, start_time, end_time")
+    .eq("created_by", userId)
+    .eq("meeting_date", args.meeting_date)
+    .eq("title", args.title)
+    .limit(5);
+
+  const dup = (existing || []).find(
+    (m: any) => String(m.start_time).slice(0, 5) === startHHMM
+  );
+  if (dup) {
+    return {
+      success: true,
+      duplicate: true,
+      message: "Такая встреча уже существует — повторно не создаю.",
+      meeting: {
+        id: dup.id,
+        title: dup.title,
+        date: dup.meeting_date,
+        start_time: dup.start_time,
+        end_time: dup.end_time,
+      },
+    };
+  }
+
   const { data: meeting, error } = await supabase.from("meetings").insert({
     title: args.title,
     description: args.description || null,
@@ -707,7 +736,24 @@ Deno.serve(async (req) => {
             tool_calls: toolCalls,
           });
 
+          // Дедуп идентичных tool_calls в одном раунде (модель иногда дублирует create_meeting и т.п.)
+          const seen = new Set<string>();
+          const uniqueCalls: any[] = [];
           for (const tc of toolCalls) {
+            const key = `${tc.function?.name}::${tc.function?.arguments || ""}`;
+            if (seen.has(key)) {
+              currentMessages.push({
+                role: "tool",
+                tool_call_id: tc.id,
+                content: JSON.stringify({ skipped: true, reason: "duplicate tool call in the same turn" }),
+              });
+              continue;
+            }
+            seen.add(key);
+            uniqueCalls.push(tc);
+          }
+
+          for (const tc of uniqueCalls) {
             let result: any;
             try {
               const args = JSON.parse(tc.function.arguments || "{}");
