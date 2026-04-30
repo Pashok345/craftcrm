@@ -156,8 +156,8 @@ Deno.serve(async (req) => {
 
     const context = await loadEntityContext(supabase, body.entity_type, body.entity_id);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
 
     const systemPrompt = `Ты — AI-ассистент внутри CRM. Тебя позвали в комментариях через @AI.
 
@@ -174,14 +174,14 @@ ${context}
 - Не повторяй контекст полностью, лишь ссылайся на нужные детали.
 - Если данных недостаточно — честно скажи об этом.`;
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: body.question },
