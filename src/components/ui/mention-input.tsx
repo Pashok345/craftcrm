@@ -283,3 +283,17 @@ export const parseMentionedUserIds = (
   }
   return Array.from(mentionedIds);
 };
+
+/** Detects if comment text contains @AI mention (whole word) */
+export const containsAIMention = (text: string): boolean => {
+  return /(^|\s)@AI(\s|$|[.,!?;:])/i.test(text);
+};
+
+/** Strip the AI marker prefix from comment content for display */
+export const AI_COMMENT_MARKER = '[AI]';
+export const isAIComment = (content: string): boolean => content.trimStart().startsWith(AI_COMMENT_MARKER);
+export const stripAIMarker = (content: string): string =>
+  content.trimStart().startsWith(AI_COMMENT_MARKER)
+    ? content.trimStart().slice(AI_COMMENT_MARKER.length).trimStart()
+    : content;
+
