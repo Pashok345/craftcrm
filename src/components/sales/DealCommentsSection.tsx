@@ -6,10 +6,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Trash2, Send } from 'lucide-react';
+import { Trash2, Send, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
-import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
+import { MentionInput, parseMentionedUserIds, isAIComment, stripAIMarker } from '@/components/ui/mention-input';
+import { maybeInvokeCommentAI } from '@/lib/aiComment';
 
 interface DealComment {
   id: string;
@@ -88,9 +89,12 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: async (_d, content) => {
       queryClient.invalidateQueries({ queryKey: ['deal-comments', dealId] });
       setNewComment('');
+      if (await maybeInvokeCommentAI(content, 'deal', dealId)) {
+        queryClient.invalidateQueries({ queryKey: ['deal-comments', dealId] });
+      }
     },
     onError: () => {
       toast({ title: t('error'), variant: 'destructive' });
@@ -131,25 +135,33 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
         ) : comments.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('noComments')}</p>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3 group">
+          comments.map((comment) => {
+            const aiReply = isAIComment(comment.content);
+            return (
+            <div key={comment.id} className={`flex gap-3 group ${aiReply ? 'rounded-lg bg-purple-500/5 border border-purple-500/20 p-2' : ''}`}>
               <Avatar className="h-8 w-8 flex-shrink-0">
-                <AvatarFallback
-                  style={{ backgroundColor: comment.profile?.avatar_color || '#6366F1' }}
-                  className="text-white text-xs"
-                >
-                  {getInitials(comment.profile?.name)}
-                </AvatarFallback>
+                {aiReply ? (
+                  <AvatarFallback className="bg-purple-500 text-white">
+                    <Sparkles className="h-4 w-4" />
+                  </AvatarFallback>
+                ) : (
+                  <AvatarFallback
+                    style={{ backgroundColor: comment.profile?.avatar_color || '#6366F1' }}
+                    className="text-white text-xs"
+                  >
+                    {getInitials(comment.profile?.name)}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    {comment.profile?.name || t('unknownUser')}
+                    {aiReply ? 'AI Асистент' : (comment.profile?.name || t('unknownUser'))}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {format(new Date(comment.created_at), 'd MMM, HH:mm', { locale: dateLocale })}
                   </span>
-                  {comment.user_id === user?.id && (
+                  {!aiReply && comment.user_id === user?.id && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -161,11 +173,12 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                  {comment.content}
+                  {aiReply ? stripAIMarker(comment.content) : comment.content}
                 </p>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
