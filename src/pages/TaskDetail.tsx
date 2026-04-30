@@ -143,6 +143,20 @@ const TaskDetail = () => {
     }
   }, [task?.id]);
 
+  // Realtime: live update comments thread (e.g. AI replies)
+  useEffect(() => {
+    if (!task?.id) return;
+    const channel = supabase
+      .channel(`task-comments-${task.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'task_comments', filter: `task_id=eq.${task.id}` },
+        () => { fetchComments(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [task?.id]);
+
   const fetchCreator = async () => {
     if (!task?.created_by) return;
     const { data } = await supabase
@@ -822,7 +836,7 @@ const TaskDetail = () => {
       <Card>
         <CardContent className="p-6">
           <h4 className="text-lg font-medium mb-4">{t('comments')}</h4>
-          <ScrollArea className="max-h-96 pr-4">
+          <ScrollArea className="h-96 pr-4">
             <div className="space-y-4">
               {comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">

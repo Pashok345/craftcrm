@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -60,6 +60,20 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
       })) as DealComment[];
     },
   });
+
+  // Realtime: live update deal comments thread
+  useEffect(() => {
+    if (!dealId) return;
+    const channel = supabase
+      .channel(`deal-comments-${dealId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deal_comments', filter: `deal_id=eq.${dealId}` },
+        () => { queryClient.invalidateQueries({ queryKey: ['deal-comments', dealId] }); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [dealId, queryClient]);
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
