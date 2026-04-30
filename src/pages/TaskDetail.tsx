@@ -929,7 +929,8 @@ const TaskDetail = () => {
                       )}
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </ScrollArea>
