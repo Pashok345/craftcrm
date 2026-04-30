@@ -46,15 +46,20 @@ export const MentionInput = ({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all users once
+  // Fetch all users once + add virtual AI assistant
   useEffect(() => {
     const fetchUsers = async () => {
+      const aiUser: MentionUser = {
+        user_id: 'AI',
+        name: 'AI',
+        avatar_color: '#8B5CF6',
+        avatar_url: null,
+      };
       const { data } = await supabase
         .from('public_profiles')
         .select('user_id, name, avatar_url, avatar_color');
-      if (data) {
-        setAllUsers(data.filter(u => u.user_id !== user?.id) as MentionUser[]);
-      }
+      const real = data ? (data.filter(u => u.user_id !== user?.id) as MentionUser[]) : [];
+      setAllUsers([aiUser, ...real]);
     };
     fetchUsers();
   }, [user?.id]);
@@ -278,3 +283,17 @@ export const parseMentionedUserIds = (
   }
   return Array.from(mentionedIds);
 };
+
+/** Detects if comment text contains @AI mention (whole word) */
+export const containsAIMention = (text: string): boolean => {
+  return /(^|\s)@AI(\s|$|[.,!?;:])/i.test(text);
+};
+
+/** Strip the AI marker prefix from comment content for display */
+export const AI_COMMENT_MARKER = '[AI]';
+export const isAIComment = (content: string): boolean => content.trimStart().startsWith(AI_COMMENT_MARKER);
+export const stripAIMarker = (content: string): string =>
+  content.trimStart().startsWith(AI_COMMENT_MARKER)
+    ? content.trimStart().slice(AI_COMMENT_MARKER.length).trimStart()
+    : content;
+

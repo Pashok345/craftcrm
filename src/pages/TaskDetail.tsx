@@ -35,7 +35,9 @@ import { TaskDependencies } from '@/components/tasks/TaskDependencies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
-import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
+import { MentionInput, parseMentionedUserIds, isAIComment, stripAIMarker } from '@/components/ui/mention-input';
+import { maybeInvokeCommentAI } from '@/lib/aiComment';
+import { Sparkles } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -409,11 +411,17 @@ const TaskDetail = () => {
         }
       }
 
+      const commentText = newComment;
       setNewComment('');
       setFiles([]);
       fetchComments();
       fetchTaskAttachments();
       toast({ title: t('commentAdded') });
+
+      // If user mentioned @AI — ask AI to reply
+      if (await maybeInvokeCommentAI(commentText, 'task', task.id)) {
+        fetchComments();
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
       toast({ title: t('errorAddingComment'), variant: 'destructive' });
@@ -821,23 +829,33 @@ const TaskDetail = () => {
                   {t('noComments')}
                 </p>
               ) : (
-                comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3 group">
+                comments.map((comment) => {
+                  const aiReply = isAIComment(comment.content);
+                  return (
+                  <div key={comment.id} className={`flex gap-3 group ${aiReply ? 'rounded-lg bg-purple-500/5 border border-purple-500/20 p-2' : ''}`}>
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={comment.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {comment.profile?.name?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
+                      {aiReply ? (
+                        <AvatarFallback className="bg-purple-500 text-white">
+                          <Sparkles className="h-4 w-4" />
+                        </AvatarFallback>
+                      ) : (
+                        <>
+                          <AvatarImage src={comment.profile?.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {comment.profile?.name?.[0]?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </>
+                      )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
-                          {comment.profile?.name || t('user')}
+                          {aiReply ? 'AI Асистент' : (comment.profile?.name || t('user'))}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(comment.created_at), 'd MMM HH:mm', { locale: dateLocale })}
                         </span>
-                        {comment.user_id === user?.id && (
+                        {!aiReply && comment.user_id === user?.id && (
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                             <Button
                               variant="ghost"
@@ -881,7 +899,9 @@ const TaskDetail = () => {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm mt-1">{comment.content}</p>
+                        <p className={`text-sm mt-1 whitespace-pre-wrap ${aiReply ? 'text-foreground' : ''}`}>
+                          {aiReply ? stripAIMarker(comment.content) : comment.content}
+                        </p>
                       )}
                       {comment.attachments && comment.attachments.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -909,7 +929,8 @@ const TaskDetail = () => {
                       )}
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </ScrollArea>

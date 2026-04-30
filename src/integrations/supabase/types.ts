@@ -530,9 +530,13 @@ export type Database = {
           created_by: string
           description: string | null
           end_time: string | null
+          exception_dates: string[]
           id: string
           meeting_date: string
+          parent_meeting_id: string | null
+          recurrence_rule: Json | null
           start_time: string
+          status: Database["public"]["Enums"]["meeting_status"]
           title: string
           updated_at: string
         }
@@ -541,9 +545,13 @@ export type Database = {
           created_by: string
           description?: string | null
           end_time?: string | null
+          exception_dates?: string[]
           id?: string
           meeting_date: string
+          parent_meeting_id?: string | null
+          recurrence_rule?: Json | null
           start_time: string
+          status?: Database["public"]["Enums"]["meeting_status"]
           title: string
           updated_at?: string
         }
@@ -552,13 +560,25 @@ export type Database = {
           created_by?: string
           description?: string | null
           end_time?: string | null
+          exception_dates?: string[]
           id?: string
           meeting_date?: string
+          parent_meeting_id?: string | null
+          recurrence_rule?: Json | null
           start_time?: string
+          status?: Database["public"]["Enums"]["meeting_status"]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_parent_meeting_id_fkey"
+            columns: ["parent_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_reactions: {
         Row: {
@@ -1852,6 +1872,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      meeting_status:
+        | "scheduled"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "rescheduled"
       project_status:
         | "planning"
         | "active"
@@ -1996,6 +2022,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      meeting_status: [
+        "scheduled",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "rescheduled",
+      ],
       project_status: [
         "planning",
         "active",
