@@ -46,15 +46,20 @@ export const MentionInput = ({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all users once
+  // Fetch all users once + add virtual AI assistant
   useEffect(() => {
     const fetchUsers = async () => {
+      const aiUser: MentionUser = {
+        user_id: 'AI',
+        name: 'AI',
+        avatar_color: '#8B5CF6',
+        avatar_url: null,
+      };
       const { data } = await supabase
         .from('public_profiles')
         .select('user_id, name, avatar_url, avatar_color');
-      if (data) {
-        setAllUsers(data.filter(u => u.user_id !== user?.id) as MentionUser[]);
-      }
+      const real = data ? (data.filter(u => u.user_id !== user?.id) as MentionUser[]) : [];
+      setAllUsers([aiUser, ...real]);
     };
     fetchUsers();
   }, [user?.id]);
