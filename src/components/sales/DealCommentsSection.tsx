@@ -61,6 +61,20 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
     },
   });
 
+  // Realtime: live update deal comments thread
+  useEffect(() => {
+    if (!dealId) return;
+    const channel = supabase
+      .channel(`deal-comments-${dealId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deal_comments', filter: `deal_id=eq.${dealId}` },
+        () => { queryClient.invalidateQueries({ queryKey: ['deal-comments', dealId] }); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [dealId, queryClient]);
+
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
       const { error } = await supabase.from('deal_comments').insert({
