@@ -493,7 +493,50 @@ async function createTask(supabase: any, args: any, userId: string) {
   return { success: true, task: { id: data.id, title: data.title, status: data.status } };
 }
 
-async function createClientFn(supabase: any, args: any, userId: string) {
+async function createSubtaskFn(supabase: any, args: any, userId: string) {
+  const titles: string[] = Array.isArray(args.titles) ? args.titles.filter((t: any) => typeof t === "string" && t.trim()) : [];
+  if (titles.length === 0) return { error: "Нужен хотя бы один title в titles[]" };
+
+  let taskId: string | null = args.task_id || null;
+  let taskTitle = "";
+
+  if (!taskId && args.task_query) {
+    const { data: tasks } = await supabase
+      .from("tasks").select("id, title").ilike("title", `%${args.task_query}%`).limit(1);
+    if (tasks && tasks.length) {
+      taskId = tasks[0].id;
+      taskTitle = tasks[0].title;
+    }
+  } else if (taskId) {
+    const { data: t } = await supabase.from("tasks").select("title").eq("id", taskId).single();
+    taskTitle = t?.title || "";
+  }
+
+  if (!taskId) return { error: "Задача не найдена. Передай task_id или уточни task_query." };
+
+  // Get current max sort_order
+  const { data: existing } = await supabase
+    .from("subtasks").select("sort_order").eq("task_id", taskId).order("sort_order", { ascending: false }).limit(1);
+  let nextOrder = (existing && existing.length ? (existing[0].sort_order || 0) + 1 : 0);
+
+  const rows = titles.map((title) => ({
+    task_id: taskId,
+    title: title.trim(),
+    sort_order: nextOrder++,
+    created_by: userId,
+  }));
+
+  const { data, error } = await supabase.from("subtasks").insert(rows).select("id, title");
+  if (error) return { error: error.message };
+
+  return {
+    success: true,
+    task: { id: taskId, title: taskTitle },
+    added_count: data?.length || 0,
+    subtasks: (data || []).map((s: any) => s.title),
+  };
+}
+
   const { data, error } = await supabase.from("clients").insert({
     name: args.name,
     email: args.email || null,
