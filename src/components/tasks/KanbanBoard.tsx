@@ -128,9 +128,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           color: row.color || DEFAULT_COLUMN_COLOR,
           is_default: false,
         }));
-        setColumns([...DEFAULT_COLUMNS, ...customCols]);
+        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]));
       } else {
-        setColumns(DEFAULT_COLUMNS);
+        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS));
       }
       setColumnsLoaded(true);
     };
