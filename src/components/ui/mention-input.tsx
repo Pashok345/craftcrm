@@ -98,11 +98,12 @@ export const MentionInput = ({
 
     if (lastAtIndex !== -1) {
       const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
-      // Only show if @ is at start or preceded by whitespace, and no space-break in query
+      // Only show if @ is at start or preceded by whitespace
       const charBeforeAt = lastAtIndex > 0 ? newValue[lastAtIndex - 1] : ' ';
       if (/\s/.test(charBeforeAt) || lastAtIndex === 0) {
-        // Allow spaces in search but stop at double space or newline
-        if (!/\n/.test(textAfterAt) && textAfterAt.length <= 30) {
+        // Close suggestions once a space appears after the mention token
+        // (so Enter submits the message instead of inserting a mention)
+        if (!/\s/.test(textAfterAt) && !/\n/.test(textAfterAt) && textAfterAt.length <= 30) {
           setMentionStart(lastAtIndex);
           setSearchQuery(textAfterAt);
           setShowSuggestions(true);
