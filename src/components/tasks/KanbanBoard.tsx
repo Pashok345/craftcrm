@@ -70,7 +70,27 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
 
-  const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
+  const [columns, setColumnsState] = useState<Column[]>(DEFAULT_COLUMNS);
+
+  const applyOrderFromStorage = (cols: Column[]): Column[] => {
+    try {
+      const saved = localStorage.getItem('kanban-column-order-v1');
+      if (!saved) return cols;
+      const order: string[] = JSON.parse(saved);
+      const idx = (id: string) => {
+        const i = order.indexOf(id);
+        return i === -1 ? order.length + cols.findIndex(c => c.id === id) : i;
+      };
+      return [...cols].sort((a, b) => idx(a.id) - idx(b.id));
+    } catch { return cols; }
+  };
+
+  const setColumns: typeof setColumnsState = (updater) => {
+    setColumnsState((prev) => {
+      const next = typeof updater === 'function' ? (updater as (p: Column[]) => Column[])(prev) : updater;
+      return next;
+    });
+  };
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem('kanban-task-order-v2');
     if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
@@ -108,9 +128,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           color: row.color || DEFAULT_COLUMN_COLOR,
           is_default: false,
         }));
-        setColumns([...DEFAULT_COLUMNS, ...customCols]);
+        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]));
       } else {
-        setColumns(DEFAULT_COLUMNS);
+        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS));
       }
       setColumnsLoaded(true);
     };
@@ -302,6 +322,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         const newColumns = [...prevColumns];
         const [movedColumn] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, movedColumn);
+        // Persist full column order locally so it survives reloads
+        try {
+          localStorage.setItem('kanban-column-order-v1', JSON.stringify(newColumns.map(c => c.id)));
+        } catch {}
         // Update sort_order for custom columns in DB
         const customCols = newColumns.filter(c => c.db_id);
         customCols.forEach((col, idx) => {
