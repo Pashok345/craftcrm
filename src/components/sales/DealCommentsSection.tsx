@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { MentionInput, parseMentionedUserIds, isAIComment, stripAIMarker } from '@/components/ui/mention-input';
 import { maybeInvokeCommentAI } from '@/lib/aiComment';
+import { CommentReactions } from '@/components/comments/CommentReactions';
 
 interface DealComment {
   id: string;
@@ -189,6 +190,7 @@ export const DealCommentsSection = ({ dealId, dealTitle }: DealCommentsSectionPr
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
                   {aiReply ? stripAIMarker(comment.content) : comment.content}
                 </p>
+                {!aiReply && <CommentReactions commentType="deal" commentId={comment.id} />}
               </div>
             </div>
             );
