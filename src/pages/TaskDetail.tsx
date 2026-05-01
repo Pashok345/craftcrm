@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks, LayoutGrid, GripVertical } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { TaskBoardsTab } from '@/components/tasks/TaskBoardsTab';
+import { CommentReactions } from '@/components/comments/CommentReactions';
 import {
   Select,
   SelectContent,
@@ -941,6 +942,7 @@ const TaskDetail = () => {
                           )}
                         </div>
                       )}
+                      {!aiReply && <CommentReactions commentType="task" commentId={comment.id} />}
                     </div>
                   </div>
                   );
