@@ -160,6 +160,26 @@ const tools = [
   {
     type: "function",
     function: {
+      name: "create_subtask",
+      description: "Добавить одну или несколько подзадач (чек-лист) к существующей задаче. Найди задачу по названию через task_query или передай task_id.",
+      parameters: {
+        type: "object",
+        properties: {
+          task_id: { type: "string", description: "UUID задачи (если уже известен)" },
+          task_query: { type: "string", description: "Часть названия задачи для поиска (если task_id неизвестен)" },
+          titles: {
+            type: "array",
+            items: { type: "string" },
+            description: "Список названий подзадач для добавления",
+          },
+        },
+        required: ["titles"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "create_client",
       description: "Добавить нового клиента в CRM.",
       parameters: {
