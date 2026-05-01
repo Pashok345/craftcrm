@@ -1069,7 +1069,7 @@ const TaskDetail = () => {
         <TabsContent value="boards" className="mt-4">
           <Card>
             <CardContent className="p-6">
-              <TaskBoardsTab taskId={task.id} />
+              <TaskBoardsTab taskId={task.id} projectId={task.project_id} />
             </CardContent>
           </Card>
         </TabsContent>
