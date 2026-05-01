@@ -137,7 +137,10 @@ export const AddAssigneeDialog = ({
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={profile.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback
+                            className="text-xs text-white"
+                            style={{ backgroundColor: profile.avatar_color || '#6366F1' }}
+                          >
                             {getInitials(profile.name)}
                           </AvatarFallback>
                         </Avatar>
