@@ -11,6 +11,7 @@ import { Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
+import { CommentReactions } from '@/components/comments/CommentReactions';
 
 interface ProposalCommentsSectionProps {
   proposalId: string;
@@ -139,7 +140,7 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
             comments.map((comment) => {
               const profile = getProfile(comment.user_id);
               return (
-                <div key={comment.id} className="flex gap-3">
+                <div key={comment.id} className="flex gap-3 group">
                   <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarImage src={profile?.avatar_url || undefined} />
                     <AvatarFallback
@@ -173,6 +174,7 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
                     <p className="text-sm text-foreground/80 whitespace-pre-wrap">
                       {comment.content}
                     </p>
+                    <CommentReactions commentType="proposal" commentId={comment.id} />
                   </div>
                 </div>
               );

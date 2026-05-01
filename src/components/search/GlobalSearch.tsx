@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2 } from 'lucide-react';
+import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface SearchResult {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'task' | 'project' | 'client' | 'deal';
+  type: 'task' | 'project' | 'client' | 'deal' | 'comment';
+  navigateTo?: string;
 }
 
 export const GlobalSearch = () => {
@@ -63,18 +64,44 @@ export const GlobalSearch = () => {
     setOpen(true);
     try {
       const pattern = `%${q}%`;
-      const [tasksRes, projectsRes, clientsRes, dealsRes] = await Promise.all([
+      const [tasksRes, projectsRes, clientsRes, dealsRes, taskCommentsRes, dealCommentsRes, proposalCommentsRes] = await Promise.all([
         supabase.from('tasks').select('id, title, status').ilike('title', pattern).limit(5),
         supabase.from('projects').select('id, title, status').ilike('title', pattern).limit(5),
         supabase.from('clients').select('id, name, company').ilike('name', pattern).limit(5),
         supabase.from('deals').select('id, title, amount').ilike('title', pattern).limit(5),
+        supabase.from('task_comments').select('id, content, task_id, tasks(title)').ilike('content', pattern).limit(5),
+        supabase.from('deal_comments').select('id, content, deal_id, deals(title)').ilike('content', pattern).limit(5),
+        supabase.from('proposal_comments').select('id, content, proposal_id, proposals(title)').ilike('content', pattern).limit(5),
       ]);
+
+      const truncate = (s: string) => s.length > 70 ? s.slice(0, 70) + '…' : s;
 
       const items: SearchResult[] = [
         ...(tasksRes.data || []).map((t) => ({ id: t.id, title: t.title, subtitle: translateStatus(t.status), type: 'task' as const })),
         ...(projectsRes.data || []).map((p) => ({ id: p.id, title: p.title, subtitle: translateStatus(p.status), type: 'project' as const })),
         ...(clientsRes.data || []).map((c) => ({ id: c.id, title: c.name, subtitle: c.company || undefined, type: 'client' as const })),
         ...(dealsRes.data || []).map((d) => ({ id: d.id, title: d.title, subtitle: d.amount ? `$${d.amount}` : undefined, type: 'deal' as const })),
+        ...(taskCommentsRes.data || []).map((c: any) => ({
+          id: c.id,
+          title: truncate(c.content),
+          subtitle: c.tasks?.title ? `${t('task') || 'Задача'}: ${c.tasks.title}` : undefined,
+          type: 'comment' as const,
+          navigateTo: `/tasks/${c.task_id}`,
+        })),
+        ...(dealCommentsRes.data || []).map((c: any) => ({
+          id: c.id,
+          title: truncate(c.content),
+          subtitle: c.deals?.title ? `${t('deal') || 'Сделка'}: ${c.deals.title}` : undefined,
+          type: 'comment' as const,
+          navigateTo: `/sales`,
+        })),
+        ...(proposalCommentsRes.data || []).map((c: any) => ({
+          id: c.id,
+          title: truncate(c.content),
+          subtitle: c.proposals?.title ? `КП: ${c.proposals.title}` : undefined,
+          type: 'comment' as const,
+          navigateTo: `/sales`,
+        })),
       ];
       setResults(items);
       setOpen(true);
@@ -83,7 +110,7 @@ export const GlobalSearch = () => {
     } finally {
       setLoading(false);
     }
-  }, [translateStatus]);
+  }, [translateStatus, t]);
 
   useEffect(() => {
     const timeout = setTimeout(() => search(query), 300);
@@ -93,6 +120,10 @@ export const GlobalSearch = () => {
   const handleSelect = (item: SearchResult) => {
     setOpen(false);
     setQuery('');
+    if (item.navigateTo) {
+      navigate(item.navigateTo);
+      return;
+    }
     switch (item.type) {
       case 'task': navigate(`/tasks/${item.id}`); break;
       case 'project': navigate('/projects'); break;
@@ -106,6 +137,7 @@ export const GlobalSearch = () => {
     project: FolderKanban,
     client: Users,
     deal: DollarSign,
+    comment: MessageSquare,
   };
 
   const labelMap = {
@@ -113,6 +145,7 @@ export const GlobalSearch = () => {
     project: t('projects'),
     client: t('clients') || 'Клиенты',
     deal: t('deals') || 'Сделки',
+    comment: t('comments') || 'Комментарии',
   };
 
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, item) => {
