@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2 } from 'lucide-react';
+import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface SearchResult {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'task' | 'project' | 'client' | 'deal';
+  type: 'task' | 'project' | 'client' | 'deal' | 'comment';
+  navigateTo?: string;
 }
 
 export const GlobalSearch = () => {
