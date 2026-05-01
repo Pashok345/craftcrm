@@ -831,6 +831,7 @@ Deno.serve(async (req) => {
                 case "meetings_schedule": result = await meetingsSchedule(supabase, args, user.id); break;
                 case "team_analytics": result = await teamAnalytics(supabase, args); break;
                 case "create_task": result = await createTask(supabase, args, user.id); break;
+                case "create_subtask": result = await createSubtaskFn(supabase, args, user.id); break;
                 case "create_client": result = await createClientFn(supabase, args, user.id); break;
                 case "create_meeting": result = await createMeetingFn(supabase, args, user.id); break;
                 default: result = { error: `Unknown tool: ${tc.function.name}` };
