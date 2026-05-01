@@ -70,7 +70,27 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
 
-  const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
+  const [columns, setColumnsState] = useState<Column[]>(DEFAULT_COLUMNS);
+
+  const applyOrderFromStorage = (cols: Column[]): Column[] => {
+    try {
+      const saved = localStorage.getItem('kanban-column-order-v1');
+      if (!saved) return cols;
+      const order: string[] = JSON.parse(saved);
+      const idx = (id: string) => {
+        const i = order.indexOf(id);
+        return i === -1 ? order.length + cols.findIndex(c => c.id === id) : i;
+      };
+      return [...cols].sort((a, b) => idx(a.id) - idx(b.id));
+    } catch { return cols; }
+  };
+
+  const setColumns: typeof setColumnsState = (updater) => {
+    setColumnsState((prev) => {
+      const next = typeof updater === 'function' ? (updater as (p: Column[]) => Column[])(prev) : updater;
+      return next;
+    });
+  };
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem('kanban-task-order-v2');
     if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
