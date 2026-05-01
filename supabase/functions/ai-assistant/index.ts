@@ -537,6 +537,7 @@ async function createSubtaskFn(supabase: any, args: any, userId: string) {
   };
 }
 
+async function createClientFn(supabase: any, args: any, userId: string) {
   const { data, error } = await supabase.from("clients").insert({
     name: args.name,
     email: args.email || null,
