@@ -154,15 +154,9 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '').trim();
-    // Accept any valid service_role JWT (handles pg_cron tokens that may differ from current env key after rotation)
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload?.role !== 'service_role') {
-        console.log("Unauthorized: token role is not service_role");
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    } catch (e) {
-      console.log("Unauthorized: invalid JWT", e);
+    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!expectedKey || token !== expectedKey) {
+      console.log("Unauthorized: token does not match service_role key");
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
