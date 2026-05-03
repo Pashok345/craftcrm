@@ -69,37 +69,50 @@ serve(async (req) => {
       );
     }
 
-    // Authorization checks
-    if (task_id) {
+    // Authorization: self-notify is always allowed; otherwise require task_id with verified relationship
+    const { data: roleData } = await adminClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', currentUserId)
+      .eq('role', 'admin')
+      .maybeSingle();
+    const isAdmin = !!roleData;
+
+    if (!isAdmin && user_id !== currentUserId) {
+      if (!task_id) {
+        return new Response(
+          JSON.stringify({ error: 'task_id required for cross-user notifications' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const { data: taskRelation } = await adminClient
         .from('tasks')
         .select('id, created_by')
         .eq('id', task_id)
         .single();
-      
+
       const { data: assigneeRelation } = await adminClient
         .from('task_assignees')
         .select('id')
         .eq('task_id', task_id)
         .eq('user_id', currentUserId)
         .maybeSingle();
-      
-      const isTaskRelated = taskRelation?.created_by === currentUserId || !!assigneeRelation;
-      
-      if (!isTaskRelated) {
-        const { data: roleData } = await adminClient
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', currentUserId)
-          .eq('role', 'admin')
-          .maybeSingle();
-        
-        if (!roleData) {
-          return new Response(
-            JSON.stringify({ error: 'Insufficient permissions' }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+
+      const { data: recipientRelation } = await adminClient
+        .from('task_assignees')
+        .select('id')
+        .eq('task_id', task_id)
+        .eq('user_id', user_id)
+        .maybeSingle();
+
+      const callerRelated = taskRelation?.created_by === currentUserId || !!assigneeRelation;
+      const recipientRelated = taskRelation?.created_by === user_id || !!recipientRelation;
+
+      if (!callerRelated || !recipientRelated) {
+        return new Response(
+          JSON.stringify({ error: 'Insufficient permissions' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
 
