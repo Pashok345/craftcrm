@@ -33,7 +33,7 @@ const generateInvitationEmail = (name: string, email: string, resetLink: string)
         <span style="font-size: 48px;">🚀</span>
       </div>
       <h1 style="color: #111827; font-size: 24px; margin: 0 0 8px 0; text-align: center;">
-        Вітаємо, ${name || 'колего'}! 👋
+        Вітаємо, ${escapeHtml(name || 'колего')}! 👋
       </h1>
       <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
         Вас запрошено до CRM системи
@@ -45,7 +45,7 @@ const generateInvitationEmail = (name: string, email: string, resetLink: string)
           <span style="font-size: 20px; margin-right: 10px;">📧</span>
           <div>
             <p style="color: #6b7280; margin: 0; font-size: 14px;">Ваша пошта</p>
-            <p style="color: #111827; margin: 0; font-weight: 600;">${email}</p>
+            <p style="color: #111827; margin: 0; font-weight: 600;">${escapeHtml(email)}</p>
           </div>
         </div>
       </div>
