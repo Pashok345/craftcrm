@@ -76,6 +76,33 @@ serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Authorization: caller must own/be related to the entity, or be admin
+    const { data: roleData } = await adminClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    const isAdmin = !!roleData;
+
+    if (!isAdmin) {
+      let allowed = false;
+      if (entity_type === 'task') {
+        const { data: t } = await adminClient.from('tasks').select('created_by').eq('id', entity_id).maybeSingle();
+        if (t?.created_by === user.id) allowed = true;
+        if (!allowed) {
+          const { data: a } = await adminClient.from('task_assignees').select('id').eq('task_id', entity_id).eq('user_id', user.id).maybeSingle();
+          if (a) allowed = true;
+        }
+      } else if (entity_type === 'project') {
+        const { data: p } = await adminClient.from('projects').select('created_by, manager_id').eq('id', entity_id).maybeSingle();
+        if (p && (p.created_by === user.id || p.manager_id === user.id)) allowed = true;
+      }
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     const { data: profiles } = await adminClient
       .from('profiles')
       .select('user_id, email, name')
