@@ -13,6 +13,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: any) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -109,12 +111,12 @@ async function sendMeetingEmails(
                 <div style="background-color: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
                   <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">${emojiMap[reminderType]}</span></div>
                   <h1 style="color: ${colorMap[reminderType]}; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Нагадування про зустріч</h1>
-                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">Вітаємо, ${userData.name || 'колего'}!</p>
+                  <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">Вітаємо, ${escapeHtml(userData.name || 'колего')}!</p>
                   <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 24px; border-left: 4px solid ${colorMap[reminderType]};">
-                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${meeting.title}</h2>
-                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">📅 <strong>Дата:</strong> ${meeting.meeting_date}</p>
-                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">🕐 <strong>Час:</strong> ${meeting.start_time.slice(0, 5)}${meeting.end_time ? ` - ${meeting.end_time.slice(0, 5)}` : ''}</p>
-                    ${meeting.description ? `<p style="color: #6b7280; margin: 12px 0 0 0; font-size: 14px;">📝 <strong>Опис:</strong> ${meeting.description}</p>` : ''}
+                    <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${escapeHtml(meeting.title)}</h2>
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">📅 <strong>Дата:</strong> ${escapeHtml(meeting.meeting_date)}</p>
+                    <p style="color: #6b7280; margin: 0 0 8px 0; font-size: 14px;">🕐 <strong>Час:</strong> ${escapeHtml(meeting.start_time.slice(0, 5))}${meeting.end_time ? ` - ${escapeHtml(meeting.end_time.slice(0, 5))}` : ''}</p>
+                    ${meeting.description ? `<p style="color: #6b7280; margin: 12px 0 0 0; font-size: 14px;">📝 <strong>Опис:</strong> ${escapeHtml(meeting.description)}</p>` : ''}
                   </div>
                   <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center; font-weight: 500;">${reminderText[reminderType].message}</p>
                 </div>
@@ -154,15 +156,9 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '').trim();
-    // Accept any valid service_role JWT (handles pg_cron tokens that may differ from current env key after rotation)
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload?.role !== 'service_role') {
-        console.log("Unauthorized: token role is not service_role");
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    } catch (e) {
-      console.log("Unauthorized: invalid JWT", e);
+    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!expectedKey || token !== expectedKey) {
+      console.log("Unauthorized: token does not match service_role key");
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

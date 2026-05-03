@@ -13,6 +13,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: any) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -104,12 +106,12 @@ serve(async (req) => {
                     <div style="text-align:center;margin-bottom:24px;"><span style="font-size:48px;">🔔</span></div>
                     <h1 style="color:#f59e0b;font-size:24px;margin:0 0 8px;text-align:center;">Follow-up нагадування</h1>
                     <p style="color:#6b7280;font-size:16px;margin:0 0 32px;text-align:center;">
-                      Вітаємо, ${profile.name || 'колего'}! Угода потребує вашої уваги.
+                      Вітаємо, ${escapeHtml(profile.name || 'колего')}! Угода потребує вашої уваги.
                     </p>
                     <div style="background:#fef3c7;border-radius:12px;padding:24px;border-left:4px solid #f59e0b;">
-                      <h2 style="color:#1f2937;margin:0 0 16px;font-size:18px;">${deal.title}</h2>
-                      <p style="color:#6b7280;margin:0 0 8px;font-size:14px;">👤 <strong>Клієнт:</strong> ${clientName}</p>
-                      <p style="color:#6b7280;margin:0 0 8px;font-size:14px;">💰 <strong>Сума:</strong> ${amount}</p>
+                      <h2 style="color:#1f2937;margin:0 0 16px;font-size:18px;">${escapeHtml(deal.title)}</h2>
+                      <p style="color:#6b7280;margin:0 0 8px;font-size:14px;">👤 <strong>Клієнт:</strong> ${escapeHtml(clientName)}</p>
+                      <p style="color:#6b7280;margin:0 0 8px;font-size:14px;">💰 <strong>Сума:</strong> ${escapeHtml(amount)}</p>
                       <p style="color:#6b7280;margin:0;font-size:14px;">⏳ <strong>Без активності:</strong> ${daysSinceUpdate} днів</p>
                     </div>
                     <p style="color:#6b7280;font-size:14px;margin:24px 0 0;text-align:center;">
