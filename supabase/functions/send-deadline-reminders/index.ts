@@ -13,6 +13,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (s: string) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const emailHeader = `
   <div style="text-align: center; margin-bottom: 32px;">
     <img src="${LOGO_URL}" alt="CRM Pro" style="max-width: 180px; height: auto;">
@@ -111,7 +113,7 @@ serve(async (req) => {
           const { error: emailError } = await resend.emails.send({
             from: "CRM <onboarding@resend.dev>",
             to: [profile.email],
-            subject: `⏰ Нагадування: дедлайн завдання "${task.title}" завтра`,
+            subject: `⏰ Нагадування: дедлайн завдання "${escapeHtml(task.title)}" завтра`,
             html: `
               <!DOCTYPE html>
               <html>
@@ -123,17 +125,17 @@ serve(async (req) => {
                     <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 48px;">⏰</span></div>
                     <h1 style="color: #f59e0b; font-size: 24px; margin: 0 0 8px 0; text-align: center;">Наближається дедлайн!</h1>
                     <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0; text-align: center;">
-                      Вітаємо, ${profile.name || 'колего'}! Нагадуємо про завдання.
+                      Вітаємо, ${escapeHtml(profile.name || 'колего')}! Нагадуємо про завдання.
                     </p>
                     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #f59e0b;">
-                      <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${task.title}</h2>
+                      <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 18px;">${escapeHtml(task.title)}</h2>
                       <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <span style="font-size: 16px; margin-right: 8px;">📅</span>
                         <p style="color: #6b7280; margin: 0; font-size: 14px;"><strong>Дедлайн:</strong> ${tomorrowDate}</p>
                       </div>
                       <div style="display: flex; align-items: center;">
                         <span style="font-size: 16px; margin-right: 8px;">📋</span>
-                        <p style="color: #6b7280; margin: 0; font-size: 14px;"><strong>Статус:</strong> ${getStatusLabel(task.status)}</p>
+                        <p style="color: #6b7280; margin: 0; font-size: 14px;"><strong>Статус:</strong> ${escapeHtml(getStatusLabel(task.status))}</p>
                       </div>
                     </div>
                     <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0 0; text-align: center;">
