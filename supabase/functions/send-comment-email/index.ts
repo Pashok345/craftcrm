@@ -59,9 +59,9 @@ serve(async (req) => {
 
     const user = { id: claimsData.claims.sub as string };
 
-    const { task_id, task_title, comment_text, commenter_name, recipient_user_ids }: CommentEmailRequest = await req.json();
+    const { task_id, comment_text, recipient_user_ids: requestedRecipients }: CommentEmailRequest = await req.json();
 
-    if (!task_id || !recipient_user_ids || recipient_user_ids.length === 0) {
+    if (!task_id || !requestedRecipients || requestedRecipients.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -70,11 +70,16 @@ serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Fetch task title from DB (don't trust client)
     const { data: taskData } = await adminClient
       .from('tasks')
-      .select('created_by')
+      .select('created_by, title')
       .eq('id', task_id)
       .single();
+
+    if (!taskData) {
+      return new Response(JSON.stringify({ error: 'Task not found' }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const { data: assigneeData } = await adminClient
       .from('task_assignees')
@@ -83,12 +88,31 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (taskData?.created_by !== user.id && !assigneeData) {
+    if (taskData.created_by !== user.id && !assigneeData) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Build verified recipient set: task creator + all assignees
+    const { data: allAssignees } = await adminClient
+      .from('task_assignees')
+      .select('user_id')
+      .eq('task_id', task_id);
+    const allowedRecipients = new Set<string>([taskData.created_by, ...(allAssignees?.map(a => a.user_id) ?? [])]);
+    const recipient_user_ids = requestedRecipients.filter(id => allowedRecipients.has(id));
+
+    if (recipient_user_ids.length === 0) {
+      return new Response(JSON.stringify({ error: 'No valid recipients' }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Derive commenter name from auth-verified user
+    const { data: callerProfile } = await adminClient
+      .from('profiles')
+      .select('name')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
     const { data: profiles } = await adminClient
       .from('profiles')
@@ -103,8 +127,8 @@ serve(async (req) => {
     }
 
     const emailsSent: string[] = [];
-    const safeTaskTitle = escapeHtml(task_title || '');
-    const safeCommenterName = escapeHtml(commenter_name || '');
+    const safeTaskTitle = escapeHtml(taskData.title || '');
+    const safeCommenterName = escapeHtml(callerProfile?.name || 'Колега');
     const rawComment = comment_text?.length > 200 ? comment_text.slice(0, 200) + '...' : (comment_text || '');
     const safeComment = escapeHtml(rawComment);
 
