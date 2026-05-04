@@ -226,6 +226,130 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "update_task",
+      description: "Изменить существующую задачу. Найди по task_id или task_query (часть названия). Обновляй только переданные поля.",
+      parameters: {
+        type: "object",
+        properties: {
+          task_id: { type: "string", description: "UUID задачи (если известен)" },
+          task_query: { type: "string", description: "Часть названия задачи для поиска" },
+          title: { type: "string" },
+          description: { type: "string" },
+          status: { type: "string", enum: ["todo", "in_progress", "review", "done"] },
+          deadline: { type: "string", description: "YYYY-MM-DD или ISO; пустая строка очищает" },
+          color: { type: "string", description: "HEX цвет, напр. #3b82f6" },
+          project_query: { type: "string", description: "Название проекта для привязки (опционально)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_subtask",
+      description: "Изменить подзадачу: переименовать или отметить выполненной/невыполненной. Ищи через subtask_query внутри указанной задачи.",
+      parameters: {
+        type: "object",
+        properties: {
+          subtask_id: { type: "string" },
+          task_query: { type: "string", description: "Часть названия родительской задачи (если subtask_id неизвестен)" },
+          subtask_query: { type: "string", description: "Часть названия подзадачи" },
+          title: { type: "string" },
+          is_completed: { type: "boolean" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_project",
+      description: "Изменить существующий проект. Найди по project_id или project_query.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_id: { type: "string" },
+          project_query: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string" },
+          status: { type: "string", enum: ["planning", "in_progress", "on_hold", "completed", "cancelled"] },
+          budget: { type: "number" },
+          currency: { type: "string", description: "USD/EUR/UAH/RUB и т.д." },
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_task_assignees",
+      description: "Добавить пользователей в задачу как исполнителей (executor) или наблюдателей (observer). Ищи по именам.",
+      parameters: {
+        type: "object",
+        properties: {
+          task_id: { type: "string" },
+          task_query: { type: "string" },
+          user_names: { type: "array", items: { type: "string" }, description: "Имена пользователей" },
+          role: { type: "string", enum: ["executor", "observer"], description: "По умолчанию executor" },
+        },
+        required: ["user_names"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_task_tags",
+      description: "Добавить теги к задаче. Если тег с таким именем не существует — создаст его.",
+      parameters: {
+        type: "object",
+        properties: {
+          task_id: { type: "string" },
+          task_query: { type: "string" },
+          tag_names: { type: "array", items: { type: "string" } },
+        },
+        required: ["tag_names"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "log_time",
+      description: "Записать время работы по задаче в минутах. Время фиксируется как завершённый интервал заканчивающийся сейчас.",
+      parameters: {
+        type: "object",
+        properties: {
+          task_id: { type: "string" },
+          task_query: { type: "string" },
+          minutes: { type: "number", description: "Количество минут" },
+          description: { type: "string" },
+        },
+        required: ["minutes"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_whiteboard",
+      description: "Создать новую доску (whiteboard). Опционально привязать к проекту.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          project_query: { type: "string", description: "Название проекта для привязки (опц.)" },
+        },
+        required: ["title"],
+      },
+    },
+  },
 ];
 
 // ===== Tool implementations =====
