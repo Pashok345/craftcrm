@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Clock, Users, ChevronRight } from 'lucide-react';
 import { format, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { expandRecurringForDay } from '@/lib/recurrence';
 import { Meeting, Profile } from '@/types/database';
 import { MeetingDialog } from './MeetingDialog';
 import { MeetingDetailDialog } from './MeetingDetailDialog';
