@@ -1021,11 +1021,11 @@ async function logTimeFn(supabase: any, args: any, userId: string) {
   return { success: true, time_entry_id: data.id, task: { id: task.id, title: task.title }, minutes: Math.round(minutes) };
 }
 
-async function createWhiteboardFn(supabase: any, args: any, userId: string) {
+async function createWhiteboardFn(supabase: any, adminClient: any, args: any, userId: string) {
   if (!args.title) return { error: "Нужен title." };
-  const task = (args.task_id || args.task_query) ? await findTaskId(supabase, args) : null;
+  const task = (args.task_id || args.task_query) ? await findLinkableTask(adminClient, args, userId) : null;
   if ((args.task_id || args.task_query) && !task) {
-    return { error: "Задача не найдена. Передай task_id или уточни task_query." };
+    return { error: "Задача не найдена или у вас нет прав привязать к ней доску." };
   }
 
   let projectId: string | null = null;
@@ -1036,7 +1036,7 @@ async function createWhiteboardFn(supabase: any, args: any, userId: string) {
     if (proj) projectId = proj.id;
   }
 
-  const { data, error } = await supabase.from("whiteboards").insert({
+  const { data, error } = await adminClient.from("whiteboards").insert({
     title: args.title,
     description: args.description || null,
     project_id: projectId,
@@ -1046,13 +1046,13 @@ async function createWhiteboardFn(supabase: any, args: any, userId: string) {
 
   let linkedTask: { id: string; title: string } | null = null;
   if (task) {
-    const { error: linkError } = await supabase.from("task_whiteboards").insert({
+    const { error: linkError } = await adminClient.from("task_whiteboards").insert({
       task_id: task.id,
       whiteboard_id: data.id,
       created_by: userId,
     });
     if (linkError) {
-      await supabase.from("whiteboards").delete().eq("id", data.id);
+      await adminClient.from("whiteboards").delete().eq("id", data.id);
       return { error: `Доска создана, но не удалось привязать к задаче: ${linkError.message}` };
     }
     linkedTask = { id: task.id, title: task.title };
