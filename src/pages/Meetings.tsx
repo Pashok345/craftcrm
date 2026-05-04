@@ -27,6 +27,7 @@ import {
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { expandRecurringMeetings, expandRecurringForDay } from '@/lib/recurrence';
 
 interface MeetingWithParticipants extends Meeting {
   participants?: Profile[];
