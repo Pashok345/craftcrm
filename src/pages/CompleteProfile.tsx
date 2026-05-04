@@ -170,13 +170,12 @@ const CompleteProfile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not found');
 
-      // Update profile
+      // Update non-sensitive profile fields (is_verified is admin-only via RLS)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           phone: phone && phone.length > 4 ? phone : null,
           position: position,
-          is_verified: true, // Mark as verified since they completed the profile
         })
         .eq('user_id', user.id);
 
