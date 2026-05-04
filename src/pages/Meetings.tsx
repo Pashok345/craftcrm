@@ -27,6 +27,7 @@ import {
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { expandRecurringMeetings, expandRecurringForDay } from '@/lib/recurrence';
 
 interface MeetingWithParticipants extends Meeting {
   participants?: Profile[];
@@ -109,53 +110,76 @@ const Meetings = () => {
 
   const fetchMeetings = async () => {
     if (!user) return;
-    
+
     try {
       const start = startOfMonth(currentDate);
       const end = endOfMonth(currentDate);
+      const startStr = start.toISOString().split('T')[0];
+      const endStr = end.toISOString().split('T')[0];
 
-      // Get meetings where user is creator
+      // 1) Meetings in current month range (created or invited) — non-recurring/regular
       const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
         .eq('created_by', user.id)
-        .gte('meeting_date', start.toISOString().split('T')[0])
-        .lte('meeting_date', end.toISOString().split('T')[0])
+        .gte('meeting_date', startStr)
+        .lte('meeting_date', endStr)
         .order('start_time', { ascending: true });
-
       if (createdError) throw createdError;
 
-      // Get meetings where user is participant
       const { data: participantData, error: participantError } = await supabase
         .from('meeting_participants')
         .select('meeting_id')
         .eq('user_id', user.id);
-
       if (participantError) throw participantError;
 
-      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
-      
+      const participantMeetingIds = participantData?.map((p) => p.meeting_id) || [];
+
       let participantMeetings: Meeting[] = [];
       if (participantMeetingIds.length > 0) {
         const { data: invitedMeetings, error: invitedError } = await supabase
           .from('meetings')
           .select('*')
           .in('id', participantMeetingIds)
-          .gte('meeting_date', start.toISOString().split('T')[0])
-          .lte('meeting_date', end.toISOString().split('T')[0])
+          .gte('meeting_date', startStr)
+          .lte('meeting_date', endStr)
           .order('start_time', { ascending: true });
-
         if (invitedError) throw invitedError;
         participantMeetings = (invitedMeetings || []) as Meeting[];
       }
 
-      // Combine and deduplicate
-      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
-      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
-        index === self.findIndex(m => m.id === meeting.id)
+      // 2) Recurring meetings whose BASE date is on/before end of range — fetch them too
+      // (their virtual occurrences may fall inside the range)
+      const { data: recurringCreated } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('created_by', user.id)
+        .not('recurrence_rule', 'is', null)
+        .lte('meeting_date', endStr);
+
+      let recurringInvited: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .not('recurrence_rule', 'is', null)
+          .lte('meeting_date', endStr);
+        recurringInvited = (data || []) as Meeting[];
+      }
+
+      const allMeetings = [
+        ...(createdMeetings || []),
+        ...participantMeetings,
+        ...(recurringCreated || []),
+        ...recurringInvited,
+      ];
+      const uniqueMeetings = allMeetings.filter(
+        (meeting, index, self) => index === self.findIndex((m) => m.id === meeting.id)
       );
 
-      setMeetings(uniqueMeetings as MeetingWithParticipants[]);
+      const expanded = expandRecurringMeetings(uniqueMeetings as any[], start, end);
+      setMeetings(expanded as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching meetings:', error);
     } finally {
@@ -165,30 +189,27 @@ const Meetings = () => {
 
   const fetchDayMeetings = async () => {
     if (!user) return;
-    
+
     try {
       const dateStr = format(selectedDay, 'yyyy-MM-dd');
-      
-      // Get meetings where user is creator
+
+      // Non-recurring on this exact day (created)
       const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
         .eq('created_by', user.id)
         .eq('meeting_date', dateStr)
         .order('start_time', { ascending: true });
-
       if (createdError) throw createdError;
 
-      // Get meetings where user is participant
       const { data: participantData, error: participantError } = await supabase
         .from('meeting_participants')
         .select('meeting_id')
         .eq('user_id', user.id);
-
       if (participantError) throw participantError;
 
-      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
-      
+      const participantMeetingIds = participantData?.map((p) => p.meeting_id) || [];
+
       let participantMeetings: Meeting[] = [];
       if (participantMeetingIds.length > 0) {
         const { data: invitedMeetings, error: invitedError } = await supabase
@@ -197,18 +218,41 @@ const Meetings = () => {
           .in('id', participantMeetingIds)
           .eq('meeting_date', dateStr)
           .order('start_time', { ascending: true });
-
         if (invitedError) throw invitedError;
         participantMeetings = (invitedMeetings || []) as Meeting[];
       }
 
-      // Combine and deduplicate
-      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
-      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
-        index === self.findIndex(m => m.id === meeting.id)
+      // Recurring meetings whose base_date <= selectedDay (might recur on this day)
+      const { data: recurringCreated } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('created_by', user.id)
+        .not('recurrence_rule', 'is', null)
+        .lte('meeting_date', dateStr);
+
+      let recurringInvited: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .not('recurrence_rule', 'is', null)
+          .lte('meeting_date', dateStr);
+        recurringInvited = (data || []) as Meeting[];
+      }
+
+      const allMeetings = [
+        ...(createdMeetings || []),
+        ...participantMeetings,
+        ...(recurringCreated || []),
+        ...recurringInvited,
+      ];
+      const uniqueMeetings = allMeetings.filter(
+        (meeting, index, self) => index === self.findIndex((m) => m.id === meeting.id)
       );
 
-      setDayMeetings(uniqueMeetings as MeetingWithParticipants[]);
+      const expanded = expandRecurringForDay(uniqueMeetings as any[], selectedDay);
+      setDayMeetings(expanded as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching day meetings:', error);
     }
@@ -243,7 +287,13 @@ const Meetings = () => {
   };
 
   const handleMeetingClick = (meeting: MeetingWithParticipants) => {
-    setSelectedMeeting(meeting);
+    // Virtual recurring instance — resolve to the original record so edit/delete works
+    const anyM = meeting as any;
+    if (anyM.is_recurring_instance && anyM.original_id) {
+      setSelectedMeeting({ ...meeting, id: anyM.original_id });
+    } else {
+      setSelectedMeeting(meeting);
+    }
     setDetailOpen(true);
   };
 

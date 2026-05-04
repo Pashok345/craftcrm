@@ -184,13 +184,13 @@ export const GlobalSearch = () => {
                   <button
                     key={`${item.type}-${item.id}`}
                     onClick={() => handleSelect(item)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left cursor-pointer"
+                    className="group w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors text-left cursor-pointer"
                   >
-                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground shrink-0" />
                     <div className="flex flex-col min-w-0">
                       <span className="truncate">{item.title}</span>
                       {item.subtitle && (
-                        <span className="text-xs text-muted-foreground truncate">{item.subtitle}</span>
+                        <span className="text-xs text-muted-foreground group-hover:text-accent-foreground/80 truncate">{item.subtitle}</span>
                       )}
                     </div>
                   </button>
