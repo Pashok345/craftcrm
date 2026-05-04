@@ -189,30 +189,27 @@ const Meetings = () => {
 
   const fetchDayMeetings = async () => {
     if (!user) return;
-    
+
     try {
       const dateStr = format(selectedDay, 'yyyy-MM-dd');
-      
-      // Get meetings where user is creator
+
+      // Non-recurring on this exact day (created)
       const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
         .eq('created_by', user.id)
         .eq('meeting_date', dateStr)
         .order('start_time', { ascending: true });
-
       if (createdError) throw createdError;
 
-      // Get meetings where user is participant
       const { data: participantData, error: participantError } = await supabase
         .from('meeting_participants')
         .select('meeting_id')
         .eq('user_id', user.id);
-
       if (participantError) throw participantError;
 
-      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
-      
+      const participantMeetingIds = participantData?.map((p) => p.meeting_id) || [];
+
       let participantMeetings: Meeting[] = [];
       if (participantMeetingIds.length > 0) {
         const { data: invitedMeetings, error: invitedError } = await supabase
@@ -221,18 +218,41 @@ const Meetings = () => {
           .in('id', participantMeetingIds)
           .eq('meeting_date', dateStr)
           .order('start_time', { ascending: true });
-
         if (invitedError) throw invitedError;
         participantMeetings = (invitedMeetings || []) as Meeting[];
       }
 
-      // Combine and deduplicate
-      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
-      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
-        index === self.findIndex(m => m.id === meeting.id)
+      // Recurring meetings whose base_date <= selectedDay (might recur on this day)
+      const { data: recurringCreated } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('created_by', user.id)
+        .not('recurrence_rule', 'is', null)
+        .lte('meeting_date', dateStr);
+
+      let recurringInvited: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .not('recurrence_rule', 'is', null)
+          .lte('meeting_date', dateStr);
+        recurringInvited = (data || []) as Meeting[];
+      }
+
+      const allMeetings = [
+        ...(createdMeetings || []),
+        ...participantMeetings,
+        ...(recurringCreated || []),
+        ...recurringInvited,
+      ];
+      const uniqueMeetings = allMeetings.filter(
+        (meeting, index, self) => index === self.findIndex((m) => m.id === meeting.id)
       );
 
-      setDayMeetings(uniqueMeetings as MeetingWithParticipants[]);
+      const expanded = expandRecurringForDay(uniqueMeetings as any[], selectedDay);
+      setDayMeetings(expanded as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching day meetings:', error);
     }
