@@ -287,7 +287,13 @@ const Meetings = () => {
   };
 
   const handleMeetingClick = (meeting: MeetingWithParticipants) => {
-    setSelectedMeeting(meeting);
+    // Virtual recurring instance — resolve to the original record so edit/delete works
+    const anyM = meeting as any;
+    if (anyM.is_recurring_instance && anyM.original_id) {
+      setSelectedMeeting({ ...meeting, id: anyM.original_id });
+    } else {
+      setSelectedMeeting(meeting);
+    }
     setDetailOpen(true);
   };
 
