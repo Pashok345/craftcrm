@@ -1079,6 +1079,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -1234,7 +1238,7 @@ Deno.serve(async (req) => {
                 case "add_task_assignees": result = await addTaskAssigneesFn(supabase, args); break;
                 case "add_task_tags": result = await addTaskTagsFn(supabase, args, user.id); break;
                 case "log_time": result = await logTimeFn(supabase, args, user.id); break;
-                case "create_whiteboard": result = await createWhiteboardFn(supabase, args, user.id); break;
+                case "create_whiteboard": result = await createWhiteboardFn(supabase, adminClient, args, user.id); break;
                 default: result = { error: `Unknown tool: ${tc.function.name}` };
               }
             } catch (e) {
