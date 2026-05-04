@@ -828,6 +828,45 @@ async function findProjectId(supabase: any, args: any): Promise<{ id: string; ti
   return null;
 }
 
+async function userCanLinkTask(adminClient: any, task: any, userId: string): Promise<boolean> {
+  if (!task) return false;
+  if (task.created_by === userId) return true;
+
+  const { data: role } = await adminClient
+    .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+  if (role) return true;
+
+  const { data: assignee } = await adminClient
+    .from("task_assignees").select("user_id").eq("task_id", task.id).eq("user_id", userId).maybeSingle();
+  if (assignee) return true;
+
+  if (task.project_id) {
+    const { data: member } = await adminClient
+      .from("project_members").select("user_id").eq("project_id", task.project_id).eq("user_id", userId).maybeSingle();
+    if (member) return true;
+  }
+
+  return false;
+}
+
+async function findLinkableTask(adminClient: any, args: any, userId: string): Promise<any | null> {
+  if (args.task_id) {
+    const { data } = await adminClient
+      .from("tasks").select("id, title, project_id, created_by").eq("id", args.task_id).maybeSingle();
+    return (await userCanLinkTask(adminClient, data, userId)) ? data : null;
+  }
+
+  if (args.task_query) {
+    const { data } = await adminClient
+      .from("tasks").select("id, title, project_id, created_by").ilike("title", `%${args.task_query}%`).limit(10);
+    for (const task of data || []) {
+      if (await userCanLinkTask(adminClient, task, userId)) return task;
+    }
+  }
+
+  return null;
+}
+
 async function updateTaskFn(supabase: any, args: any) {
   const found = await findTaskId(supabase, args);
   if (!found) return { error: "Задача не найдена. Передай task_id или уточни task_query." };
