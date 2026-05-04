@@ -798,6 +798,205 @@ async function createMeetingFn(supabase: any, args: any, userId: string) {
   };
 }
 
+// ===== New helpers: edit/manage =====
+
+async function findTaskId(supabase: any, args: any): Promise<{ id: string; title: string } | null> {
+  if (args.task_id) {
+    const { data } = await supabase.from("tasks").select("id, title").eq("id", args.task_id).maybeSingle();
+    if (data) return data;
+  }
+  if (args.task_query) {
+    const { data } = await supabase
+      .from("tasks").select("id, title").ilike("title", `%${args.task_query}%`).limit(1);
+    if (data && data.length) return data[0];
+  }
+  return null;
+}
+
+async function findProjectId(supabase: any, args: any): Promise<{ id: string; title: string } | null> {
+  if (args.project_id) {
+    const { data } = await supabase.from("projects").select("id, title").eq("id", args.project_id).maybeSingle();
+    if (data) return data;
+  }
+  if (args.project_query) {
+    const { data } = await supabase
+      .from("projects").select("id, title").ilike("title", `%${args.project_query}%`).limit(1);
+    if (data && data.length) return data[0];
+  }
+  return null;
+}
+
+async function updateTaskFn(supabase: any, args: any) {
+  const found = await findTaskId(supabase, args);
+  if (!found) return { error: "Задача не найдена. Передай task_id или уточни task_query." };
+
+  const patch: any = {};
+  if (typeof args.title === "string") patch.title = args.title;
+  if (typeof args.description === "string") patch.description = args.description || null;
+  if (typeof args.status === "string") patch.status = args.status;
+  if (typeof args.color === "string") patch.color = args.color;
+  if (typeof args.deadline === "string") patch.deadline = args.deadline ? args.deadline : null;
+  if (args.project_query) {
+    const proj = await findProjectId(supabase, { project_query: args.project_query });
+    if (proj) patch.project_id = proj.id;
+  }
+
+  if (Object.keys(patch).length === 0) return { error: "Не передано ни одного поля для обновления." };
+
+  const { error } = await supabase.from("tasks").update(patch).eq("id", found.id);
+  if (error) return { error: error.message };
+  return { success: true, task: { id: found.id, title: patch.title || found.title }, updated_fields: Object.keys(patch) };
+}
+
+async function updateSubtaskFn(supabase: any, args: any) {
+  let subtaskId: string | null = args.subtask_id || null;
+
+  if (!subtaskId) {
+    if (!args.subtask_query) return { error: "Нужен subtask_id или subtask_query." };
+    let taskId: string | null = null;
+    if (args.task_query) {
+      const t = await findTaskId(supabase, { task_query: args.task_query });
+      if (t) taskId = t.id;
+    }
+    let q = supabase.from("subtasks").select("id, title, task_id").ilike("title", `%${args.subtask_query}%`).limit(1);
+    if (taskId) q = q.eq("task_id", taskId);
+    const { data } = await q;
+    if (!data || !data.length) return { error: "Подзадача не найдена." };
+    subtaskId = data[0].id;
+  }
+
+  const patch: any = {};
+  if (typeof args.title === "string") patch.title = args.title;
+  if (typeof args.is_completed === "boolean") {
+    patch.is_completed = args.is_completed;
+    patch.completed_at = args.is_completed ? new Date().toISOString() : null;
+  }
+  if (Object.keys(patch).length === 0) return { error: "Нечего обновлять." };
+
+  const { error } = await supabase.from("subtasks").update(patch).eq("id", subtaskId);
+  if (error) return { error: error.message };
+  return { success: true, subtask_id: subtaskId, updated_fields: Object.keys(patch) };
+}
+
+async function updateProjectFn(supabase: any, args: any) {
+  const found = await findProjectId(supabase, args);
+  if (!found) return { error: "Проект не найден." };
+
+  const patch: any = {};
+  if (typeof args.title === "string") patch.title = args.title;
+  if (typeof args.description === "string") patch.description = args.description || null;
+  if (typeof args.status === "string") patch.status = args.status;
+  if (typeof args.budget === "number") patch.budget = args.budget;
+  if (typeof args.currency === "string") patch.currency = args.currency;
+  if (typeof args.start_date === "string") patch.start_date = args.start_date || null;
+  if (typeof args.end_date === "string") patch.end_date = args.end_date || null;
+
+  if (Object.keys(patch).length === 0) return { error: "Не передано ни одного поля для обновления." };
+
+  const { error } = await supabase.from("projects").update(patch).eq("id", found.id);
+  if (error) return { error: error.message };
+  return { success: true, project: { id: found.id, title: patch.title || found.title }, updated_fields: Object.keys(patch) };
+}
+
+async function addTaskAssigneesFn(supabase: any, args: any) {
+  const task = await findTaskId(supabase, args);
+  if (!task) return { error: "Задача не найдена." };
+  const role = args.role === "observer" ? "observer" : "executor";
+  const names: string[] = Array.isArray(args.user_names) ? args.user_names : [];
+  if (names.length === 0) return { error: "Нужны user_names." };
+
+  const matched: { user_id: string; name: string }[] = [];
+  const notFound: string[] = [];
+  for (const raw of names) {
+    const name = String(raw).trim();
+    if (!name) continue;
+    const { data: profs } = await supabase
+      .from("public_profiles").select("user_id, name").ilike("name", `%${name}%`).limit(1);
+    if (profs && profs.length) matched.push({ user_id: profs[0].user_id, name: profs[0].name });
+    else notFound.push(name);
+  }
+
+  if (matched.length === 0) {
+    return { error: "Никто из указанных пользователей не найден.", not_found: notFound };
+  }
+
+  const rows = matched.map((m) => ({ task_id: task.id, user_id: m.user_id, role }));
+  const { error } = await supabase.from("task_assignees").upsert(rows, { onConflict: "task_id,user_id,role", ignoreDuplicates: true });
+  if (error) return { error: error.message };
+  return {
+    success: true,
+    task: { id: task.id, title: task.title },
+    role,
+    added: matched.map((m) => m.name),
+    not_found: notFound,
+  };
+}
+
+async function addTaskTagsFn(supabase: any, args: any, userId: string) {
+  const task = await findTaskId(supabase, args);
+  if (!task) return { error: "Задача не найдена." };
+  const names: string[] = Array.isArray(args.tag_names) ? args.tag_names.filter((s: any) => typeof s === "string" && s.trim()) : [];
+  if (names.length === 0) return { error: "Нужны tag_names." };
+
+  const tagIds: string[] = [];
+  for (const rawName of names) {
+    const name = rawName.trim();
+    const { data: existing } = await supabase.from("tags").select("id").ilike("name", name).limit(1);
+    if (existing && existing.length) {
+      tagIds.push(existing[0].id);
+      continue;
+    }
+    const { data: created, error: ce } = await supabase
+      .from("tags").insert({ name, color: "#6366f1", created_by: userId }).select("id").single();
+    if (ce) return { error: `Не удалось создать тег "${name}": ${ce.message}` };
+    if (created) tagIds.push(created.id);
+  }
+
+  const rows = tagIds.map((id) => ({ task_id: task.id, tag_id: id }));
+  const { error } = await supabase.from("task_tags").upsert(rows, { onConflict: "task_id,tag_id", ignoreDuplicates: true });
+  if (error) return { error: error.message };
+  return { success: true, task: { id: task.id, title: task.title }, added_tags: names };
+}
+
+async function logTimeFn(supabase: any, args: any, userId: string) {
+  const task = await findTaskId(supabase, args);
+  if (!task) return { error: "Задача не найдена." };
+  const minutes = Number(args.minutes);
+  if (!minutes || minutes <= 0) return { error: "minutes должен быть положительным числом." };
+
+  const end = new Date();
+  const start = new Date(end.getTime() - minutes * 60 * 1000);
+
+  const { data, error } = await supabase.from("time_entries").insert({
+    task_id: task.id,
+    user_id: userId,
+    start_time: start.toISOString(),
+    end_time: end.toISOString(),
+    duration_minutes: Math.round(minutes),
+    description: args.description || null,
+  }).select("id").single();
+  if (error) return { error: error.message };
+
+  return { success: true, time_entry_id: data.id, task: { id: task.id, title: task.title }, minutes: Math.round(minutes) };
+}
+
+async function createWhiteboardFn(supabase: any, args: any, userId: string) {
+  if (!args.title) return { error: "Нужен title." };
+  let projectId: string | null = null;
+  if (args.project_query) {
+    const proj = await findProjectId(supabase, { project_query: args.project_query });
+    if (proj) projectId = proj.id;
+  }
+  const { data, error } = await supabase.from("whiteboards").insert({
+    title: args.title,
+    description: args.description || null,
+    project_id: projectId,
+    created_by: userId,
+  }).select("id, title").single();
+  if (error) return { error: error.message };
+  return { success: true, whiteboard: { id: data.id, title: data.title } };
+}
+
 // ===== Server =====
 
 Deno.serve(async (req) => {
