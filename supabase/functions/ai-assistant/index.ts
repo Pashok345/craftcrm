@@ -984,11 +984,19 @@ async function logTimeFn(supabase: any, args: any, userId: string) {
 
 async function createWhiteboardFn(supabase: any, args: any, userId: string) {
   if (!args.title) return { error: "Нужен title." };
+  const task = (args.task_id || args.task_query) ? await findTaskId(supabase, args) : null;
+  if ((args.task_id || args.task_query) && !task) {
+    return { error: "Задача не найдена. Передай task_id или уточни task_query." };
+  }
+
   let projectId: string | null = null;
-  if (args.project_query) {
+  if (task?.project_id) {
+    projectId = task.project_id;
+  } else if (args.project_query) {
     const proj = await findProjectId(supabase, { project_query: args.project_query });
     if (proj) projectId = proj.id;
   }
+
   const { data, error } = await supabase.from("whiteboards").insert({
     title: args.title,
     description: args.description || null,
@@ -996,7 +1004,22 @@ async function createWhiteboardFn(supabase: any, args: any, userId: string) {
     created_by: userId,
   }).select("id, title").single();
   if (error) return { error: error.message };
-  return { success: true, whiteboard: { id: data.id, title: data.title } };
+
+  let linkedTask: { id: string; title: string } | null = null;
+  if (task) {
+    const { error: linkError } = await supabase.from("task_whiteboards").insert({
+      task_id: task.id,
+      whiteboard_id: data.id,
+      created_by: userId,
+    });
+    if (linkError) {
+      await supabase.from("whiteboards").delete().eq("id", data.id);
+      return { error: `Доска создана, но не удалось привязать к задаче: ${linkError.message}` };
+    }
+    linkedTask = { id: task.id, title: task.title };
+  }
+
+  return { success: true, whiteboard: { id: data.id, title: data.title }, linked_task: linkedTask };
 }
 
 // ===== Server =====
