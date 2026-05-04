@@ -376,6 +376,61 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
             </div>
           </div>
 
+          <div className="space-y-2 border-t pt-4">
+            <Label>{t('repeatMeeting') || 'Повторение'}</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={recurrenceFreq}
+                onChange={(e) => setRecurrenceFreq(e.target.value as any)}
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="none">{t('noRepeat') || 'Не повторять'}</option>
+                <option value="daily">{t('daily') || 'Ежедневно'}</option>
+                <option value="weekly">{t('weekly') || 'Еженедельно'}</option>
+                <option value="monthly">{t('monthly') || 'Ежемесячно'}</option>
+              </select>
+              {recurrenceFreq !== 'none' && (
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={recurrenceInterval}
+                  onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  placeholder={t('every') || 'Каждые N'}
+                />
+              )}
+            </div>
+            {recurrenceFreq !== 'none' && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn('w-full justify-start text-left font-normal', !recurrenceUntil && 'text-muted-foreground')}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {recurrenceUntil
+                      ? `${t('until') || 'До'}: ${format(recurrenceUntil, 'PPP', { locale: dateLocale })}`
+                      : (t('endDateOptional') || 'Дата окончания (опционально)')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={recurrenceUntil}
+                    onSelect={setRecurrenceUntil}
+                    disabled={(d) => (date ? d <= date : false)}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+            {recurrenceFreq !== 'none' && (
+              <p className="text-xs text-muted-foreground">
+                {t('recurrenceHint') || 'Повторы будут отображаться в календаре до даты окончания (или 1 год вперёд).'}
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               {t('cancel') || 'Отмена'}
