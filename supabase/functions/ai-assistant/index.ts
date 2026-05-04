@@ -802,14 +802,14 @@ async function createMeetingFn(supabase: any, args: any, userId: string) {
 
 // ===== New helpers: edit/manage =====
 
-async function findTaskId(supabase: any, args: any): Promise<{ id: string; title: string } | null> {
+async function findTaskId(supabase: any, args: any): Promise<{ id: string; title: string; project_id?: string | null } | null> {
   if (args.task_id) {
-    const { data } = await supabase.from("tasks").select("id, title").eq("id", args.task_id).maybeSingle();
+    const { data } = await supabase.from("tasks").select("id, title, project_id").eq("id", args.task_id).maybeSingle();
     if (data) return data;
   }
   if (args.task_query) {
     const { data } = await supabase
-      .from("tasks").select("id, title").ilike("title", `%${args.task_query}%`).limit(1);
+      .from("tasks").select("id, title, project_id").ilike("title", `%${args.task_query}%`).limit(1);
     if (data && data.length) return data[0];
   }
   return null;
