@@ -187,6 +187,14 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
     setLoading(true);
     try {
+      const recurrence_rule = recurrenceFreq !== 'none'
+        ? {
+            freq: recurrenceFreq,
+            interval: Math.max(1, recurrenceInterval || 1),
+            until: recurrenceUntil ? format(recurrenceUntil, 'yyyy-MM-dd') : null,
+          }
+        : null;
+
       const { data: meeting, error: meetingError } = await supabase
         .from('meetings')
         .insert({
@@ -196,6 +204,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           start_time: startTime,
           end_time: endTime || null,
           created_by: user.id,
+          recurrence_rule: recurrence_rule as any,
         })
         .select()
         .single();
