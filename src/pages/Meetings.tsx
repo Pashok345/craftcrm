@@ -110,53 +110,76 @@ const Meetings = () => {
 
   const fetchMeetings = async () => {
     if (!user) return;
-    
+
     try {
       const start = startOfMonth(currentDate);
       const end = endOfMonth(currentDate);
+      const startStr = start.toISOString().split('T')[0];
+      const endStr = end.toISOString().split('T')[0];
 
-      // Get meetings where user is creator
+      // 1) Meetings in current month range (created or invited) — non-recurring/regular
       const { data: createdMeetings, error: createdError } = await supabase
         .from('meetings')
         .select('*')
         .eq('created_by', user.id)
-        .gte('meeting_date', start.toISOString().split('T')[0])
-        .lte('meeting_date', end.toISOString().split('T')[0])
+        .gte('meeting_date', startStr)
+        .lte('meeting_date', endStr)
         .order('start_time', { ascending: true });
-
       if (createdError) throw createdError;
 
-      // Get meetings where user is participant
       const { data: participantData, error: participantError } = await supabase
         .from('meeting_participants')
         .select('meeting_id')
         .eq('user_id', user.id);
-
       if (participantError) throw participantError;
 
-      const participantMeetingIds = participantData?.map(p => p.meeting_id) || [];
-      
+      const participantMeetingIds = participantData?.map((p) => p.meeting_id) || [];
+
       let participantMeetings: Meeting[] = [];
       if (participantMeetingIds.length > 0) {
         const { data: invitedMeetings, error: invitedError } = await supabase
           .from('meetings')
           .select('*')
           .in('id', participantMeetingIds)
-          .gte('meeting_date', start.toISOString().split('T')[0])
-          .lte('meeting_date', end.toISOString().split('T')[0])
+          .gte('meeting_date', startStr)
+          .lte('meeting_date', endStr)
           .order('start_time', { ascending: true });
-
         if (invitedError) throw invitedError;
         participantMeetings = (invitedMeetings || []) as Meeting[];
       }
 
-      // Combine and deduplicate
-      const allMeetings = [...(createdMeetings || []), ...participantMeetings];
-      const uniqueMeetings = allMeetings.filter((meeting, index, self) =>
-        index === self.findIndex(m => m.id === meeting.id)
+      // 2) Recurring meetings whose BASE date is on/before end of range — fetch them too
+      // (their virtual occurrences may fall inside the range)
+      const { data: recurringCreated } = await supabase
+        .from('meetings')
+        .select('*')
+        .eq('created_by', user.id)
+        .not('recurrence_rule', 'is', null)
+        .lte('meeting_date', endStr);
+
+      let recurringInvited: Meeting[] = [];
+      if (participantMeetingIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds)
+          .not('recurrence_rule', 'is', null)
+          .lte('meeting_date', endStr);
+        recurringInvited = (data || []) as Meeting[];
+      }
+
+      const allMeetings = [
+        ...(createdMeetings || []),
+        ...participantMeetings,
+        ...(recurringCreated || []),
+        ...recurringInvited,
+      ];
+      const uniqueMeetings = allMeetings.filter(
+        (meeting, index, self) => index === self.findIndex((m) => m.id === meeting.id)
       );
 
-      setMeetings(uniqueMeetings as MeetingWithParticipants[]);
+      const expanded = expandRecurringMeetings(uniqueMeetings as any[], start, end);
+      setMeetings(expanded as MeetingWithParticipants[]);
     } catch (error) {
       console.error('Error fetching meetings:', error);
     } finally {
