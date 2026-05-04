@@ -1164,6 +1164,13 @@ Deno.serve(async (req) => {
                 case "create_subtask": result = await createSubtaskFn(supabase, args, user.id); break;
                 case "create_client": result = await createClientFn(supabase, args, user.id); break;
                 case "create_meeting": result = await createMeetingFn(supabase, args, user.id); break;
+                case "update_task": result = await updateTaskFn(supabase, args); break;
+                case "update_subtask": result = await updateSubtaskFn(supabase, args); break;
+                case "update_project": result = await updateProjectFn(supabase, args); break;
+                case "add_task_assignees": result = await addTaskAssigneesFn(supabase, args); break;
+                case "add_task_tags": result = await addTaskTagsFn(supabase, args, user.id); break;
+                case "log_time": result = await logTimeFn(supabase, args, user.id); break;
+                case "create_whiteboard": result = await createWhiteboardFn(supabase, args, user.id); break;
                 default: result = { error: `Unknown tool: ${tc.function.name}` };
               }
             } catch (e) {
