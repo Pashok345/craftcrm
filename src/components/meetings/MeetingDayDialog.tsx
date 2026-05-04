@@ -51,22 +51,40 @@ export const MeetingDayDialog = ({
     setLoading(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      
-      const { data: meetingsData, error } = await supabase
-        .from('meetings')
-        .select('*')
-        .eq('meeting_date', dateStr)
-        .order('start_time', { ascending: true });
 
-      if (error) throw error;
+      // Non-recurring meetings on the day + recurring meetings whose base date <= day
+      const [{ data: regular, error: e1 }, { data: recurring, error: e2 }] = await Promise.all([
+        supabase
+          .from('meetings')
+          .select('*')
+          .eq('meeting_date', dateStr)
+          .order('start_time', { ascending: true }),
+        supabase
+          .from('meetings')
+          .select('*')
+          .not('recurrence_rule', 'is', null)
+          .lte('meeting_date', dateStr)
+          .order('start_time', { ascending: true }),
+      ]);
 
-      // Fetch participants for each meeting
+      if (e1) throw e1;
+      if (e2) throw e2;
+
+      const merged = [
+        ...(regular || []),
+        ...(recurring || []).filter((r) => !(regular || []).some((m) => m.id === r.id)),
+      ];
+
+      const expanded = expandRecurringForDay(merged as any[], selectedDate);
+
+      // Fetch participants per ORIGINAL meeting id (use original_id for recurring instances)
       const meetingsWithParticipants = await Promise.all(
-        (meetingsData || []).map(async (meeting) => {
+        expanded.map(async (meeting: any) => {
+          const sourceId = meeting.original_id || meeting.id;
           const { data: participantsData } = await supabase
             .from('meeting_participants')
             .select('user_id')
-            .eq('meeting_id', meeting.id);
+            .eq('meeting_id', sourceId);
 
           if (participantsData && participantsData.length > 0) {
             const userIds = participantsData.map((p) => p.user_id);
@@ -90,7 +108,12 @@ export const MeetingDayDialog = ({
   };
 
   const handleMeetingClick = (meeting: MeetingWithParticipants) => {
-    setSelectedMeeting(meeting);
+    const anyM = meeting as any;
+    if (anyM.is_recurring_instance && anyM.original_id) {
+      setSelectedMeeting({ ...meeting, id: anyM.original_id });
+    } else {
+      setSelectedMeeting(meeting);
+    }
     setDetailDialogOpen(true);
   };
 
