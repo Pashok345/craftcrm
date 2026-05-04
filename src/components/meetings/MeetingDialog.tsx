@@ -94,6 +94,9 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
   const [users, setUsers] = useState<Profile[]>([]);
   const [participants, setParticipants] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recurrenceFreq, setRecurrenceFreq] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(1);
+  const [recurrenceUntil, setRecurrenceUntil] = useState<Date | undefined>(undefined);
   const { toast } = useToast();
   const { user } = useAuth();
 
