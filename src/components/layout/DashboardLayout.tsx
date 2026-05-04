@@ -22,6 +22,11 @@ export const DashboardLayout = () => {
     return <Navigate to="/" replace />;
   }
 
+  // Server-enforced gate: unverified self-registered users must complete approval flow
+  if (profile && profile.is_verified === false) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <Sidebar

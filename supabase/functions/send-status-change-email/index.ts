@@ -65,13 +65,17 @@ serve(async (req) => {
       );
     }
 
-    const { entity_type, entity_id, entity_title, old_status, new_status, changed_by_name, recipient_user_ids }: StatusChangeRequest = await req.json();
+    const { entity_type, entity_id, old_status, new_status, recipient_user_ids: requestedRecipients }: StatusChangeRequest = await req.json();
 
-    if (!entity_type || !entity_id || !recipient_user_ids || recipient_user_ids.length === 0) {
+    if (!entity_type || !entity_id || !requestedRecipients || requestedRecipients.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (entity_type !== 'task' && entity_type !== 'project') {
+      return new Response(JSON.stringify({ error: 'Invalid entity_type' }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
@@ -85,23 +89,46 @@ serve(async (req) => {
       .maybeSingle();
     const isAdmin = !!roleData;
 
-    if (!isAdmin) {
-      let allowed = false;
-      if (entity_type === 'task') {
-        const { data: t } = await adminClient.from('tasks').select('created_by').eq('id', entity_id).maybeSingle();
-        if (t?.created_by === user.id) allowed = true;
-        if (!allowed) {
-          const { data: a } = await adminClient.from('task_assignees').select('id').eq('task_id', entity_id).eq('user_id', user.id).maybeSingle();
-          if (a) allowed = true;
-        }
-      } else if (entity_type === 'project') {
-        const { data: p } = await adminClient.from('projects').select('created_by, manager_id').eq('id', entity_id).maybeSingle();
-        if (p && (p.created_by === user.id || p.manager_id === user.id)) allowed = true;
-      }
-      if (!allowed) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
+    // Fetch entity title from DB (don't trust client) + build verified recipient set
+    let verifiedTitle = '';
+    const allowedRecipients = new Set<string>();
+    let allowed = isAdmin;
+
+    if (entity_type === 'task') {
+      const { data: t } = await adminClient.from('tasks').select('created_by, title').eq('id', entity_id).maybeSingle();
+      if (!t) return new Response(JSON.stringify({ error: 'Task not found' }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      verifiedTitle = t.title || '';
+      if (t.created_by === user.id) allowed = true;
+      allowedRecipients.add(t.created_by);
+      const { data: assignees } = await adminClient.from('task_assignees').select('user_id').eq('task_id', entity_id);
+      assignees?.forEach(a => allowedRecipients.add(a.user_id));
+      if (!allowed && assignees?.some(a => a.user_id === user.id)) allowed = true;
+    } else {
+      const { data: p } = await adminClient.from('projects').select('created_by, manager_id, title').eq('id', entity_id).maybeSingle();
+      if (!p) return new Response(JSON.stringify({ error: 'Project not found' }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      verifiedTitle = p.title || '';
+      if (p.created_by === user.id || p.manager_id === user.id) allowed = true;
+      allowedRecipients.add(p.created_by);
+      if (p.manager_id) allowedRecipients.add(p.manager_id);
+      const { data: members } = await adminClient.from('project_members').select('user_id').eq('project_id', entity_id);
+      members?.forEach(m => allowedRecipients.add(m.user_id));
     }
+
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const recipient_user_ids = requestedRecipients.filter(id => allowedRecipients.has(id));
+    if (recipient_user_ids.length === 0) {
+      return new Response(JSON.stringify({ error: 'No valid recipients' }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Derive changed_by_name from auth-verified user
+    const { data: callerProfile } = await adminClient
+      .from('profiles')
+      .select('name')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
     const { data: profiles } = await adminClient
       .from('profiles')
@@ -122,8 +149,8 @@ serve(async (req) => {
     const entityTypeTitle = entity_type === 'task' ? 'Завдання' : 'Проект';
     const emoji = entity_type === 'task' ? '📋' : '📁';
 
-    const safeEntityTitle = escapeHtml(entity_title || '');
-    const safeChangedByName = escapeHtml(changed_by_name || '');
+    const safeEntityTitle = escapeHtml(verifiedTitle);
+    const safeChangedByName = escapeHtml(callerProfile?.name || 'Колега');
     const safeOldStatus = escapeHtml(oldStatusLabel);
     const safeNewStatus = escapeHtml(newStatusLabel);
 
