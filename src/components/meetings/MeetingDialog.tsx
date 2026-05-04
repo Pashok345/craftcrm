@@ -266,6 +266,9 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     setStartTime('09:00');
     setEndTime('10:00');
     setParticipants([]);
+    setRecurrenceFreq('none');
+    setRecurrenceInterval(1);
+    setRecurrenceUntil(undefined);
   };
 
   const toggleParticipant = (userId: string) => {
