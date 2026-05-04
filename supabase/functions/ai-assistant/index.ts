@@ -33,7 +33,7 @@ const SYSTEM_PROMPT = `Ты — AI-ассистент внутри CRM-сист�
 - add_task_assignees — добавить исполнителей или наблюдателей к задаче (ищи по именам)
 - add_task_tags — добавить теги к задаче (создаёт теги если их нет)
 - log_time — записать время работы по задаче (минуты + опц. описание)
-- create_whiteboard — создать новую доску (опционально привязать к проекту)
+- create_whiteboard — создать новую доску и, если указана задача, сразу привязать её к задаче
 
 Важно при создании встреч:
 - Если пользователь говорит «завтра», «послезавтра», «на следующей неделе» — вычисли дату сам относительно сегодняшней (текущая дата передаётся в системе).
@@ -338,12 +338,14 @@ const tools = [
     type: "function",
     function: {
       name: "create_whiteboard",
-      description: "Создать новую доску (whiteboard). Опционально привязать к проекту.",
+      description: "Создать новую доску (whiteboard). Можно сразу привязать к задаче через task_id или task_query; если у задачи есть проект, доска наследует project_id.",
       parameters: {
         type: "object",
         properties: {
           title: { type: "string" },
           description: { type: "string" },
+          task_id: { type: "string", description: "UUID задачи для привязки (если известен)" },
+          task_query: { type: "string", description: "Часть названия задачи для поиска и привязки" },
           project_query: { type: "string", description: "Название проекта для привязки (опц.)" },
         },
         required: ["title"],
@@ -800,14 +802,14 @@ async function createMeetingFn(supabase: any, args: any, userId: string) {
 
 // ===== New helpers: edit/manage =====
 
-async function findTaskId(supabase: any, args: any): Promise<{ id: string; title: string } | null> {
+async function findTaskId(supabase: any, args: any): Promise<{ id: string; title: string; project_id?: string | null } | null> {
   if (args.task_id) {
-    const { data } = await supabase.from("tasks").select("id, title").eq("id", args.task_id).maybeSingle();
+    const { data } = await supabase.from("tasks").select("id, title, project_id").eq("id", args.task_id).maybeSingle();
     if (data) return data;
   }
   if (args.task_query) {
     const { data } = await supabase
-      .from("tasks").select("id, title").ilike("title", `%${args.task_query}%`).limit(1);
+      .from("tasks").select("id, title, project_id").ilike("title", `%${args.task_query}%`).limit(1);
     if (data && data.length) return data[0];
   }
   return null;
@@ -823,6 +825,45 @@ async function findProjectId(supabase: any, args: any): Promise<{ id: string; ti
       .from("projects").select("id, title").ilike("title", `%${args.project_query}%`).limit(1);
     if (data && data.length) return data[0];
   }
+  return null;
+}
+
+async function userCanLinkTask(adminClient: any, task: any, userId: string): Promise<boolean> {
+  if (!task) return false;
+  if (task.created_by === userId) return true;
+
+  const { data: role } = await adminClient
+    .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+  if (role) return true;
+
+  const { data: assignee } = await adminClient
+    .from("task_assignees").select("user_id").eq("task_id", task.id).eq("user_id", userId).maybeSingle();
+  if (assignee) return true;
+
+  if (task.project_id) {
+    const { data: member } = await adminClient
+      .from("project_members").select("user_id").eq("project_id", task.project_id).eq("user_id", userId).maybeSingle();
+    if (member) return true;
+  }
+
+  return false;
+}
+
+async function findLinkableTask(adminClient: any, args: any, userId: string): Promise<any | null> {
+  if (args.task_id) {
+    const { data } = await adminClient
+      .from("tasks").select("id, title, project_id, created_by").eq("id", args.task_id).maybeSingle();
+    return (await userCanLinkTask(adminClient, data, userId)) ? data : null;
+  }
+
+  if (args.task_query) {
+    const { data } = await adminClient
+      .from("tasks").select("id, title, project_id, created_by").ilike("title", `%${args.task_query}%`).limit(10);
+    for (const task of data || []) {
+      if (await userCanLinkTask(adminClient, task, userId)) return task;
+    }
+  }
+
   return null;
 }
 
@@ -980,21 +1021,44 @@ async function logTimeFn(supabase: any, args: any, userId: string) {
   return { success: true, time_entry_id: data.id, task: { id: task.id, title: task.title }, minutes: Math.round(minutes) };
 }
 
-async function createWhiteboardFn(supabase: any, args: any, userId: string) {
+async function createWhiteboardFn(supabase: any, adminClient: any, args: any, userId: string) {
   if (!args.title) return { error: "Нужен title." };
+  const task = (args.task_id || args.task_query) ? await findLinkableTask(adminClient, args, userId) : null;
+  if ((args.task_id || args.task_query) && !task) {
+    return { error: "Задача не найдена или у вас нет прав привязать к ней доску." };
+  }
+
   let projectId: string | null = null;
-  if (args.project_query) {
+  if (task?.project_id) {
+    projectId = task.project_id;
+  } else if (args.project_query) {
     const proj = await findProjectId(supabase, { project_query: args.project_query });
     if (proj) projectId = proj.id;
   }
-  const { data, error } = await supabase.from("whiteboards").insert({
+
+  const { data, error } = await adminClient.from("whiteboards").insert({
     title: args.title,
     description: args.description || null,
     project_id: projectId,
     created_by: userId,
   }).select("id, title").single();
   if (error) return { error: error.message };
-  return { success: true, whiteboard: { id: data.id, title: data.title } };
+
+  let linkedTask: { id: string; title: string } | null = null;
+  if (task) {
+    const { error: linkError } = await adminClient.from("task_whiteboards").insert({
+      task_id: task.id,
+      whiteboard_id: data.id,
+      created_by: userId,
+    });
+    if (linkError) {
+      await adminClient.from("whiteboards").delete().eq("id", data.id);
+      return { error: `Доска создана, но не удалось привязать к задаче: ${linkError.message}` };
+    }
+    linkedTask = { id: task.id, title: task.title };
+  }
+
+  return { success: true, whiteboard: { id: data.id, title: data.title }, linked_task: linkedTask };
 }
 
 // ===== Server =====
@@ -1014,6 +1078,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
+    );
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -1170,7 +1238,7 @@ Deno.serve(async (req) => {
                 case "add_task_assignees": result = await addTaskAssigneesFn(supabase, args); break;
                 case "add_task_tags": result = await addTaskTagsFn(supabase, args, user.id); break;
                 case "log_time": result = await logTimeFn(supabase, args, user.id); break;
-                case "create_whiteboard": result = await createWhiteboardFn(supabase, args, user.id); break;
+                case "create_whiteboard": result = await createWhiteboardFn(supabase, adminClient, args, user.id); break;
                 default: result = { error: `Unknown tool: ${tc.function.name}` };
               }
             } catch (e) {
