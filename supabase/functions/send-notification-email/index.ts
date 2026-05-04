@@ -69,6 +69,26 @@ serve(async (req) => {
       );
     }
 
+    // Validate type against known enum
+    if (type && !['welcome', 'notification'].includes(type)) {
+      return new Response(
+        JSON.stringify({ error: "invalid type" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Length limits and URL/script content stripping for client-supplied strings
+    const safeStrTitle = String(title ?? '').slice(0, 150);
+    const safeStrMessage = String(message ?? '').slice(0, 500);
+    // Reject bare URLs / protocol handlers in cross-user messages to prevent phishing
+    const urlPattern = /(https?:\/\/|www\.|javascript:|data:|file:)/i;
+    if (user_id !== currentUserId && (urlPattern.test(safeStrTitle) || urlPattern.test(safeStrMessage))) {
+      return new Response(
+        JSON.stringify({ error: "URLs are not allowed in cross-user notification content" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Authorization: self-notify is always allowed; otherwise require task_id with verified relationship
     const { data: roleData } = await adminClient
       .from('user_roles')
@@ -129,8 +149,8 @@ serve(async (req) => {
       );
     }
 
-    const safeTitle = escapeHtml(title || '');
-    const safeMessage = escapeHtml(message || '');
+    const safeTitle = escapeHtml(safeStrTitle);
+    const safeMessage = escapeHtml(safeStrMessage);
     const safeName = escapeHtml(profile.name || 'колего');
 
     let subject = '';
