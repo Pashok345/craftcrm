@@ -149,8 +149,8 @@ serve(async (req) => {
       );
     }
 
-    const safeTitle = escapeHtml(title || '');
-    const safeMessage = escapeHtml(message || '');
+    const safeTitle = escapeHtml(safeStrTitle);
+    const safeMessage = escapeHtml(safeStrMessage);
     const safeName = escapeHtml(profile.name || 'колего');
 
     let subject = '';
