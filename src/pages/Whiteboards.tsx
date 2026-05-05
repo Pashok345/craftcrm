@@ -92,6 +92,15 @@ const Whiteboards = () => {
     setProjects((data as ProjectLite[]) || []);
   };
 
+  const fetchTasks = async () => {
+    const { data } = await supabase
+      .from('tasks')
+      .select('id, title, project_id')
+      .order('updated_at', { ascending: false })
+      .limit(500);
+    setTasks((data as TaskLite[]) || []);
+  };
+
   const handleCreate = async () => {
     if (!newTitle.trim()) {
       toast.error(t('whiteboardTitle'));
