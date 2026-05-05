@@ -71,7 +71,7 @@ const Whiteboards = () => {
       return;
     }
     setUserId(session.user.id);
-    await Promise.all([fetchBoards(), fetchProjects()]);
+    await Promise.all([fetchBoards(), fetchProjects(), fetchTasks()]);
     setLoading(false);
   };
 
