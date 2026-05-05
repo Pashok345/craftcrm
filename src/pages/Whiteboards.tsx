@@ -116,25 +116,45 @@ const Whiteboards = () => {
       return;
     }
     const boardId = crypto.randomUUID();
+    // If task chosen, inherit project from task
+    const linkedTask = newTaskId !== '__none__' ? tasks.find((t) => t.id === newTaskId) : null;
+    const projectIdToUse =
+      linkedTask?.project_id ?? (newProjectId === '__none__' ? null : newProjectId);
+
     const { error } = await supabase
       .from('whiteboards')
       .insert({
         id: boardId,
         title: newTitle.trim(),
         description: newDescription.trim() || null,
-        project_id: newProjectId === '__none__' ? null : newProjectId,
+        project_id: projectIdToUse,
       });
-    setCreating(false);
     if (error) {
+      setCreating(false);
       console.error('Whiteboard insert error:', error);
       toast.error(`${error.message}${error.details ? ` — ${error.details}` : ''}`);
       return;
     }
+
+    if (linkedTask) {
+      const { error: linkError } = await supabase.from('task_whiteboards').insert({
+        task_id: linkedTask.id,
+        whiteboard_id: boardId,
+        created_by: uid,
+      });
+      if (linkError) {
+        console.error('Task link error:', linkError);
+        toast.error(linkError.message);
+      }
+    }
+
+    setCreating(false);
     toast.success(t('whiteboardCreated'));
     setCreateOpen(false);
     setNewTitle('');
     setNewDescription('');
     setNewProjectId('__none__');
+    setNewTaskId('__none__');
     navigate(`/whiteboards/${boardId}`);
   };
 
