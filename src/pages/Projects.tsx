@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Folder, Calendar, DollarSign, User, Search } from 'lucide-react';
 import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
-import { ProjectDetailDialog } from '@/components/projects/ProjectDetailDialog';
+
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
