@@ -449,12 +449,70 @@ const Messages = () => {
 
   // Get chat members for displaying avatars
   const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (chats.length > 0) {
       fetchChatMembers();
+      fetchUnreadCounts();
     }
   }, [chats]);
+
+  // Realtime: bump unread counts when a new message arrives in any of user's chats
+  useEffect(() => {
+    if (!user || chats.length === 0) return;
+    const chatIds = new Set(chats.map((c) => c.id));
+    const channel = supabase
+      .channel('messages-unread-watch')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const msg = payload.new as Message;
+          if (!chatIds.has(msg.chat_id)) return;
+          if (msg.user_id === user.id) return;
+          if (selectedChat?.id === msg.chat_id) return;
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [msg.chat_id]: (prev[msg.chat_id] || 0) + 1,
+          }));
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chats, user, selectedChat?.id]);
+
+  // Clear unread for the active chat when opened
+  useEffect(() => {
+    if (selectedChat) {
+      setUnreadCounts((prev) => ({ ...prev, [selectedChat.id]: 0 }));
+    }
+  }, [selectedChat?.id]);
+
+  const fetchUnreadCounts = async () => {
+    if (!user) return;
+    const { data: members } = await supabase
+      .from('chat_members')
+      .select('chat_id, last_read_at')
+      .eq('user_id', user.id);
+    if (!members) return;
+    const counts: Record<string, number> = {};
+    await Promise.all(
+      members.map(async (m: any) => {
+        const lastRead = m.last_read_at || '1970-01-01T00:00:00Z';
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('chat_id', m.chat_id)
+          .neq('user_id', user.id)
+          .gt('created_at', lastRead);
+        counts[m.chat_id] = count || 0;
+      })
+    );
+    setUnreadCounts(counts);
+  };
 
   const fetchChatMembers = async () => {
     const memberMap: Record<string, string[]> = {};
