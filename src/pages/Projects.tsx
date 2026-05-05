@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Folder, Calendar, DollarSign, User, Search } from 'lucide-react';
 import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
-import { ProjectDetailDialog } from '@/components/projects/ProjectDetailDialog';
+
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -23,7 +23,7 @@ const Projects = () => {
   const [managers, setManagers] = useState<Record<string, Profile>>({});
   const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -201,7 +201,7 @@ const Projects = () => {
               key={project.id}
               className="cursor-pointer hover:shadow-md transition-shadow animate-slide-up"
               style={{ animationDelay: `${index * 0.03}s` }}
-              onClick={() => setSelectedProject(project)}
+              onClick={() => navigate(`/projects/${project.id}`)}
             >
               <CardContent className="p-4">
                 <div className="space-y-3">
@@ -260,12 +260,6 @@ const Projects = () => {
         </div>
       )}
 
-      <ProjectDetailDialog
-        project={selectedProject}
-        open={!!selectedProject}
-        onOpenChange={(open) => !open && setSelectedProject(null)}
-        onUpdate={fetchProjects}
-      />
     </div>
   );
 };

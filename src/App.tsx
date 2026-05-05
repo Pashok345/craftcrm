@@ -15,6 +15,7 @@ import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject";
+import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<CreateProject />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/processes" element={<Processes />} />
             <Route path="/processes/run/:id" element={<RunProcess />} />
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
