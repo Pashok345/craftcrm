@@ -23,7 +23,7 @@ const Projects = () => {
   const [managers, setManagers] = useState<Record<string, Profile>>({});
   const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
