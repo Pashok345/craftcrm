@@ -32,6 +32,12 @@ interface ProjectLite {
   title: string;
 }
 
+interface TaskLite {
+  id: string;
+  title: string;
+  project_id: string | null;
+}
+
 const Whiteboards = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
