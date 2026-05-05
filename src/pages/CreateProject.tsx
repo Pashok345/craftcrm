@@ -110,6 +110,13 @@ const CreateProject = () => {
         }));
 
         await supabase.from('project_members').insert(membersToInsert);
+
+        // Log creation in project history
+        await supabase.from('project_history').insert({
+          project_id: projectData.id,
+          user_id: user.id,
+          action: 'created',
+        });
       }
 
       toast({
