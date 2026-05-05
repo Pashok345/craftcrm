@@ -260,12 +260,6 @@ const Projects = () => {
         </div>
       )}
 
-      <ProjectDetailDialog
-        project={selectedProject}
-        open={!!selectedProject}
-        onOpenChange={(open) => !open && setSelectedProject(null)}
-        onUpdate={fetchProjects}
-      />
     </div>
   );
 };
