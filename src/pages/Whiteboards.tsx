@@ -332,7 +332,11 @@ const Whiteboards = () => {
             </div>
             <div className="space-y-2">
               <Label>{t('whiteboardLinkProject')}</Label>
-              <Select value={newProjectId} onValueChange={setNewProjectId}>
+              <Select
+                value={newProjectId}
+                onValueChange={setNewProjectId}
+                disabled={newTaskId !== '__none__'}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -341,6 +345,22 @@ const Whiteboards = () => {
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('whiteboardLinkTask')}</Label>
+              <Select value={newTaskId} onValueChange={setNewTaskId}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('whiteboardNoTask')}</SelectItem>
+                  {tasks.map((tk) => (
+                    <SelectItem key={tk.id} value={tk.id}>
+                      {tk.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
