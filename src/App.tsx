@@ -15,6 +15,7 @@ import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject";
+import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
