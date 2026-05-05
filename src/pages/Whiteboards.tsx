@@ -32,6 +32,12 @@ interface ProjectLite {
   title: string;
 }
 
+interface TaskLite {
+  id: string;
+  title: string;
+  project_id: string | null;
+}
+
 const Whiteboards = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
@@ -39,6 +45,7 @@ const Whiteboards = () => {
 
   const [boards, setBoards] = useState<Whiteboard[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [tasks, setTasks] = useState<TaskLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -48,6 +55,7 @@ const Whiteboards = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newProjectId, setNewProjectId] = useState<string>('__none__');
+  const [newTaskId, setNewTaskId] = useState<string>('__none__');
   const [creating, setCreating] = useState(false);
 
   const [boardToDelete, setBoardToDelete] = useState<Whiteboard | null>(null);
@@ -63,7 +71,7 @@ const Whiteboards = () => {
       return;
     }
     setUserId(session.user.id);
-    await Promise.all([fetchBoards(), fetchProjects()]);
+    await Promise.all([fetchBoards(), fetchProjects(), fetchTasks()]);
     setLoading(false);
   };
 
@@ -84,6 +92,15 @@ const Whiteboards = () => {
     setProjects((data as ProjectLite[]) || []);
   };
 
+  const fetchTasks = async () => {
+    const { data } = await supabase
+      .from('tasks')
+      .select('id, title, project_id')
+      .order('updated_at', { ascending: false })
+      .limit(500);
+    setTasks((data as TaskLite[]) || []);
+  };
+
   const handleCreate = async () => {
     if (!newTitle.trim()) {
       toast.error(t('whiteboardTitle'));
@@ -99,25 +116,45 @@ const Whiteboards = () => {
       return;
     }
     const boardId = crypto.randomUUID();
+    // If task chosen, inherit project from task
+    const linkedTask = newTaskId !== '__none__' ? tasks.find((t) => t.id === newTaskId) : null;
+    const projectIdToUse =
+      linkedTask?.project_id ?? (newProjectId === '__none__' ? null : newProjectId);
+
     const { error } = await supabase
       .from('whiteboards')
       .insert({
         id: boardId,
         title: newTitle.trim(),
         description: newDescription.trim() || null,
-        project_id: newProjectId === '__none__' ? null : newProjectId,
+        project_id: projectIdToUse,
       });
-    setCreating(false);
     if (error) {
+      setCreating(false);
       console.error('Whiteboard insert error:', error);
       toast.error(`${error.message}${error.details ? ` — ${error.details}` : ''}`);
       return;
     }
+
+    if (linkedTask) {
+      const { error: linkError } = await supabase.from('task_whiteboards').insert({
+        task_id: linkedTask.id,
+        whiteboard_id: boardId,
+        created_by: uid,
+      });
+      if (linkError) {
+        console.error('Task link error:', linkError);
+        toast.error(linkError.message);
+      }
+    }
+
+    setCreating(false);
     toast.success(t('whiteboardCreated'));
     setCreateOpen(false);
     setNewTitle('');
     setNewDescription('');
     setNewProjectId('__none__');
+    setNewTaskId('__none__');
     navigate(`/whiteboards/${boardId}`);
   };
 
@@ -295,7 +332,11 @@ const Whiteboards = () => {
             </div>
             <div className="space-y-2">
               <Label>{t('whiteboardLinkProject')}</Label>
-              <Select value={newProjectId} onValueChange={setNewProjectId}>
+              <Select
+                value={newProjectId}
+                onValueChange={setNewProjectId}
+                disabled={newTaskId !== '__none__'}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -304,6 +345,22 @@ const Whiteboards = () => {
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('whiteboardLinkTask')}</Label>
+              <Select value={newTaskId} onValueChange={setNewTaskId}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('whiteboardNoTask')}</SelectItem>
+                  {tasks.map((tk) => (
+                    <SelectItem key={tk.id} value={tk.id}>
+                      {tk.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
