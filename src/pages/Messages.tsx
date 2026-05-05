@@ -750,7 +750,10 @@ const Messages = () => {
                   </Button>
                 </div>
               ) : (
-                filteredChats.map((chat) => (
+                filteredChats.map((chat) => {
+                  const unread = unreadCounts[chat.id] || 0;
+                  const hasUnread = unread > 0 && selectedChat?.id !== chat.id;
+                  return (
                   <div
                     key={chat.id}
                     className={cn(
@@ -760,9 +763,18 @@ const Messages = () => {
                     onClick={() => setSelectedChat(chat)}
                   >
                     <div className="flex items-center gap-3">
-                      {renderChatAvatar(chat)}
+                      <div className="relative">
+                        {renderChatAvatar(chat)}
+                        {hasUnread && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center border-2 border-card">
+                            {unread > 99 ? '99+' : unread}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{getChatDisplayName(chat)}</p>
+                        <p className={cn('truncate', hasUnread ? 'font-semibold text-foreground' : 'font-medium')}>
+                          {getChatDisplayName(chat)}
+                        </p>
                         {chat.description && (
                           <p className="text-xs text-muted-foreground truncate">
                             {chat.description}
@@ -787,7 +799,8 @@ const Messages = () => {
                       </Button>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </ScrollArea>
           </>
