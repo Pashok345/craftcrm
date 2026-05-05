@@ -786,6 +786,8 @@ export const translations: Translations = {
   whiteboardDescriptionLabel: { ru: 'Описание', en: 'Description', uk: 'Опис' },
   whiteboardLinkProject: { ru: 'Привязать к проекту', en: 'Link to project', uk: 'Привʼязати до проєкту' },
   whiteboardNoProject: { ru: 'Без проекта (личная)', en: 'No project (personal)', uk: 'Без проєкту (особиста)' },
+  whiteboardLinkTask: { ru: 'Привязать к задаче', en: 'Link to task', uk: 'Привʼязати до завдання' },
+  whiteboardNoTask: { ru: 'Без задачи', en: 'No task', uk: 'Без завдання' },
   myWhiteboards: { ru: 'Мои доски', en: 'My boards', uk: 'Мої дошки' },
   projectWhiteboards: { ru: 'Доски проектов', en: 'Project boards', uk: 'Дошки проєктів' },
   sharedWhiteboards: { ru: 'Совместные', en: 'Shared with me', uk: 'Спільні' },
