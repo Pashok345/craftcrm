@@ -45,6 +45,7 @@ const Whiteboards = () => {
 
   const [boards, setBoards] = useState<Whiteboard[]>([]);
   const [projects, setProjects] = useState<ProjectLite[]>([]);
+  const [tasks, setTasks] = useState<TaskLite[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,6 +55,7 @@ const Whiteboards = () => {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newProjectId, setNewProjectId] = useState<string>('__none__');
+  const [newTaskId, setNewTaskId] = useState<string>('__none__');
   const [creating, setCreating] = useState(false);
 
   const [boardToDelete, setBoardToDelete] = useState<Whiteboard | null>(null);
