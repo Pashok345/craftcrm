@@ -201,7 +201,7 @@ const Projects = () => {
               key={project.id}
               className="cursor-pointer hover:shadow-md transition-shadow animate-slide-up"
               style={{ animationDelay: `${index * 0.03}s` }}
-              onClick={() => setSelectedProject(project)}
+              onClick={() => navigate(`/projects/${project.id}`)}
             >
               <CardContent className="p-4">
                 <div className="space-y-3">
