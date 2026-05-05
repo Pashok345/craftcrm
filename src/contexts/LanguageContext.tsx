@@ -749,6 +749,16 @@ export const translations: Translations = {
   monthly: { ru: 'Ежемесячно', en: 'Monthly', uk: 'Щомісяця' },
   interval: { ru: 'Интервал', en: 'Interval', uk: 'Інтервал' },
   templateActive: { ru: 'Активный', en: 'Active', uk: 'Активний' },
+  repeatMeeting: { ru: 'Повторение', en: 'Repeat', uk: 'Повторення' },
+  noRepeat: { ru: 'Не повторять', en: 'No repeat', uk: 'Не повторювати' },
+  every: { ru: 'Каждые N', en: 'Every N', uk: 'Кожні N' },
+  until: { ru: 'До', en: 'Until', uk: 'До' },
+  endDateOptional: { ru: 'Дата окончания (опционально)', en: 'End date (optional)', uk: 'Дата закінчення (необов\'язково)' },
+  recurrenceHint: {
+    ru: 'Повторы будут отображаться в календаре до даты окончания (или 1 год вперёд).',
+    en: 'Recurrences will appear in the calendar until the end date (or 1 year ahead).',
+    uk: 'Повтори відображатимуться в календарі до дати закінчення (або 1 рік уперед).',
+  },
 
   // Whiteboards (Доски)
   whiteboards: { ru: 'Доски', en: 'Boards', uk: 'Дошки' },
