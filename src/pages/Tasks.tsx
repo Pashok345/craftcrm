@@ -562,119 +562,177 @@ const Tasks = () => {
             </Card>
           ) : (
             <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <Droppable droppableId="task-list">
-                {(provided) => (
-                  <div className="grid gap-4 min-w-0" ref={provided.innerRef} {...provided.droppableProps}>
-                    {filteredAndSortedTasks.map((task, index) => (
-                      <Draggable key={task.id} draggableId={task.id} index={index}>
-                        {(provided, snapshot) => (
-                          <Card
+              <div className="space-y-6">
+                {columns.map((column) => {
+                  const colTasks = tasksByColumn[column.id] || [];
+                  if (colTasks.length === 0) return null;
+                  return (
+                    <div key={column.id}>
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <span
+                          className="inline-block w-3 h-3 rounded-sm border border-border/50"
+                          style={{ backgroundColor: column.color }}
+                        />
+                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                          {getColumnTitleI18n(column, t)}
+                        </h3>
+                        <Badge variant="secondary" className="rounded-full">{colTasks.length}</Badge>
+                      </div>
+                      <Droppable droppableId={column.id}>
+                        {(provided, dropSnapshot) => (
+                          <div
                             ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`cursor-pointer hover:shadow-md transition-shadow animate-slide-up min-w-0 max-w-full ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
-                            style={{ ...provided.draggableProps.style, animationDelay: `${index * 0.03}s` }}
-                            onClick={(e) => {
-                              if (isDragging || snapshot.isDragging) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return;
-                              }
-                              handleTaskClick(task);
-                            }}
+                            {...provided.droppableProps}
+                            className={cn(
+                              "grid gap-3 min-w-0 rounded-lg transition-colors p-1",
+                              dropSnapshot.isDraggingOver && "bg-primary/5 ring-2 ring-primary/20 ring-dashed"
+                            )}
                           >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between gap-4 min-w-0">
-                                <div className="flex items-start gap-2 flex-1 min-w-0">
-                                  <div
-                                    {...provided.dragHandleProps}
-                                    className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary hover:bg-muted/60 rounded p-1 -ml-1 shrink-0 transition-colors"
-                                    onClick={e => e.stopPropagation()}
-                                    title={t('manualSort') || 'Перетягивание'}
-                                    aria-label="drag"
+                            {colTasks.map((task, index) => (
+                              <Draggable key={task.id} draggableId={task.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <Card
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={cn(
+                                      "cursor-pointer hover:shadow-md transition-shadow min-w-0 max-w-full overflow-hidden",
+                                      snapshot.isDragging && "shadow-lg ring-2 ring-primary/20"
+                                    )}
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      borderLeft: `4px solid ${column.color}`,
+                                    }}
+                                    onClick={(e) => {
+                                      if (isDragging || snapshot.isDragging) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                      }
+                                      handleTaskClick(task);
+                                    }}
                                   >
-                                    <GripVertical className="h-5 w-5" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <h3 className="font-medium text-foreground truncate min-w-0">{task.title}</h3>
-                                      {task.project_id && projects[task.project_id] && (
-                                        <Badge variant="outline" className="shrink-0 max-w-[140px] truncate">
-                                          {projects[task.project_id].title}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {task.description && (
-                                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words">{task.description}</p>
-                                    )}
-                                    <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-3">
-                                      {task.deadline && (
-                                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                          <Calendar className="h-4 w-4" />
-                                          {format(new Date(task.deadline), 'd MMM yyyy', { locale: dateLocale })}
+                                    <CardContent className="p-4">
+                                      <div className="flex items-start justify-between gap-4 min-w-0">
+                                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary hover:bg-muted/60 rounded p-1 -ml-1 shrink-0 transition-colors"
+                                            onClick={e => e.stopPropagation()}
+                                            title={t('manualSort') || 'Перетягивание'}
+                                            aria-label="drag"
+                                          >
+                                            <GripVertical className="h-5 w-5" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              <h3 className="font-medium text-foreground truncate min-w-0">{task.title}</h3>
+                                              {task.project_id && projects[task.project_id] && (
+                                                <Badge variant="outline" className="shrink-0 max-w-[140px] truncate">
+                                                  {projects[task.project_id].title}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            {task.description && (
+                                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2 break-words">{task.description}</p>
+                                            )}
+                                            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-3">
+                                              {task.deadline && (
+                                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                  <Calendar className="h-4 w-4" />
+                                                  {format(new Date(task.deadline), 'd MMM yyyy', { locale: dateLocale })}
+                                                </div>
+                                              )}
+                                              {task.created_by && creators[task.created_by] && (
+                                                <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                                                  <User className="h-4 w-4 shrink-0" />
+                                                  <span className="truncate">{t('createdBy')}: {creators[task.created_by].name}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            {taskTags[task.id] && taskTags[task.id].length > 0 && (
+                                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                                {taskTags[task.id].map((tag) => (
+                                                  <Badge key={tag.id} variant="secondary" style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }} className="text-xs border">
+                                                    {tag.name}
+                                                  </Badge>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                      )}
-                                      {task.created_by && creators[task.created_by] && (
-                                        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-                                          <User className="h-4 w-4 shrink-0" />
-                                          <span className="truncate">{t('createdBy')}: {creators[task.created_by].name}</span>
+                                        <div className="flex flex-col items-end gap-2 shrink-0">
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                              <button
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-border/60 hover:opacity-90 transition-opacity whitespace-nowrap"
+                                                style={{ backgroundColor: column.color, color: 'hsl(var(--foreground))' }}
+                                              >
+                                                {getColumnTitleI18n(column, t)}
+                                                <ChevronDown className="h-3 w-3 opacity-70" />
+                                              </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                              {columns.map(c => (
+                                                <DropdownMenuItem
+                                                  key={c.id}
+                                                  onClick={(e) => { e.stopPropagation(); handleQuickStatusChange(task, c); }}
+                                                  className="gap-2"
+                                                >
+                                                  <span
+                                                    className="inline-block w-3 h-3 rounded-sm border border-border/50"
+                                                    style={{ backgroundColor: c.color }}
+                                                  />
+                                                  {getColumnTitleI18n(c, t)}
+                                                </DropdownMenuItem>
+                                              ))}
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                          {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
+                                            <TooltipProvider>
+                                              <div className="flex -space-x-2">
+                                                {taskAssignees[task.id].slice(0, 3).map((assignee) => (
+                                                  <Tooltip key={assignee.user_id}>
+                                                    <TooltipTrigger asChild>
+                                                      <Avatar className="h-8 w-8 border-2 border-background">
+                                                        {assignee.avatar_url ? <AvatarImage src={assignee.avatar_url} alt={assignee.name} /> : null}
+                                                        <AvatarFallback style={{ backgroundColor: assignee.avatar_color || '#6366f1' }} className="text-white text-xs">
+                                                          {getInitials(assignee.name)}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>{assignee.name}</p></TooltipContent>
+                                                  </Tooltip>
+                                                ))}
+                                                {taskAssignees[task.id].length > 3 && (
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <Avatar className="h-8 w-8 border-2 border-background">
+                                                        <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                                                          +{taskAssignees[task.id].length - 3}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>{taskAssignees[task.id].slice(3).map(a => a.name).join(', ')}</p></TooltipContent>
+                                                  </Tooltip>
+                                                )}
+                                              </div>
+                                            </TooltipProvider>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                    {taskTags[task.id] && taskTags[task.id].length > 0 && (
-                                      <div className="flex flex-wrap gap-1.5 mt-3">
-                                        {taskTags[task.id].map((tag) => (
-                                          <Badge key={tag.id} variant="secondary" style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }} className="text-xs border">
-                                            {tag.name}
-                                          </Badge>
-                                        ))}
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-2 shrink-0">
-                                  <Badge className={`${STATUS_COLORS[task.status]} whitespace-nowrap`}>{statusLabels[task.status]}</Badge>
-                                  {taskAssignees[task.id] && taskAssignees[task.id].length > 0 && (
-                                    <TooltipProvider>
-                                      <div className="flex -space-x-2">
-                                        {taskAssignees[task.id].slice(0, 3).map((assignee) => (
-                                          <Tooltip key={assignee.user_id}>
-                                            <TooltipTrigger asChild>
-                                              <Avatar className="h-8 w-8 border-2 border-background">
-                                                {assignee.avatar_url ? <AvatarImage src={assignee.avatar_url} alt={assignee.name} /> : null}
-                                                <AvatarFallback style={{ backgroundColor: assignee.avatar_color || '#6366f1' }} className="text-white text-xs">
-                                                  {getInitials(assignee.name)}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>{assignee.name}</p></TooltipContent>
-                                          </Tooltip>
-                                        ))}
-                                        {taskAssignees[task.id].length > 3 && (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Avatar className="h-8 w-8 border-2 border-background">
-                                                <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                                                  +{taskAssignees[task.id].length - 3}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>{taskAssignees[task.id].slice(3).map(a => a.name).join(', ')}</p></TooltipContent>
-                                          </Tooltip>
-                                        )}
-                                      </div>
-                                    </TooltipProvider>
-                                  )}
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                                    </CardContent>
+                                  </Card>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
                         )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
+                      </Droppable>
+                    </div>
+                  );
+                })}
+              </div>
             </DragDropContext>
           )}
         </TabsContent>
