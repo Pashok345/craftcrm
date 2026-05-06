@@ -447,6 +447,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     }
     setNewColumnName('');
     setIsAddingColumn(false);
+    notifyKanbanChange();
   };
 
   const deleteColumn = async (columnId: string) => {
