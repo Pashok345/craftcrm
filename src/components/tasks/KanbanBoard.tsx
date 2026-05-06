@@ -483,6 +483,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, title: editingName.trim() } : c));
     setEditingColumn(null);
     setEditingName('');
+    notifyKanbanChange();
   };
 
   const setColumnColor = async (columnId: string, color: string) => {
@@ -491,6 +492,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       await supabase.from('kanban_columns').update({ color }).eq('id', column.db_id);
     }
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, color } : c));
+    notifyKanbanChange();
   };
 
   const getColumnTitle = (column: Column) => {
