@@ -94,6 +94,13 @@ const Tasks = () => {
     fetchTaskAssignees();
   }, []);
 
+  // Refetch tasks when kanban placements change (cross-view sync)
+  useEffect(() => {
+    const handler = () => fetchTasks();
+    window.addEventListener(KANBAN_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(KANBAN_CHANGED_EVENT, handler);
+  }, []);
+
   // Load manual order from sessionStorage
   useEffect(() => {
     const saved = sessionStorage.getItem('tasks-manual-order');
