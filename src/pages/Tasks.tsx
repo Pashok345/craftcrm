@@ -29,6 +29,7 @@ import { useKanbanColumns, getColumnTitleI18n, KANBAN_CHANGED_EVENT, KanbanColum
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name' | 'manual';
 
