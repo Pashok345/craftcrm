@@ -13,11 +13,18 @@ export interface KanbanColumn {
 
 export const DEFAULT_COLUMN_COLOR = 'hsl(var(--muted))';
 
+export const BUILT_IN_COLUMN_COLORS: Record<string, string> = {
+  todo: 'hsl(220 14% 75% / 0.55)',
+  in_progress: 'hsl(38 92% 70% / 0.55)',
+  review: 'hsl(221 83% 70% / 0.55)',
+  done: 'hsl(142 60% 65% / 0.55)',
+};
+
 const DEFAULT_COLUMNS: KanbanColumn[] = [
-  { id: 'col-todo', title: 'statusTodo', status: 'todo', color: DEFAULT_COLUMN_COLOR, is_default: true },
-  { id: 'col-in_progress', title: 'statusInProgress', status: 'in_progress', color: DEFAULT_COLUMN_COLOR, is_default: true },
-  { id: 'col-review', title: 'statusReview', status: 'review', color: DEFAULT_COLUMN_COLOR, is_default: true },
-  { id: 'col-done', title: 'statusDone', status: 'done', color: DEFAULT_COLUMN_COLOR, is_default: true },
+  { id: 'col-todo', title: 'statusTodo', status: 'todo', color: BUILT_IN_COLUMN_COLORS.todo, is_default: true },
+  { id: 'col-in_progress', title: 'statusInProgress', status: 'in_progress', color: BUILT_IN_COLUMN_COLORS.in_progress, is_default: true },
+  { id: 'col-review', title: 'statusReview', status: 'review', color: BUILT_IN_COLUMN_COLORS.review, is_default: true },
+  { id: 'col-done', title: 'statusDone', status: 'done', color: BUILT_IN_COLUMN_COLORS.done, is_default: true },
 ];
 
 const BUILT_IN: TaskStatus[] = ['todo', 'in_progress', 'review', 'done'];
