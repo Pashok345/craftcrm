@@ -372,6 +372,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
             sort_order: destination.index,
           }, { onConflict: 'task_id' });
         }
+        notifyKanbanChange();
         return;
       }
 
@@ -385,7 +386,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       // Remove from DB placements
       await supabase.from('kanban_task_placements').delete().eq('task_id', taskId);
 
-      if (movedTask.status === destColumn.status) return;
+      if (movedTask.status === destColumn.status) {
+        notifyKanbanChange();
+        return;
+      }
 
       const newStatus = destColumn.status as TaskStatus;
       const oldStatus = movedTask.status;
@@ -400,6 +404,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
               task_id: taskId, old_status: oldStatus, new_status: newStatus, changed_by: user.id,
             });
           }
+          notifyKanbanChange();
           onTaskUpdate();
         }
       } catch (error) {
