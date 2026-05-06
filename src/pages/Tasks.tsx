@@ -24,6 +24,10 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useKanbanColumns, getColumnTitleI18n, KANBAN_CHANGED_EVENT, KanbanColumn } from '@/hooks/useKanbanColumns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name' | 'manual';
