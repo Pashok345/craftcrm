@@ -466,6 +466,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       });
       return changed ? next : prev;
     });
+    notifyKanbanChange();
   };
 
   const startEditingColumn = (column: Column) => {
