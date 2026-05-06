@@ -21,6 +21,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
+
+const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
 interface Column {
   id: string;
@@ -369,6 +372,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
             sort_order: destination.index,
           }, { onConflict: 'task_id' });
         }
+        notifyKanbanChange();
         return;
       }
 
@@ -382,7 +386,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       // Remove from DB placements
       await supabase.from('kanban_task_placements').delete().eq('task_id', taskId);
 
-      if (movedTask.status === destColumn.status) return;
+      if (movedTask.status === destColumn.status) {
+        notifyKanbanChange();
+        return;
+      }
 
       const newStatus = destColumn.status as TaskStatus;
       const oldStatus = movedTask.status;
@@ -397,6 +404,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
               task_id: taskId, old_status: oldStatus, new_status: newStatus, changed_by: user.id,
             });
           }
+          notifyKanbanChange();
           onTaskUpdate();
         }
       } catch (error) {
@@ -439,6 +447,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     }
     setNewColumnName('');
     setIsAddingColumn(false);
+    notifyKanbanChange();
   };
 
   const deleteColumn = async (columnId: string) => {
@@ -457,6 +466,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       });
       return changed ? next : prev;
     });
+    notifyKanbanChange();
   };
 
   const startEditingColumn = (column: Column) => {
@@ -473,6 +483,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, title: editingName.trim() } : c));
     setEditingColumn(null);
     setEditingName('');
+    notifyKanbanChange();
   };
 
   const setColumnColor = async (columnId: string, color: string) => {
@@ -481,6 +492,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       await supabase.from('kanban_columns').update({ color }).eq('id', column.db_id);
     }
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, color } : c));
+    notifyKanbanChange();
   };
 
   const getColumnTitle = (column: Column) => {
