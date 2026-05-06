@@ -45,7 +45,9 @@ interface TaskAssignee {
 
 const Tasks = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { columns, getColumnForTask, moveTaskToColumn, refetch: refetchKanban } = useKanbanColumns();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [manualOrder, setManualOrder] = useState<string[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
