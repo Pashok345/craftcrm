@@ -275,26 +275,61 @@ const Tasks = () => {
 
   const [isDragging, setIsDragging] = useState(false);
 
-  // DnD handler
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
+  // Group filtered tasks by kanban column
+  const tasksByColumn = useMemo(() => {
+    const groups: Record<string, Task[]> = {};
+    columns.forEach(c => { groups[c.id] = []; });
+    filteredAndSortedTasks.forEach(task => {
+      const col = getColumnForTask(task);
+      if (!col) return;
+      if (!groups[col.id]) groups[col.id] = [];
+      groups[col.id].push(task);
+    });
+    return groups;
+  }, [filteredAndSortedTasks, columns, getColumnForTask]);
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleQuickStatusChange = useCallback(async (task: Task, column: KanbanColumn) => {
+    await moveTaskToColumn(task, column, user?.id);
+    fetchTasks();
+    toast.success(t('statusUpdated') || 'Статус обновлён');
+  }, [moveTaskToColumn, user, t]);
+
+  // DnD handler — supports moving between column groups
+  const handleDragStart = () => { setIsDragging(true); };
+
+  const handleDragEnd = async (result: DropResult) => {
     setIsDragging(false);
     if (!result.destination) return;
-    if (result.destination.index === result.source.index) return;
+    const sourceColId = result.source.droppableId;
+    const destColId = result.destination.droppableId;
+    if (sourceColId === destColId && result.source.index === result.destination.index) return;
 
-    const items = Array.from(filteredAndSortedTasks);
+    const taskId = result.draggableId;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (sourceColId !== destColId) {
+      const destCol = columns.find(c => c.id === destColId);
+      if (destCol) {
+        await moveTaskToColumn(task, destCol, user?.id);
+        fetchTasks();
+      }
+      return;
+    }
+
+    // Reorder within same column → manual sort
+    const colTasks = tasksByColumn[sourceColId] || [];
+    const items = Array.from(colTasks);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
-    const newOrder = items.map(t => t.id);
-    setManualOrder(newOrder);
-    if (sortBy !== 'manual') {
-      setSortBy('manual');
-      toast.success(t('manualSort') || 'Сортировка: вручную');
-    }
-    sessionStorage.setItem('tasks-manual-order', JSON.stringify(newOrder));
+    const fullOrder: string[] = [];
+    columns.forEach(c => {
+      const list = c.id === sourceColId ? items : (tasksByColumn[c.id] || []);
+      list.forEach(t => fullOrder.push(t.id));
+    });
+    setManualOrder(fullOrder);
+    if (sortBy !== 'manual') setSortBy('manual');
+    sessionStorage.setItem('tasks-manual-order', JSON.stringify(fullOrder));
   };
 
   if (loading) {
