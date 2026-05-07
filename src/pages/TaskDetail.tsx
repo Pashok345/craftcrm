@@ -930,10 +930,10 @@ const TaskDetail = () => {
                         <div className="flex flex-wrap gap-2 mt-2">
                           {comment.attachments.map((att) => 
                             isImageFile(att.file_type, att.file_name) ? (
-                              <ImageThumbnail
+                              <AttachmentImage
                                 key={att.id}
-                                src={att.file_url}
-                                alt={att.file_name}
+                                fileUrl={att.file_url}
+                                fileName={att.file_name}
                               />
                             ) : (
                               <a
