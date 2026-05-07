@@ -36,6 +36,7 @@ import { TaskDependencies } from '@/components/tasks/TaskDependencies';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
+import { AttachmentImage } from '@/components/ui/attachment-image';
 import { MentionInput, parseMentionedUserIds, isAIComment, stripAIMarker } from '@/components/ui/mention-input';
 import { maybeInvokeCommentAI } from '@/lib/aiComment';
 import { Sparkles } from 'lucide-react';
@@ -929,10 +930,10 @@ const TaskDetail = () => {
                         <div className="flex flex-wrap gap-2 mt-2">
                           {comment.attachments.map((att) => 
                             isImageFile(att.file_type, att.file_name) ? (
-                              <ImageThumbnail
+                              <AttachmentImage
                                 key={att.id}
-                                src={att.file_url}
-                                alt={att.file_name}
+                                fileUrl={att.file_url}
+                                fileName={att.file_name}
                               />
                             ) : (
                               <a

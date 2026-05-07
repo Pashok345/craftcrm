@@ -30,6 +30,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name' | 'manual';
 
@@ -648,7 +649,7 @@ const Tasks = () => {
                                     )}
                                     style={{
                                       ...provided.draggableProps.style,
-                                      borderLeft: `4px solid ${column.color}`,
+                                      ...getTaskCardStyle(task, column.color),
                                     }}
                                     onClick={(e) => {
                                       if (isDragging || snapshot.isDragging) {
@@ -673,7 +674,8 @@ const Tasks = () => {
                                           </div>
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 min-w-0">
-                                              <h3 className="font-medium text-foreground truncate min-w-0">{task.title}</h3>
+                                              {task.icon && <span className="text-lg shrink-0">{task.icon}</span>}
+                                              <h3 className="font-medium text-foreground truncate min-w-0" style={getTaskTitleStyle(task)}>{task.title}</h3>
                                               {task.project_id && projects[task.project_id] && (
                                                 <Badge variant="outline" className="shrink-0 max-w-[140px] truncate">
                                                   {projects[task.project_id].title}

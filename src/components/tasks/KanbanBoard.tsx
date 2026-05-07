@@ -23,6 +23,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
 import { loadColumnColorOverrides, saveColumnColorOverride } from '@/lib/columnColors';
+import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
 
 const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
@@ -582,13 +583,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       {/* Top scrollbar */}
       <div
         ref={topScrollRef}
-        className="overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full"
+        className="overflow-x-auto mb-5 kanban-scrollbar"
         style={{ scrollbarWidth: 'auto' }}
       >
         <div style={{ height: '1px' }} />
       </div>
 
-      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pt-1 pb-4 overflow-x-auto kanban-scrollbar overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-3 sm:gap-4">
@@ -703,13 +704,15 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                         )}
                                         style={{
                                           ...provided.draggableProps.style,
-                                          borderLeftColor: task.color || '#3b82f6',
-                                          borderLeftWidth: '4px',
+                                          ...getTaskCardStyle(task, task.color || '#3b82f6'),
                                         }}
                                         onClick={() => { if (!isDraggingRef.current) onTaskClick(task); }}
                                       >
                                         <CardContent className="p-3">
-                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2">{task.title}</h4>
+                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2 flex items-center gap-1.5" style={getTaskTitleStyle(task)}>
+                                            {task.icon && <span className="text-base">{task.icon}</span>}
+                                            <span className="truncate">{task.title}</span>
+                                          </h4>
                                           {task.project_id && projects[task.project_id] && (
                                             <Badge variant="outline" className="mb-2 text-xs">{projects[task.project_id].title}</Badge>
                                           )}

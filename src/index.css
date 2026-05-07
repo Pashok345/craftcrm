@@ -219,3 +219,32 @@
     }
   }
 }
+
+/* Kanban horizontal scrollbar with notches/grip */
+.kanban-scrollbar::-webkit-scrollbar {
+  height: 16px;
+}
+.kanban-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 9999px;
+  margin: 0 4px;
+}
+.kanban-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--primary) / 0.7);
+  background-image: repeating-linear-gradient(
+    90deg,
+    hsl(var(--primary-foreground) / 0.55) 0,
+    hsl(var(--primary-foreground) / 0.55) 2px,
+    transparent 2px,
+    transparent 7px
+  );
+  background-size: 70% 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.kanban-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}

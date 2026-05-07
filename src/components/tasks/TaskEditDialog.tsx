@@ -40,6 +40,38 @@ const TASK_COLORS = [
   { value: '#06b6d4', label: 'Голубой' },
 ];
 
+const BG_COLORS = [
+  { value: '', label: 'Нет' },
+  { value: '#fef3c7', label: 'Кремовый' },
+  { value: '#dbeafe', label: 'Голубой' },
+  { value: '#dcfce7', label: 'Мятный' },
+  { value: '#fce7f3', label: 'Розовый' },
+  { value: '#ede9fe', label: 'Лавандовый' },
+  { value: '#fee2e2', label: 'Персиковый' },
+  { value: '#f1f5f9', label: 'Серый' },
+];
+
+const GRADIENTS = [
+  { value: '', label: 'Нет' },
+  { value: 'linear-gradient(135deg,#667eea,#764ba2)', label: 'Фиолет' },
+  { value: 'linear-gradient(135deg,#f093fb,#f5576c)', label: 'Закат' },
+  { value: 'linear-gradient(135deg,#4facfe,#00f2fe)', label: 'Океан' },
+  { value: 'linear-gradient(135deg,#43e97b,#38f9d7)', label: 'Свежесть' },
+  { value: 'linear-gradient(135deg,#fa709a,#fee140)', label: 'Заря' },
+  { value: 'linear-gradient(135deg,#30cfd0,#330867)', label: 'Глубина' },
+];
+
+const FONT_OPTIONS = [
+  { value: '', label: 'По умолчанию' },
+  { value: '"Playfair Display", serif', label: 'Playfair (серифа)' },
+  { value: '"Roboto Mono", monospace', label: 'Roboto Mono' },
+  { value: '"Comfortaa", cursive', label: 'Comfortaa' },
+  { value: '"Bebas Neue", sans-serif', label: 'Bebas Neue' },
+  { value: '"Caveat", cursive', label: 'Caveat (рукопись)' },
+];
+
+const ICON_OPTIONS = ['', '🚀', '⭐', '🔥', '💡', '✅', '🎯', '📌', '🐛', '⚡', '💎', '🏆', '📈', '🎨', '🛠️'];
+
 interface TaskEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +86,13 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
   const [status, setStatus] = useState<TaskStatus>('todo');
   const [projectId, setProjectId] = useState<string>('');
   const [color, setColor] = useState('#3b82f6');
+  const [bgColor, setBgColor] = useState<string>('');
+  const [bgImageUrl, setBgImageUrl] = useState<string>('');
+  const [accentColor, setAccentColor] = useState<string>('');
+  const [icon, setIcon] = useState<string>('');
+  const [titleFont, setTitleFont] = useState<string>('');
+  const [gradient, setGradient] = useState<string>('');
+  const [uploadingBg, setUploadingBg] = useState(false);
   const [links, setLinks] = useState<TaskLink[]>([]);
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
@@ -75,6 +114,12 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
       setStatus(task.status);
       setProjectId(task.project_id || '');
       setColor(task.color || '#3b82f6');
+      setBgColor(task.bg_color || '');
+      setBgImageUrl(task.bg_image_url || '');
+      setAccentColor(task.accent_color || '');
+      setIcon(task.icon || '');
+      setTitleFont(task.title_font || '');
+      setGradient(task.gradient || '');
       setLinks((task.links as TaskLink[]) || []);
       fetchUsers();
       fetchProjects();
@@ -130,6 +175,12 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
           status,
           project_id: projectId || null,
           color,
+          bg_color: bgColor || null,
+          bg_image_url: bgImageUrl || null,
+          accent_color: accentColor || null,
+          icon: icon || null,
+          title_font: titleFont || null,
+          gradient: gradient || null,
           links: JSON.parse(JSON.stringify(links)),
         })
         .eq('id', task.id);
@@ -217,6 +268,27 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
   const deleteAttachment = async (attachmentId: string) => {
     await supabase.from('task_attachments').delete().eq('id', attachmentId);
     setExistingAttachments(existingAttachments.filter(a => a.id !== attachmentId));
+  };
+
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingBg(true);
+    try {
+      const sanitized = file.name.replace(/[^\w.-]/g, '_');
+      const path = `${task.id}/bg-${Date.now()}-${sanitized}`;
+      const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: signed } = await supabase.storage.from('task-attachments').createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signed?.signedUrl) setBgImageUrl(signed.signedUrl);
+      toast({ title: 'Фон загружен' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Ошибка загрузки фона', variant: 'destructive' });
+    } finally {
+      setUploadingBg(false);
+      if (e.target) e.target.value = '';
+    }
   };
 
   return (
@@ -322,6 +394,100 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Кастомизация задачи */}
+          <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+            <Label className="text-sm font-semibold">🎨 Кастомизация задачи</Label>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Цвет фона карточки</Label>
+              <div className="flex gap-2 flex-wrap">
+                {BG_COLORS.map((c) => (
+                  <button key={c.value || 'none'} type="button"
+                    className={cn('w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center text-xs',
+                      bgColor === c.value ? 'border-foreground scale-110' : 'border-border')}
+                    style={{ backgroundColor: c.value || 'transparent' }}
+                    onClick={() => setBgColor(c.value)} title={c.label}>
+                    {!c.value && '✕'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Градиент</Label>
+              <div className="flex gap-2 flex-wrap">
+                {GRADIENTS.map((g) => (
+                  <button key={g.value || 'none'} type="button"
+                    className={cn('h-8 px-3 rounded-md border-2 transition-all text-xs font-medium',
+                      gradient === g.value ? 'border-foreground scale-105' : 'border-border')}
+                    style={{ background: g.value || 'hsl(var(--muted))', color: g.value ? '#fff' : 'hsl(var(--muted-foreground))' }}
+                    onClick={() => setGradient(g.value)}>{g.label}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Фоновое изображение</Label>
+              {bgImageUrl && (
+                <div className="relative w-full h-24 rounded-md overflow-hidden border border-border">
+                  <img src={bgImageUrl} alt="bg" className="w-full h-full object-cover" />
+                  <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6"
+                    onClick={() => setBgImageUrl('')}><X className="h-3 w-3" /></Button>
+                </div>
+              )}
+              <input type="file" id="bg-upload" accept="image/*" className="hidden" onChange={handleBgImageUpload} />
+              <Button type="button" variant="outline" size="sm" disabled={uploadingBg}
+                onClick={() => document.getElementById('bg-upload')?.click()}>
+                {uploadingBg ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Paperclip className="h-4 w-4 mr-2" />}
+                {bgImageUrl ? 'Заменить фото' : 'Загрузить фото'}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Акцент (рамка)</Label>
+                <div className="flex gap-1.5 flex-wrap">
+                  <button type="button" onClick={() => setAccentColor('')}
+                    className={cn('w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs',
+                      !accentColor ? 'border-foreground' : 'border-border')}>✕</button>
+                  {TASK_COLORS.map((c) => (
+                    <button key={c.value} type="button"
+                      className={cn('w-7 h-7 rounded-full border-2 transition-all',
+                        accentColor === c.value ? 'border-foreground scale-110' : 'border-transparent')}
+                      style={{ backgroundColor: c.value }}
+                      onClick={() => setAccentColor(c.value)} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Иконка</Label>
+                <div className="flex gap-1 flex-wrap">
+                  {ICON_OPTIONS.map((i) => (
+                    <button key={i || 'none'} type="button"
+                      className={cn('w-7 h-7 rounded-md border-2 transition-all text-base flex items-center justify-center',
+                        icon === i ? 'border-foreground bg-muted' : 'border-border')}
+                      onClick={() => setIcon(i)}>{i || '✕'}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Шрифт заголовка</Label>
+              <Select value={titleFont || '__default__'} onValueChange={(v) => setTitleFont(v === '__default__' ? '' : v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {FONT_OPTIONS.map((f) => (
+                    <SelectItem key={f.value || '__default__'} value={f.value || '__default__'}>
+                      <span style={{ fontFamily: f.value || undefined }}>{f.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Links section */}
