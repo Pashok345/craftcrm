@@ -704,13 +704,15 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                         )}
                                         style={{
                                           ...provided.draggableProps.style,
-                                          borderLeftColor: task.color || '#3b82f6',
-                                          borderLeftWidth: '4px',
+                                          ...getTaskCardStyle(task, task.color || '#3b82f6'),
                                         }}
                                         onClick={() => { if (!isDraggingRef.current) onTaskClick(task); }}
                                       >
                                         <CardContent className="p-3">
-                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2">{task.title}</h4>
+                                          <h4 className="font-medium text-foreground mb-1 line-clamp-2 flex items-center gap-1.5" style={getTaskTitleStyle(task)}>
+                                            {task.icon && <span className="text-base">{task.icon}</span>}
+                                            <span className="truncate">{task.title}</span>
+                                          </h4>
                                           {task.project_id && projects[task.project_id] && (
                                             <Badge variant="outline" className="mb-2 text-xs">{projects[task.project_id].title}</Badge>
                                           )}
