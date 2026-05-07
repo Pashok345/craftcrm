@@ -125,6 +125,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   // Load custom columns from DB
   useEffect(() => {
     const fetchColumns = async () => {
+      const overrides = loadColumnColorOverrides();
+      const applyColor = (col: Column): Column =>
+        overrides[col.id] ? { ...col, color: overrides[col.id] } : col;
+
       const { data } = await supabase
         .from('kanban_columns')
         .select('*')
@@ -139,9 +143,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           color: row.color || DEFAULT_COLUMN_COLOR,
           is_default: false,
         }));
-        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]));
+        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]).map(applyColor));
       } else {
-        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS));
+        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS).map(applyColor));
       }
       setColumnsLoaded(true);
     };
