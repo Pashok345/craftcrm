@@ -225,6 +225,66 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     return () => { main.removeEventListener('scroll', syncFromMain); top.removeEventListener('scroll', syncFromTop); };
   }, []);
 
+  // Hold SPACE + drag mouse to pan kanban horizontally
+  useEffect(() => {
+    const main = scrollContainerRef.current;
+    if (!main) return;
+    let spaceDown = false;
+    let panning = false;
+    let startX = 0;
+    let startScroll = 0;
+    const isInputTarget = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || (t as HTMLElement).isContentEditable;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || isInputTarget(e.target)) return;
+      if (!spaceDown) {
+        spaceDown = true;
+        main.style.cursor = 'grab';
+        e.preventDefault();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      spaceDown = false;
+      panning = false;
+      main.style.cursor = '';
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (!spaceDown) return;
+      panning = true;
+      startX = e.clientX;
+      startScroll = main.scrollLeft;
+      main.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!panning) return;
+      main.scrollLeft = startScroll - (e.clientX - startX);
+    };
+    const onMouseUp = () => {
+      if (panning) {
+        panning = false;
+        main.style.cursor = spaceDown ? 'grab' : '';
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    main.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      main.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
   // Update top scroll width
   useEffect(() => {
     const updateWidth = () => {
