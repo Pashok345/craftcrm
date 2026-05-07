@@ -188,8 +188,33 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess, defaultProjectId }: 
     setStatus('todo');
     setProjectId('');
     setColor('#3b82f6');
+    setBgColor('');
+    setBgImageUrl('');
+    setAccentColor('');
+    setIcon('');
+    setTitleFont('');
+    setGradient('');
     setExecutors([]);
     setObservers([]);
+  };
+
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingBg(true);
+    try {
+      const sanitized = file.name.replace(/[^\w.-]/g, '_');
+      const path = `${user.id}/new-bg-${Date.now()}-${sanitized}`;
+      const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: signed } = await supabase.storage.from('task-attachments').createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signed?.signedUrl) setBgImageUrl(signed.signedUrl);
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Ошибка загрузки фото', variant: 'destructive' });
+    } finally {
+      setUploadingBg(false);
+    }
   };
 
   const toggleUser = (userId: string, list: string[], setList: (v: string[]) => void) => {
