@@ -39,6 +39,38 @@ const TASK_COLORS = [
   { value: '#06b6d4', label: 'Голубой' },
 ];
 
+const BG_COLORS = [
+  { value: '', label: 'Нет' },
+  { value: '#fef3c7', label: 'Кремовый' },
+  { value: '#dbeafe', label: 'Голубой' },
+  { value: '#dcfce7', label: 'Мятный' },
+  { value: '#fce7f3', label: 'Розовый' },
+  { value: '#ede9fe', label: 'Лавандовый' },
+  { value: '#fee2e2', label: 'Персиковый' },
+  { value: '#f1f5f9', label: 'Серый' },
+];
+
+const GRADIENTS = [
+  { value: '', label: 'Нет' },
+  { value: 'linear-gradient(135deg,#667eea,#764ba2)', label: 'Фиолет' },
+  { value: 'linear-gradient(135deg,#f093fb,#f5576c)', label: 'Закат' },
+  { value: 'linear-gradient(135deg,#4facfe,#00f2fe)', label: 'Океан' },
+  { value: 'linear-gradient(135deg,#43e97b,#38f9d7)', label: 'Свежесть' },
+  { value: 'linear-gradient(135deg,#fa709a,#fee140)', label: 'Заря' },
+  { value: 'linear-gradient(135deg,#30cfd0,#330867)', label: 'Глубина' },
+];
+
+const FONT_OPTIONS = [
+  { value: '', label: 'По умолчанию' },
+  { value: '"Playfair Display", serif', label: 'Playfair' },
+  { value: '"Roboto Mono", monospace', label: 'Roboto Mono' },
+  { value: '"Comfortaa", cursive', label: 'Comfortaa' },
+  { value: '"Bebas Neue", sans-serif', label: 'Bebas Neue' },
+  { value: '"Caveat", cursive', label: 'Caveat' },
+];
+
+const ICON_OPTIONS = ['', '🚀', '⭐', '🔥', '💡', '✅', '🎯', '📌', '🐛', '⚡', '💎', '🏆', '📈', '🎨', '🛠️'];
+
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
