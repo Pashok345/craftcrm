@@ -55,6 +55,9 @@ const Tasks = () => {
   const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [taskTags, setTaskTags] = useState<Record<string, Tag[]>>({});
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
+  const [taskAssigneeRoles, setTaskAssigneeRoles] = useState<Record<string, { executors: Profile[]; observers: Profile[] }>>({});
+  const [commentInfo, setCommentInfo] = useState<Record<string, { count: number; lastAt: string | null }>>({});
+  const [lastReads, setLastReads] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -93,6 +96,8 @@ const Tasks = () => {
     fetchCreators();
     fetchTaskTags();
     fetchTaskAssignees();
+    fetchCommentInfo();
+    fetchLastReads();
   }, []);
 
   // Refetch tasks when kanban placements change (cross-view sync)
