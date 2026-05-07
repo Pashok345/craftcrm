@@ -270,6 +270,27 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
     setExistingAttachments(existingAttachments.filter(a => a.id !== attachmentId));
   };
 
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingBg(true);
+    try {
+      const sanitized = file.name.replace(/[^\w.-]/g, '_');
+      const path = `${task.id}/bg-${Date.now()}-${sanitized}`;
+      const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: signed } = await supabase.storage.from('task-attachments').createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signed?.signedUrl) setBgImageUrl(signed.signedUrl);
+      toast({ title: 'Фон загружен' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Ошибка загрузки фона', variant: 'destructive' });
+    } finally {
+      setUploadingBg(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
