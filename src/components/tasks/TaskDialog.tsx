@@ -146,8 +146,14 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess, defaultProjectId }: 
           status,
           project_id: projectId || null,
           color,
+          bg_color: bgColor || null,
+          bg_image_url: bgImageUrl || null,
+          accent_color: accentColor || null,
+          icon: icon || null,
+          title_font: titleFont || null,
+          gradient: gradient || null,
           created_by: user.id,
-        })
+        } as any)
         .select()
         .single();
 
