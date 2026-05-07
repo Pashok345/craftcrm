@@ -582,13 +582,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       {/* Top scrollbar */}
       <div
         ref={topScrollRef}
-        className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
-        style={{ scrollbarWidth: 'thin' }}
+        className="overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full"
+        style={{ scrollbarWidth: 'auto' }}
       >
         <div style={{ height: '1px' }} />
       </div>
 
-      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-3 sm:gap-4">
