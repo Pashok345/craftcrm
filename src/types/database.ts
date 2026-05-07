@@ -83,6 +83,12 @@ export interface Task {
   project_id?: string;
   color?: string;
   links?: TaskLink[];
+  bg_color?: string | null;
+  bg_image_url?: string | null;
+  accent_color?: string | null;
+  icon?: string | null;
+  title_font?: string | null;
+  gradient?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
