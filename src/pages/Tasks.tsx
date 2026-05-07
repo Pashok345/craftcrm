@@ -691,11 +691,59 @@ const Tasks = () => {
                                                 </div>
                                               )}
                                               {task.created_by && creators[task.created_by] && (
-                                                <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-                                                  <User className="h-4 w-4 shrink-0" />
-                                                  <span className="truncate">{t('createdBy')}: {creators[task.created_by].name}</span>
-                                                </div>
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Crown className="h-3.5 w-3.5 text-amber-500" />
+                                                        <Avatar className="h-6 w-6 border border-background">
+                                                          <AvatarImage src={creators[task.created_by].avatar_url || undefined} />
+                                                          <AvatarFallback style={{ backgroundColor: creators[task.created_by].avatar_color || '#6366f1' }} className="text-[10px] text-white">
+                                                            {getInitials(creators[task.created_by].name)}
+                                                          </AvatarFallback>
+                                                        </Avatar>
+                                                      </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>{t('createdBy')}: {creators[task.created_by].name}</p></TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
                                               )}
+                                              {taskAssigneeRoles[task.id]?.executors && taskAssigneeRoles[task.id].executors.length > 0 && (
+                                                <TooltipProvider>
+                                                  <div className="flex items-center gap-1.5">
+                                                    <UserCircle2 className="h-3.5 w-3.5 text-primary" />
+                                                    <div className="flex -space-x-1.5">
+                                                      {taskAssigneeRoles[task.id].executors.slice(0, 3).map(ex => (
+                                                        <Tooltip key={ex.user_id}>
+                                                          <TooltipTrigger asChild>
+                                                            <Avatar className="h-6 w-6 border border-background">
+                                                              <AvatarImage src={ex.avatar_url || undefined} />
+                                                              <AvatarFallback style={{ backgroundColor: ex.avatar_color || '#6366f1' }} className="text-[10px] text-white">
+                                                                {getInitials(ex.name)}
+                                                              </AvatarFallback>
+                                                            </Avatar>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent><p>{t('executor')}: {ex.name}</p></TooltipContent>
+                                                        </Tooltip>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                </TooltipProvider>
+                                              )}
+                                              {commentInfo[task.id] && commentInfo[task.id].count > 0 && (() => {
+                                                const info = commentInfo[task.id];
+                                                const last = lastReads[task.id];
+                                                const isUnread = !last || (info.lastAt && info.lastAt > last);
+                                                return (
+                                                  <div className={cn("relative flex items-center gap-1 text-sm", isUnread ? "text-primary font-semibold" : "text-muted-foreground")}>
+                                                    <MessageSquare className="h-4 w-4" />
+                                                    <span>{info.count}</span>
+                                                    {isUnread && (
+                                                      <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                                                    )}
+                                                  </div>
+                                                );
+                                              })()}
                                             </div>
                                             {taskTags[task.id] && taskTags[task.id].length > 0 && (
                                               <div className="flex flex-wrap gap-1.5 mt-3">
