@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Task, TaskStatus } from '@/types/database';
+import { loadColumnColorOverrides } from '@/lib/columnColors';
 
 export interface KanbanColumn {
   id: string;
@@ -53,6 +54,9 @@ export function useKanbanColumns() {
   columnsRef.current = columns;
 
   const refetch = useCallback(async () => {
+    const overrides = loadColumnColorOverrides();
+    const applyColor = (c: KanbanColumn): KanbanColumn =>
+      overrides[c.id] ? { ...c, color: overrides[c.id] } : c;
     const { data: cols } = await supabase.from('kanban_columns').select('*').order('sort_order');
     let allCols: KanbanColumn[] = DEFAULT_COLUMNS;
     if (cols && cols.length) {
@@ -64,9 +68,9 @@ export function useKanbanColumns() {
         color: row.color || DEFAULT_COLUMN_COLOR,
         is_default: false,
       }));
-      allCols = applyOrder([...DEFAULT_COLUMNS, ...custom]);
+      allCols = applyOrder([...DEFAULT_COLUMNS, ...custom]).map(applyColor);
     } else {
-      allCols = applyOrder(DEFAULT_COLUMNS);
+      allCols = applyOrder(DEFAULT_COLUMNS).map(applyColor);
     }
     setColumns(allCols);
 
