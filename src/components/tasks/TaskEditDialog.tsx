@@ -175,6 +175,12 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
           status,
           project_id: projectId || null,
           color,
+          bg_color: bgColor || null,
+          bg_image_url: bgImageUrl || null,
+          accent_color: accentColor || null,
+          icon: icon || null,
+          title_font: titleFont || null,
+          gradient: gradient || null,
           links: JSON.parse(JSON.stringify(links)),
         })
         .eq('id', task.id);
