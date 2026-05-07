@@ -23,6 +23,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
 import { loadColumnColorOverrides, saveColumnColorOverride } from '@/lib/columnColors';
+import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
 
 const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
