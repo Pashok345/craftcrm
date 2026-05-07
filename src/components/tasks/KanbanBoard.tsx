@@ -582,7 +582,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       {/* Top scrollbar */}
       <div
         ref={topScrollRef}
-        className="overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full"
+        className="overflow-x-auto mb-5 kanban-scrollbar"
         style={{ scrollbarWidth: 'auto' }}
       >
         <div style={{ height: '1px' }} />
