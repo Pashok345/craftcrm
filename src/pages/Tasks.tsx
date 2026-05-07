@@ -649,7 +649,7 @@ const Tasks = () => {
                                     )}
                                     style={{
                                       ...provided.draggableProps.style,
-                                      borderLeft: `4px solid ${column.color}`,
+                                      ...getTaskCardStyle(task, column.color),
                                     }}
                                     onClick={(e) => {
                                       if (isDragging || snapshot.isDragging) {
