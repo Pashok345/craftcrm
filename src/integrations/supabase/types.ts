@@ -1687,42 +1687,60 @@ export type Database = {
       }
       tasks: {
         Row: {
+          accent_color: string | null
+          bg_color: string | null
+          bg_image_url: string | null
           color: string | null
           created_at: string
           created_by: string
           deadline: string | null
           description: string | null
+          gradient: string | null
+          icon: string | null
           id: string
           links: Json | null
           project_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
+          title_font: string | null
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
+          bg_color?: string | null
+          bg_image_url?: string | null
           color?: string | null
           created_at?: string
           created_by: string
           deadline?: string | null
           description?: string | null
+          gradient?: string | null
+          icon?: string | null
           id?: string
           links?: Json | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
+          title_font?: string | null
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
+          bg_color?: string | null
+          bg_image_url?: string | null
           color?: string | null
           created_at?: string
           created_by?: string
           deadline?: string | null
           description?: string | null
+          gradient?: string | null
+          icon?: string | null
           id?: string
           links?: Json | null
           project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
+          title_font?: string | null
           updated_at?: string
         }
         Relationships: [
