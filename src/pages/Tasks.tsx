@@ -325,9 +325,22 @@ const Tasks = () => {
 
   const handleQuickStatusChange = useCallback(async (task: Task, column: KanbanColumn) => {
     await moveTaskToColumn(task, column, user?.id);
+    // Place the task at the very top of the destination column in the list view
+    const newColumnTasks = [task.id, ...((tasksByColumn[column.id] || []).filter(t => t.id !== task.id).map(t => t.id))];
+    const fullOrder: string[] = [];
+    columns.forEach(c => {
+      if (c.id === column.id) {
+        newColumnTasks.forEach(id => fullOrder.push(id));
+      } else {
+        (tasksByColumn[c.id] || []).filter(t => t.id !== task.id).forEach(t => fullOrder.push(t.id));
+      }
+    });
+    setManualOrder(fullOrder);
+    if (sortBy !== 'manual') setSortBy('manual');
+    sessionStorage.setItem('tasks-manual-order', JSON.stringify(fullOrder));
     fetchTasks();
     toast.success(t('statusUpdated') || 'Статус обновлён');
-  }, [moveTaskToColumn, user, t]);
+  }, [moveTaskToColumn, user, t, tasksByColumn, columns, sortBy]);
 
   // DnD handler — supports moving between column groups
   const handleDragStart = () => { setIsDragging(true); };
