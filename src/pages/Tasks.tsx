@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter, Repeat, GripVertical, Keyboard } from 'lucide-react';
+import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter, Repeat, GripVertical, Keyboard, MessageSquare, UserCircle2, Crown } from 'lucide-react';
 import { Task, Project, Profile, Tag } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { TaskTemplatesDialog } from '@/components/tasks/TaskTemplatesDialog';
@@ -55,6 +55,9 @@ const Tasks = () => {
   const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [taskTags, setTaskTags] = useState<Record<string, Tag[]>>({});
   const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
+  const [taskAssigneeRoles, setTaskAssigneeRoles] = useState<Record<string, { executors: Profile[]; observers: Profile[] }>>({});
+  const [commentInfo, setCommentInfo] = useState<Record<string, { count: number; lastAt: string | null }>>({});
+  const [lastReads, setLastReads] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -93,6 +96,8 @@ const Tasks = () => {
     fetchCreators();
     fetchTaskTags();
     fetchTaskAssignees();
+    fetchCommentInfo();
+    fetchLastReads();
   }, []);
 
   // Refetch tasks when kanban placements change (cross-view sync)
@@ -156,15 +161,44 @@ const Tasks = () => {
   };
 
   const fetchTaskAssignees = async () => {
-    const { data, error } = await supabase.from('task_assignees').select('task_id, user_id, profiles(*)');
+    const { data, error } = await supabase.from('task_assignees').select('task_id, user_id, role, profiles(*)');
     if (!error && data) {
       const map: Record<string, Profile[]> = {};
-      (data as unknown as TaskAssignee[]).forEach((item) => {
+      const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
+      (data as unknown as (TaskAssignee & { role: string })[]).forEach((item) => {
         if (!map[item.task_id]) map[item.task_id] = [];
-        if (item.profiles) map[item.task_id].push(item.profiles);
+        if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
+        if (item.profiles) {
+          map[item.task_id].push(item.profiles);
+          if (item.role === 'executor') roleMap[item.task_id].executors.push(item.profiles);
+          else if (item.role === 'observer') roleMap[item.task_id].observers.push(item.profiles);
+        }
       });
       setTaskAssignees(map);
+      setTaskAssigneeRoles(roleMap);
     }
+  };
+
+  const fetchCommentInfo = async () => {
+    const { data } = await supabase.from('task_comments').select('task_id, created_at');
+    if (!data) return;
+    const map: Record<string, { count: number; lastAt: string | null }> = {};
+    data.forEach((row: any) => {
+      const cur = map[row.task_id] || { count: 0, lastAt: null };
+      cur.count += 1;
+      if (!cur.lastAt || row.created_at > cur.lastAt) cur.lastAt = row.created_at;
+      map[row.task_id] = cur;
+    });
+    setCommentInfo(map);
+  };
+
+  const fetchLastReads = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('task_comment_reads').select('task_id, last_read_at').eq('user_id', user.id);
+    if (!data) return;
+    const map: Record<string, string> = {};
+    data.forEach((row: any) => { map[row.task_id] = row.last_read_at; });
+    setLastReads(map);
   };
 
   const getInitials = (name: string) =>
@@ -291,9 +325,22 @@ const Tasks = () => {
 
   const handleQuickStatusChange = useCallback(async (task: Task, column: KanbanColumn) => {
     await moveTaskToColumn(task, column, user?.id);
+    // Place the task at the very top of the destination column in the list view
+    const newColumnTasks = [task.id, ...((tasksByColumn[column.id] || []).filter(t => t.id !== task.id).map(t => t.id))];
+    const fullOrder: string[] = [];
+    columns.forEach(c => {
+      if (c.id === column.id) {
+        newColumnTasks.forEach(id => fullOrder.push(id));
+      } else {
+        (tasksByColumn[c.id] || []).filter(t => t.id !== task.id).forEach(t => fullOrder.push(t.id));
+      }
+    });
+    setManualOrder(fullOrder);
+    if (sortBy !== 'manual') setSortBy('manual');
+    sessionStorage.setItem('tasks-manual-order', JSON.stringify(fullOrder));
     fetchTasks();
     toast.success(t('statusUpdated') || 'Статус обновлён');
-  }, [moveTaskToColumn, user, t]);
+  }, [moveTaskToColumn, user, t, tasksByColumn, columns, sortBy]);
 
   // DnD handler — supports moving between column groups
   const handleDragStart = () => { setIsDragging(true); };
@@ -644,11 +691,59 @@ const Tasks = () => {
                                                 </div>
                                               )}
                                               {task.created_by && creators[task.created_by] && (
-                                                <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
-                                                  <User className="h-4 w-4 shrink-0" />
-                                                  <span className="truncate">{t('createdBy')}: {creators[task.created_by].name}</span>
-                                                </div>
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Crown className="h-3.5 w-3.5 text-amber-500" />
+                                                        <Avatar className="h-6 w-6 border border-background">
+                                                          <AvatarImage src={creators[task.created_by].avatar_url || undefined} />
+                                                          <AvatarFallback style={{ backgroundColor: creators[task.created_by].avatar_color || '#6366f1' }} className="text-[10px] text-white">
+                                                            {getInitials(creators[task.created_by].name)}
+                                                          </AvatarFallback>
+                                                        </Avatar>
+                                                      </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>{t('createdBy')}: {creators[task.created_by].name}</p></TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
                                               )}
+                                              {taskAssigneeRoles[task.id]?.executors && taskAssigneeRoles[task.id].executors.length > 0 && (
+                                                <TooltipProvider>
+                                                  <div className="flex items-center gap-1.5">
+                                                    <UserCircle2 className="h-3.5 w-3.5 text-primary" />
+                                                    <div className="flex -space-x-1.5">
+                                                      {taskAssigneeRoles[task.id].executors.slice(0, 3).map(ex => (
+                                                        <Tooltip key={ex.user_id}>
+                                                          <TooltipTrigger asChild>
+                                                            <Avatar className="h-6 w-6 border border-background">
+                                                              <AvatarImage src={ex.avatar_url || undefined} />
+                                                              <AvatarFallback style={{ backgroundColor: ex.avatar_color || '#6366f1' }} className="text-[10px] text-white">
+                                                                {getInitials(ex.name)}
+                                                              </AvatarFallback>
+                                                            </Avatar>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent><p>{t('executor')}: {ex.name}</p></TooltipContent>
+                                                        </Tooltip>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                </TooltipProvider>
+                                              )}
+                                              {commentInfo[task.id] && commentInfo[task.id].count > 0 && (() => {
+                                                const info = commentInfo[task.id];
+                                                const last = lastReads[task.id];
+                                                const isUnread = !last || (info.lastAt && info.lastAt > last);
+                                                return (
+                                                  <div className={cn("relative flex items-center gap-1 text-sm", isUnread ? "text-primary font-semibold" : "text-muted-foreground")}>
+                                                    <MessageSquare className="h-4 w-4" />
+                                                    <span>{info.count}</span>
+                                                    {isUnread && (
+                                                      <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                                                    )}
+                                                  </div>
+                                                );
+                                              })()}
                                             </div>
                                             {taskTags[task.id] && taskTags[task.id].length > 0 && (
                                               <div className="flex flex-wrap gap-1.5 mt-3">

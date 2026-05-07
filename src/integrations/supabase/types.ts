@@ -1413,6 +1413,35 @@ export type Database = {
           },
         ]
       }
+      task_comment_reads: {
+        Row: {
+          id: string
+          last_read_at: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_read_at?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_read_at?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comment_reads_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_comments: {
         Row: {
           content: string

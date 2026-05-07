@@ -215,6 +215,13 @@ const TaskDetail = () => {
         } as CommentWithUser);
       }
       setComments(commentsWithUsers);
+      // Mark comments as read for the current user
+      if (user && task) {
+        await supabase.from('task_comment_reads').upsert(
+          { user_id: user.id, task_id: task.id, last_read_at: new Date().toISOString() },
+          { onConflict: 'user_id,task_id' }
+        );
+      }
     }
   };
 

@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
+import { loadColumnColorOverrides, saveColumnColorOverride } from '@/lib/columnColors';
 
 const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
@@ -124,6 +125,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   // Load custom columns from DB
   useEffect(() => {
     const fetchColumns = async () => {
+      const overrides = loadColumnColorOverrides();
+      const applyColor = (col: Column): Column =>
+        overrides[col.id] ? { ...col, color: overrides[col.id] } : col;
+
       const { data } = await supabase
         .from('kanban_columns')
         .select('*')
@@ -138,9 +143,9 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           color: row.color || DEFAULT_COLUMN_COLOR,
           is_default: false,
         }));
-        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]));
+        setColumnsState(applyOrderFromStorage([...DEFAULT_COLUMNS, ...customCols]).map(applyColor));
       } else {
-        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS));
+        setColumnsState(applyOrderFromStorage(DEFAULT_COLUMNS).map(applyColor));
       }
       setColumnsLoaded(true);
     };
@@ -218,6 +223,66 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     main.addEventListener('scroll', syncFromMain);
     top.addEventListener('scroll', syncFromTop);
     return () => { main.removeEventListener('scroll', syncFromMain); top.removeEventListener('scroll', syncFromTop); };
+  }, []);
+
+  // Hold SPACE + drag mouse to pan kanban horizontally
+  useEffect(() => {
+    const main = scrollContainerRef.current;
+    if (!main) return;
+    let spaceDown = false;
+    let panning = false;
+    let startX = 0;
+    let startScroll = 0;
+    const isInputTarget = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || (t as HTMLElement).isContentEditable;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || isInputTarget(e.target)) return;
+      if (!spaceDown) {
+        spaceDown = true;
+        main.style.cursor = 'grab';
+        e.preventDefault();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      spaceDown = false;
+      panning = false;
+      main.style.cursor = '';
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (!spaceDown) return;
+      panning = true;
+      startX = e.clientX;
+      startScroll = main.scrollLeft;
+      main.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!panning) return;
+      main.scrollLeft = startScroll - (e.clientX - startX);
+    };
+    const onMouseUp = () => {
+      if (panning) {
+        panning = false;
+        main.style.cursor = spaceDown ? 'grab' : '';
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    main.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      main.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
   }, []);
 
   // Update top scroll width
@@ -498,6 +563,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     if (column?.db_id) {
       await supabase.from('kanban_columns').update({ color }).eq('id', column.db_id);
     }
+    // Persist override locally — required for built-in columns (no db_id)
+    saveColumnColorOverride(columnId, color);
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, color } : c));
     notifyKanbanChange();
   };
@@ -515,13 +582,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       {/* Top scrollbar */}
       <div
         ref={topScrollRef}
-        className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full"
-        style={{ scrollbarWidth: 'thin' }}
+        className="overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full"
+        style={{ scrollbarWidth: 'auto' }}
       >
         <div style={{ height: '1px' }} />
       </div>
 
-      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full scrollbar-thin overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 min-h-[calc(100vh-320px)] pb-4 overflow-x-auto [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb:hover]:bg-primary/60 [&::-webkit-scrollbar-thumb]:rounded-full overscroll-x-contain" style={{ touchAction: 'pan-y pan-x', scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-3 sm:gap-4">
