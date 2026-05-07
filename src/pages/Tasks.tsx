@@ -30,6 +30,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name' | 'manual';
 
