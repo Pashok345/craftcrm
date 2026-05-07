@@ -161,15 +161,44 @@ const Tasks = () => {
   };
 
   const fetchTaskAssignees = async () => {
-    const { data, error } = await supabase.from('task_assignees').select('task_id, user_id, profiles(*)');
+    const { data, error } = await supabase.from('task_assignees').select('task_id, user_id, role, profiles(*)');
     if (!error && data) {
       const map: Record<string, Profile[]> = {};
-      (data as unknown as TaskAssignee[]).forEach((item) => {
+      const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
+      (data as unknown as (TaskAssignee & { role: string })[]).forEach((item) => {
         if (!map[item.task_id]) map[item.task_id] = [];
-        if (item.profiles) map[item.task_id].push(item.profiles);
+        if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
+        if (item.profiles) {
+          map[item.task_id].push(item.profiles);
+          if (item.role === 'executor') roleMap[item.task_id].executors.push(item.profiles);
+          else if (item.role === 'observer') roleMap[item.task_id].observers.push(item.profiles);
+        }
       });
       setTaskAssignees(map);
+      setTaskAssigneeRoles(roleMap);
     }
+  };
+
+  const fetchCommentInfo = async () => {
+    const { data } = await supabase.from('task_comments').select('task_id, created_at');
+    if (!data) return;
+    const map: Record<string, { count: number; lastAt: string | null }> = {};
+    data.forEach((row: any) => {
+      const cur = map[row.task_id] || { count: 0, lastAt: null };
+      cur.count += 1;
+      if (!cur.lastAt || row.created_at > cur.lastAt) cur.lastAt = row.created_at;
+      map[row.task_id] = cur;
+    });
+    setCommentInfo(map);
+  };
+
+  const fetchLastReads = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('task_comment_reads').select('task_id, last_read_at').eq('user_id', user.id);
+    if (!data) return;
+    const map: Record<string, string> = {};
+    data.forEach((row: any) => { map[row.task_id] = row.last_read_at; });
+    setLastReads(map);
   };
 
   const getInitials = (name: string) =>
