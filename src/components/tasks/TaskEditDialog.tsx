@@ -114,6 +114,12 @@ export const TaskEditDialog = ({ open, onOpenChange, task, onSuccess }: TaskEdit
       setStatus(task.status);
       setProjectId(task.project_id || '');
       setColor(task.color || '#3b82f6');
+      setBgColor(task.bg_color || '');
+      setBgImageUrl(task.bg_image_url || '');
+      setAccentColor(task.accent_color || '');
+      setIcon(task.icon || '');
+      setTitleFont(task.title_font || '');
+      setGradient(task.gradient || '');
       setLinks((task.links as TaskLink[]) || []);
       fetchUsers();
       fetchProjects();
