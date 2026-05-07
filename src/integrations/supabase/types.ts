@@ -1980,6 +1980,14 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_task_assignee: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_whiteboard_member: {
         Args: { _user_id: string; _whiteboard_id: string }
         Returns: boolean
