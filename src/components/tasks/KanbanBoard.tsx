@@ -499,6 +499,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
     if (column?.db_id) {
       await supabase.from('kanban_columns').update({ color }).eq('id', column.db_id);
     }
+    // Persist override locally — required for built-in columns (no db_id)
+    saveColumnColorOverride(columnId, color);
     setColumns(prev => prev.map(c => c.id === columnId ? { ...c, color } : c));
     notifyKanbanChange();
   };
