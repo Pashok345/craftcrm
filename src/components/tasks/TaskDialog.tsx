@@ -99,7 +99,6 @@ export const TaskDialog = ({ open, onOpenChange, onSuccess, defaultProjectId }: 
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { user } = useAuth();
 
   useEffect(() => {
     if (open) {
