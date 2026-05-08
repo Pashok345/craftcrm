@@ -33,6 +33,7 @@ import { TagsManager } from '@/components/tasks/TagsManager';
 import { SubtasksList } from '@/components/tasks/SubtasksList';
 import { TaskFilesGallery } from '@/components/tasks/TaskFilesGallery';
 import { TaskDependencies } from '@/components/tasks/TaskDependencies';
+import { TaskCustomization, TaskCustomizationValue, emptyCustomization } from '@/components/tasks/TaskCustomization';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
