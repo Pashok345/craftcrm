@@ -649,6 +649,10 @@ const TaskDetail = () => {
             <LayoutGrid className="h-4 w-4" />
             {t('taskTabBoards')}
           </TabsTrigger>
+          <TabsTrigger value="design" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Дизайн
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="mt-4 md:pl-8">
