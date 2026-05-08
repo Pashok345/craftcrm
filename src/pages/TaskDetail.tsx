@@ -621,17 +621,15 @@ const TaskDetail = () => {
             )}
             {t('addFile')}
           </Button>
+          <Button variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            {t('edit')}
+          </Button>
           {user?.id === task.created_by && (
-            <>
-              <Button variant="outline" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4 mr-2" />
-                {t('edit')}
-              </Button>
-              <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                {t('delete')}
-              </Button>
-            </>
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('delete')}
+            </Button>
           )}
         </div>
       </div>
