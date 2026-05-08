@@ -89,6 +89,7 @@ export interface Task {
   icon?: string | null;
   title_font?: string | null;
   gradient?: string | null;
+  header_title?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
