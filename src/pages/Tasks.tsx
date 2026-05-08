@@ -60,7 +60,7 @@ const Tasks = () => {
   const [commentInfo, setCommentInfo] = useState<Record<string, { count: number; lastAt: string | null }>>({});
   const [lastReads, setLastReads] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tasks-active-tab') || 'list');
   const [searchQuery, setSearchQuery] = useState('');
