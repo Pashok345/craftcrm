@@ -622,7 +622,7 @@ const TaskDetail = () => {
             )}
             {t('addFile')}
           </Button>
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
+          <Button variant="outline" onClick={() => navigate(`/tasks/${task.id}/edit`)}>
             <Pencil className="h-4 w-4 mr-2" />
             {t('edit')}
           </Button>

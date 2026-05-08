@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
 import CreateTask from "./pages/CreateTask";
+import EditTask from "./pages/EditTask";
 import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/new" element={<CreateTask />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
+            <Route path="/tasks/:id/edit" element={<EditTask />} />
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
             <Route path="/projects" element={<Projects />} />
