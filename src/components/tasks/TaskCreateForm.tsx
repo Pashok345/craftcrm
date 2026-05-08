@@ -105,6 +105,7 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
           icon: custom.icon || null,
           title_font: custom.titleFont || null,
           gradient: custom.gradient || null,
+          header_title: custom.headerTitle || null,
           created_by: user.id,
         } as any)
         .select()
