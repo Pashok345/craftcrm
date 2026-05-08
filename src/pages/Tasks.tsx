@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter, Repeat, GripVertical, Keyboard, MessageSquare, UserCircle2, Crown } from 'lucide-react';
 import { Task, Project, Profile, Tag } from '@/types/database';
-import { TaskDialog } from '@/components/tasks/TaskDialog';
+
 import { TaskTemplatesDialog } from '@/components/tasks/TaskTemplatesDialog';
 import { TasksExport } from '@/components/tasks/TasksExport';
 import { GanttChart } from '@/components/tasks/GanttChart';
