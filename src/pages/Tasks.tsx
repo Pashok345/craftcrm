@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Calendar, List, BarChart3, Columns, Search, User, Filter, Repeat, GripVertical, Keyboard, MessageSquare, UserCircle2, Crown } from 'lucide-react';
 import { Task, Project, Profile, Tag } from '@/types/database';
-import { TaskDialog } from '@/components/tasks/TaskDialog';
+
 import { TaskTemplatesDialog } from '@/components/tasks/TaskTemplatesDialog';
 import { TasksExport } from '@/components/tasks/TasksExport';
 import { GanttChart } from '@/components/tasks/GanttChart';
@@ -60,7 +60,7 @@ const Tasks = () => {
   const [commentInfo, setCommentInfo] = useState<Record<string, { count: number; lastAt: string | null }>>({});
   const [lastReads, setLastReads] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tasks-active-tab') || 'list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -221,7 +221,7 @@ const Tasks = () => {
   }, []);
 
   useTaskShortcuts({
-    onCreateTask: useCallback(() => setDialogOpen(true), []),
+    onCreateTask: useCallback(() => navigate('/tasks/new'), []),
     onSwitchView: handleSwitchView,
     onToggleTemplates: useCallback(() => setTemplatesOpen(prev => !prev), []),
     onToggleHelp: toggleShortcuts,
@@ -435,7 +435,7 @@ const Tasks = () => {
             <Repeat className="h-4 w-4" />
             {t('recurringTasks')}
           </Button>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+          <Button onClick={() => navigate('/tasks/new')} className="gap-2">
             <Plus className="h-4 w-4" />
             {t('addTask')}
           </Button>
@@ -606,7 +606,7 @@ const Tasks = () => {
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">{t('noTasks')}</h3>
                 <p className="text-muted-foreground mb-4">{t('createFirstTask')}</p>
-                <Button onClick={() => setDialogOpen(true)}>{t('createTask')}</Button>
+                <Button onClick={() => navigate('/tasks/new')}>{t('createTask')}</Button>
               </CardContent>
             </Card>
           ) : (
@@ -856,7 +856,7 @@ const Tasks = () => {
         </TabsContent>
       </Tabs>
 
-      <TaskDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchTasks} />
+      
       <TaskTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onTaskGenerated={fetchTasks} />
     </div>
   );

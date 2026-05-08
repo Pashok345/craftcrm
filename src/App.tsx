@@ -11,6 +11,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
+import CreateTask from "./pages/CreateTask";
 import Meetings from "./pages/Meetings";
 import Users from "./pages/Users";
 import Projects from "./pages/Projects";
@@ -42,6 +43,7 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
+            <Route path="/tasks/new" element={<CreateTask />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/users" element={<Users />} />
