@@ -45,6 +45,7 @@ export const TaskEditForm = ({ task, onSuccess, onCancel }: TaskEditFormProps) =
     icon: task.icon || '',
     titleFont: task.title_font || '',
     gradient: task.gradient || '',
+    headerTitle: (task as any).header_title || '',
   });
   const [links, setLinks] = useState<TaskLink[]>((task.links as TaskLink[]) || []);
   const [newLinkTitle, setNewLinkTitle] = useState('');
@@ -98,6 +99,7 @@ export const TaskEditForm = ({ task, onSuccess, onCancel }: TaskEditFormProps) =
           icon: customization.icon || null,
           title_font: customization.titleFont || null,
           gradient: customization.gradient || null,
+          header_title: customization.headerTitle || null,
           links: JSON.parse(JSON.stringify(links)),
         })
         .eq('id', task.id);
@@ -162,11 +164,11 @@ export const TaskEditForm = ({ task, onSuccess, onCancel }: TaskEditFormProps) =
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs defaultValue="main" className="w-full">
-        <TabsList className="w-full justify-start flex-wrap h-auto">
-          <TabsTrigger value="main">Основное</TabsTrigger>
-          <TabsTrigger value="people">Участники</TabsTrigger>
-          <TabsTrigger value="files">Файлы и ссылки</TabsTrigger>
-          <TabsTrigger value="design">Дизайн</TabsTrigger>
+        <TabsList className="w-full justify-start flex-wrap h-auto bg-muted/60 border border-border p-1 gap-1">
+          <TabsTrigger value="main" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Основное</TabsTrigger>
+          <TabsTrigger value="people" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Участники</TabsTrigger>
+          <TabsTrigger value="files" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Файлы и ссылки</TabsTrigger>
+          <TabsTrigger value="design" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">Кастомизация</TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="space-y-4 mt-4">
