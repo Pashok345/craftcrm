@@ -1150,3 +1150,56 @@ const TaskDetail = () => {
 };
 
 export default TaskDetail;
+
+interface TaskDesignTabProps {
+  task: Task;
+  onSaved: (patch: Partial<Task>) => void;
+}
+
+const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
+  const { toast } = useToast();
+  const [value, setValue] = useState<TaskCustomizationValue>({
+    color: (task as any).color || '#3b82f6',
+    bgColor: (task as any).bg_color || '',
+    bgImageUrl: (task as any).bg_image_url || '',
+    accentColor: (task as any).accent_color || '',
+    icon: (task as any).icon || '',
+    titleFont: (task as any).title_font || '',
+    gradient: (task as any).gradient || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const patch = {
+      color: value.color,
+      bg_color: value.bgColor || null,
+      bg_image_url: value.bgImageUrl || null,
+      accent_color: value.accentColor || null,
+      icon: value.icon || null,
+      title_font: value.titleFont || null,
+      gradient: value.gradient || null,
+    } as any;
+    const { error } = await supabase.from('tasks').update(patch).eq('id', task.id);
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Не удалось сохранить', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Дизайн сохранён' });
+    onSaved(patch);
+  };
+
+  return (
+    <>
+      <TaskCustomization value={value} onChange={setValue} previewTitle={task.title} uploadFolder={task.id} />
+      <div className="flex justify-end pt-2">
+        <Button onClick={save} disabled={saving}>
+          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          Сохранить дизайн
+        </Button>
+      </div>
+    </>
+  );
+};
+
