@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Paperclip, X, Calendar } from 'lucide-react';
@@ -84,17 +85,18 @@ export interface TaskCustomizationValue {
   icon: string;
   titleFont: string;
   gradient: string;
+  headerTitle: string;
 }
 
 export const emptyCustomization: TaskCustomizationValue = {
-  color: '#3b82f6', bgColor: '', bgImageUrl: '', accentColor: '', icon: '', titleFont: '', gradient: '',
+  color: '#3b82f6', bgColor: '', bgImageUrl: '', accentColor: '', icon: '', titleFont: '', gradient: '', headerTitle: '',
 };
 
 interface TaskCustomizationProps {
   value: TaskCustomizationValue;
   onChange: (v: TaskCustomizationValue) => void;
   previewTitle?: string;
-  uploadFolder?: string; // path prefix for bg upload
+  uploadFolder?: string;
 }
 
 export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder }: TaskCustomizationProps) => {
@@ -124,20 +126,26 @@ export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder 
     }
   };
 
-  // Build preview style
-  const previewStyle: React.CSSProperties = {};
-  if (value.gradient) { previewStyle.backgroundImage = value.gradient; previewStyle.color = '#fff'; }
-  else if (value.bgImageUrl) {
-    previewStyle.backgroundImage = `linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url(${value.bgImageUrl})`;
-    previewStyle.backgroundSize = 'cover'; previewStyle.backgroundPosition = 'center';
-  } else if (value.bgColor) { previewStyle.backgroundColor = value.bgColor; }
-  if (value.accentColor) previewStyle.borderLeft = `4px solid ${value.accentColor}`;
+  // Mini card preview style — uses gradient for thumbnail, falls back to bg color
+  const miniStyle: React.CSSProperties = {};
+  if (value.gradient) { miniStyle.backgroundImage = value.gradient; miniStyle.color = '#fff'; }
+  else if (value.bgColor) { miniStyle.backgroundColor = value.bgColor; }
+  if (value.accentColor) miniStyle.borderLeft = `4px solid ${value.accentColor}`;
+
+  // Page header preview style
+  const headerStyle: React.CSSProperties = value.bgImageUrl
+    ? {
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.45)), url(${value.bgImageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : { background: 'hsl(var(--muted))' };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr,260px] gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-4">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Цвет фона карточки</Label>
+          <Label className="text-xs text-muted-foreground">Цвет фона страницы задачи</Label>
           <div className="flex gap-2 flex-wrap">
             {BG_COLORS.map((c) => (
               <button key={c.value || 'none'} type="button"
@@ -152,7 +160,7 @@ export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder 
         </div>
 
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Градиент</Label>
+          <Label className="text-xs text-muted-foreground">Градиент (для миниатюры в списке/канбане)</Label>
           <div className="flex gap-2 flex-wrap">
             {GRADIENTS.map((g) => (
               <button key={g.value || 'none'} type="button"
@@ -164,10 +172,10 @@ export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder 
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Фоновое изображение</Label>
+        <div className="space-y-2 rounded-lg border border-dashed p-3">
+          <Label className="text-xs text-muted-foreground">Шапка задачи (фоновое изображение)</Label>
           {value.bgImageUrl && (
-            <div className="relative w-full h-24 rounded-md overflow-hidden border border-border">
+            <div className="relative w-full h-28 rounded-md overflow-hidden border border-border">
               <img src={value.bgImageUrl} alt="bg" className="w-full h-full object-cover" />
               <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6"
                 onClick={() => set({ bgImageUrl: '' })}><X className="h-3 w-3" /></Button>
@@ -179,6 +187,14 @@ export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder 
             {uploadingBg ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Paperclip className="h-4 w-4 mr-2" />}
             {value.bgImageUrl ? 'Заменить фото' : 'Загрузить фото'}
           </Button>
+          <div className="space-y-1 pt-1">
+            <Label className="text-xs text-muted-foreground">Заголовок поверх шапки (необязательно)</Label>
+            <Input
+              value={value.headerTitle}
+              onChange={(e) => set({ headerTitle: e.target.value })}
+              placeholder="Например: Спринт #3 — релиз"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -238,24 +254,51 @@ export const TaskCustomization = ({ value, onChange, previewTitle, uploadFolder 
         </div>
       </div>
 
-      {/* Live preview */}
-      <div className="space-y-2 lg:sticky lg:top-4 self-start">
-        <Label className="text-xs text-muted-foreground">Предпросмотр</Label>
-        <Card className="overflow-hidden bg-background" style={previewStyle}>
-          <CardContent className="p-3">
-            <h4 className="font-medium mb-1 line-clamp-2 flex items-center gap-1.5"
-              style={value.titleFont ? { fontFamily: value.titleFont } : undefined}>
-              {value.icon && <span className="text-base">{value.icon}</span>}
-              <span className="truncate">{previewTitle?.trim() || 'Название задачи'}</span>
-            </h4>
-            <p className="text-xs opacity-80 line-clamp-2 mb-2">Пример описания задачи для предпросмотра дизайна.</p>
-            <div className="flex items-center gap-1 text-xs opacity-80">
-              <Calendar className="h-3 w-3" />
-              <span>сегодня</span>
+      {/* Live preview — mini card + page mock */}
+      <div className="space-y-3 lg:sticky lg:top-4 self-start">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Миниатюра в списке/канбане</Label>
+          <Card className="overflow-hidden bg-background" style={miniStyle}>
+            <CardContent className="p-3">
+              <h4 className="font-medium mb-1 line-clamp-2 flex items-center gap-1.5"
+                style={value.titleFont ? { fontFamily: value.titleFont } : undefined}>
+                {value.icon && <span className="text-base">{value.icon}</span>}
+                <span className="truncate">{previewTitle?.trim() || 'Название задачи'}</span>
+              </h4>
+              <p className="text-xs opacity-80 line-clamp-2 mb-2">Краткое описание задачи.</p>
+              <div className="flex items-center gap-1 text-xs opacity-80">
+                <Calendar className="h-3 w-3" />
+                <span>сегодня</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Страница задачи</Label>
+          <div
+            className="rounded-lg overflow-hidden border"
+            style={{ backgroundColor: value.bgColor || 'hsl(var(--background))' }}
+          >
+            <div className="h-24 flex items-end p-3" style={headerStyle}>
+              {value.bgImageUrl && (
+                <h3 className="text-white font-bold text-sm drop-shadow"
+                  style={value.titleFont ? { fontFamily: value.titleFont } : undefined}>
+                  {value.headerTitle?.trim() || previewTitle?.trim() || 'Название задачи'}
+                </h3>
+              )}
             </div>
-          </CardContent>
-        </Card>
-        <p className="text-[11px] text-muted-foreground">Так будет выглядеть карточка задачи.</p>
+            <div className="p-3 space-y-2"
+              style={value.accentColor ? { borderLeft: `4px solid ${value.accentColor}` } : undefined}>
+              <h4 className="font-semibold text-sm flex items-center gap-1.5"
+                style={value.titleFont ? { fontFamily: value.titleFont } : undefined}>
+                {value.icon && <span>{value.icon}</span>}
+                <span>{previewTitle?.trim() || 'Название задачи'}</span>
+              </h4>
+              <p className="text-[11px] text-muted-foreground">Содержимое страницы задачи будет на этом фоне.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
