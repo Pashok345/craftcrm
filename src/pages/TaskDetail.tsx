@@ -597,7 +597,10 @@ const TaskDetail = () => {
 
   return (
     <TooltipProvider>
-    <div className="space-y-6 animate-fade-in">
+    <div
+      className="space-y-6 animate-fade-in -m-4 md:-m-6 p-4 md:p-6 min-h-[calc(100vh-4rem)] transition-colors"
+      style={task.bg_color ? { backgroundColor: task.bg_color } : undefined}
+    >
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate('/tasks')} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
@@ -635,23 +638,43 @@ const TaskDetail = () => {
         </div>
       </div>
 
+      {task.bg_image_url && (
+        <div
+          className="relative rounded-xl overflow-hidden border shadow-md h-48 md:h-64 flex items-end"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.65)), url(${task.bg_image_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div className="p-5 md:p-8 w-full">
+            <h2
+              className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
+              style={task.title_font ? { fontFamily: task.title_font } : undefined}
+            >
+              {(task as any).header_title?.trim() || task.title}
+            </h2>
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="main" className="w-full">
-        <TabsList>
-          <TabsTrigger value="main" className="gap-2">
+        <TabsList className="bg-muted/60 border border-border p-1 gap-1 shadow-sm">
+          <TabsTrigger value="main" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
             <ListChecks className="h-4 w-4" />
             {t('taskTabMain')}
           </TabsTrigger>
-          <TabsTrigger value="files" className="gap-2">
+          <TabsTrigger value="files" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
             <Files className="h-4 w-4" />
             {t('taskTabFiles')} ({taskAttachments.length})
           </TabsTrigger>
-          <TabsTrigger value="boards" className="gap-2">
+          <TabsTrigger value="boards" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
             <LayoutGrid className="h-4 w-4" />
             {t('taskTabBoards')}
           </TabsTrigger>
-          <TabsTrigger value="design" className="gap-2">
+          <TabsTrigger value="design" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
             <Sparkles className="h-4 w-4" />
-            Дизайн
+            Кастомизация
           </TabsTrigger>
         </TabsList>
 
@@ -1166,6 +1189,7 @@ const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
     icon: (task as any).icon || '',
     titleFont: (task as any).title_font || '',
     gradient: (task as any).gradient || '',
+    headerTitle: (task as any).header_title || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -1179,6 +1203,7 @@ const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
       icon: value.icon || null,
       title_font: value.titleFont || null,
       gradient: value.gradient || null,
+      header_title: value.headerTitle || null,
     } as any;
     const { error } = await supabase.from('tasks').update(patch).eq('id', task.id);
     setSaving(false);
@@ -1186,7 +1211,7 @@ const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
       toast({ title: 'Не удалось сохранить', description: error.message, variant: 'destructive' });
       return;
     }
-    toast({ title: 'Дизайн сохранён' });
+    toast({ title: 'Кастомизация сохранена' });
     onSaved(patch);
   };
 
@@ -1196,7 +1221,7 @@ const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
       <div className="flex justify-end pt-2">
         <Button onClick={save} disabled={saving}>
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Сохранить дизайн
+          Сохранить
         </Button>
       </div>
     </>
