@@ -1086,6 +1086,14 @@ const TaskDetail = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="design" className="mt-4">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <TaskDesignTab task={task} onSaved={(patch) => setTask(prev => prev ? { ...prev, ...patch } : prev)} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <TaskEditDialog
