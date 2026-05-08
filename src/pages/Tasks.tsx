@@ -856,7 +856,7 @@ const Tasks = () => {
         </TabsContent>
       </Tabs>
 
-      <TaskDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchTasks} />
+      
       <TaskTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onTaskGenerated={fetchTasks} />
     </div>
   );
