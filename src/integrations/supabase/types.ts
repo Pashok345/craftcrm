@@ -1696,6 +1696,7 @@ export type Database = {
           deadline: string | null
           description: string | null
           gradient: string | null
+          header_title: string | null
           icon: string | null
           id: string
           links: Json | null
@@ -1715,6 +1716,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           gradient?: string | null
+          header_title?: string | null
           icon?: string | null
           id?: string
           links?: Json | null
@@ -1734,6 +1736,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           gradient?: string | null
+          header_title?: string | null
           icon?: string | null
           id?: string
           links?: Json | null
