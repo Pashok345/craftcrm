@@ -221,7 +221,7 @@ const Tasks = () => {
   }, []);
 
   useTaskShortcuts({
-    onCreateTask: useCallback(() => setDialogOpen(true), []),
+    onCreateTask: useCallback(() => navigate('/tasks/new'), []),
     onSwitchView: handleSwitchView,
     onToggleTemplates: useCallback(() => setTemplatesOpen(prev => !prev), []),
     onToggleHelp: toggleShortcuts,
@@ -435,7 +435,7 @@ const Tasks = () => {
             <Repeat className="h-4 w-4" />
             {t('recurringTasks')}
           </Button>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+          <Button onClick={() => navigate('/tasks/new')} className="gap-2">
             <Plus className="h-4 w-4" />
             {t('addTask')}
           </Button>
@@ -606,7 +606,7 @@ const Tasks = () => {
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">{t('noTasks')}</h3>
                 <p className="text-muted-foreground mb-4">{t('createFirstTask')}</p>
-                <Button onClick={() => setDialogOpen(true)}>{t('createTask')}</Button>
+                <Button onClick={() => navigate('/tasks/new')}>{t('createTask')}</Button>
               </CardContent>
             </Card>
           ) : (
