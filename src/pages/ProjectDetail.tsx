@@ -119,12 +119,13 @@ const ProjectDetail = () => {
     if (!id) return;
     setLoading(true);
     try {
-      const [{ data: pData }, { data: tData }, { data: hData }, { data: profData }] =
+      const [{ data: pData }, { data: tData }, { data: hData }, { data: profData }, { data: mData }] =
         await Promise.all([
           supabase.from('projects').select('*').eq('id', id).maybeSingle(),
           supabase.from('tasks').select('*').eq('project_id', id).order('created_at', { ascending: false }),
           supabase.from('project_history').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(200),
           supabase.from('profiles').select('user_id, name, email, avatar_url, avatar_color'),
+          supabase.from('project_members').select('user_id').eq('project_id', id),
         ]);
       setProject(pData as unknown as Project);
       setTasks((tData || []) as unknown as Task[]);
@@ -132,6 +133,7 @@ const ProjectDetail = () => {
       const map: Record<string, Profile> = {};
       (profData || []).forEach((p: any) => { map[p.user_id] = p as Profile; });
       setProfiles(map);
+      setMemberIds(((mData || []) as any[]).map(m => m.user_id));
     } catch (e) {
       console.error(e);
     } finally {
