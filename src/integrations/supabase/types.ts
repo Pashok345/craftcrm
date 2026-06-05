@@ -984,6 +984,7 @@ export type Database = {
           name: string
           phone: string | null
           position: Database["public"]["Enums"]["user_position"] | null
+          ui_preferences: Json
           updated_at: string
           user_id: string
         }
@@ -998,6 +999,7 @@ export type Database = {
           name: string
           phone?: string | null
           position?: Database["public"]["Enums"]["user_position"] | null
+          ui_preferences?: Json
           updated_at?: string
           user_id: string
         }
@@ -1012,6 +1014,7 @@ export type Database = {
           name?: string
           phone?: string | null
           position?: Database["public"]["Enums"]["user_position"] | null
+          ui_preferences?: Json
           updated_at?: string
           user_id?: string
         }
