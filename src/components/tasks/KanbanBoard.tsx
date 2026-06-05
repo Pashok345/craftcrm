@@ -133,6 +133,11 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       const applyColor = (col: Column): Column =>
         overrides[col.id] ? { ...col, color: overrides[col.id] } : col;
 
+      // Pull latest user prefs from DB so order persists across devices/sessions
+      if (user?.id) {
+        try { await fetchUserPreferences(user.id); } catch {}
+      }
+
       const { data } = await supabase
         .from('kanban_columns')
         .select('*')
@@ -154,7 +159,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       setColumnsLoaded(true);
     };
     fetchColumns();
-  }, []);
+  }, [user?.id]);
 
   // Load task placements from DB
   useEffect(() => {
