@@ -81,6 +81,7 @@ const ProjectDetail = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
