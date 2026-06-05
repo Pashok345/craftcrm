@@ -1084,9 +1084,10 @@ const TaskDetail = () => {
                       {...provided.droppableProps}
                       className="space-y-6"
                     >
-                      {blockOrder.map((blockId, index) => {
+                      {visibleBlockOrder.map((blockId, index) => {
                         const content = blocks[blockId];
                         if (!content) return null;
+                        const isOptional = OPTIONAL_BLOCKS.includes(blockId);
                         return (
                           <Draggable key={blockId} draggableId={blockId} index={index}>
                             {(prov, snapshot) => (
@@ -1113,6 +1114,18 @@ const TaskDetail = () => {
                                 >
                                   <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
                                 </div>
+                                {isOptional && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => toggleOptionalBlock(blockId)}
+                                    className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                    title={t('removeBlock') || 'Прибрати блок'}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {content}
                               </div>
                             )}
@@ -1120,6 +1133,35 @@ const TaskDetail = () => {
                         );
                       })}
                       {provided.placeholder}
+
+                      {(() => {
+                        const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
+                        if (available.length === 0) return null;
+                        const blockLabel = (b: string) =>
+                          b === 'dependencies' ? (t('dependencies') || 'Залежності')
+                          : b === 'timeTracker' ? (t('timeTracker') || 'Облік часу')
+                          : b;
+                        return (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            <span className="text-xs text-muted-foreground self-center mr-1">
+                              {t('addBlock') || 'Додати блок:'}
+                            </span>
+                            {available.map(b => (
+                              <Button
+                                key={b}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleOptionalBlock(b)}
+                                className="gap-1 h-8"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                {blockLabel(b)}
+                              </Button>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </Droppable>
@@ -1127,6 +1169,7 @@ const TaskDetail = () => {
             );
           })()}
         </TabsContent>
+
 
         <TabsContent value="files" className="mt-4">
           <Card>
