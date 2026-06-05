@@ -87,12 +87,14 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
   const applyOrderFromStorage = (cols: Column[]): Column[] => {
     try {
-      const saved = localStorage.getItem('kanban-column-order-v1');
-      if (!saved) return cols;
-      const order: string[] = JSON.parse(saved);
+      const prefs = readCachedPrefs(user?.id);
+      const saved: string[] | undefined =
+        prefs.kanban_column_order ||
+        (() => { try { const v = localStorage.getItem('kanban-column-order-v1'); return v ? JSON.parse(v) : undefined; } catch { return undefined; } })();
+      if (!saved || !Array.isArray(saved)) return cols;
       const idx = (id: string) => {
-        const i = order.indexOf(id);
-        return i === -1 ? order.length + cols.findIndex(c => c.id === id) : i;
+        const i = saved.indexOf(id);
+        return i === -1 ? saved.length + cols.findIndex(c => c.id === id) : i;
       };
       return [...cols].sort((a, b) => idx(a.id) - idx(b.id));
     } catch { return cols; }
