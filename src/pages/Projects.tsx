@@ -228,7 +228,7 @@ const Projects = () => {
                       </div>
                     )}
 
-                    {project.created_by && creators[project.created_by] && (
+                    {project.created_by && creators[project.created_by] && project.created_by !== project.manager_id && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="h-4 w-4" />
                         <span>{t('createdBy')}: {creators[project.created_by].name}</span>

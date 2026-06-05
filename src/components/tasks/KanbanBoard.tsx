@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
 import { loadColumnColorOverrides, saveColumnColorOverride } from '@/lib/columnColors';
 import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
+import { fetchUserPreferences, readCachedPrefs, setUserPreference } from '@/lib/userPreferences';
 
 const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
@@ -86,12 +87,14 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
 
   const applyOrderFromStorage = (cols: Column[]): Column[] => {
     try {
-      const saved = localStorage.getItem('kanban-column-order-v1');
-      if (!saved) return cols;
-      const order: string[] = JSON.parse(saved);
+      const prefs = readCachedPrefs(user?.id);
+      const saved: string[] | undefined =
+        prefs.kanban_column_order ||
+        (() => { try { const v = localStorage.getItem('kanban-column-order-v1'); return v ? JSON.parse(v) : undefined; } catch { return undefined; } })();
+      if (!saved || !Array.isArray(saved)) return cols;
       const idx = (id: string) => {
-        const i = order.indexOf(id);
-        return i === -1 ? order.length + cols.findIndex(c => c.id === id) : i;
+        const i = saved.indexOf(id);
+        return i === -1 ? saved.length + cols.findIndex(c => c.id === id) : i;
       };
       return [...cols].sort((a, b) => idx(a.id) - idx(b.id));
     } catch { return cols; }
@@ -130,6 +133,11 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       const applyColor = (col: Column): Column =>
         overrides[col.id] ? { ...col, color: overrides[col.id] } : col;
 
+      // Pull latest user prefs from DB so order persists across devices/sessions
+      if (user?.id) {
+        try { await fetchUserPreferences(user.id); } catch {}
+      }
+
       const { data } = await supabase
         .from('kanban_columns')
         .select('*')
@@ -151,7 +159,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
       setColumnsLoaded(true);
     };
     fetchColumns();
-  }, []);
+  }, [user?.id]);
 
   // Load task placements from DB
   useEffect(() => {
@@ -398,10 +406,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         const newColumns = [...prevColumns];
         const [movedColumn] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, movedColumn);
-        // Persist full column order locally so it survives reloads
-        try {
-          localStorage.setItem('kanban-column-order-v1', JSON.stringify(newColumns.map(c => c.id)));
-        } catch {}
+        const ids = newColumns.map(c => c.id);
+        // Persist full column order: localStorage for instant reads + per-user DB for cross-device.
+        try { localStorage.setItem('kanban-column-order-v1', JSON.stringify(ids)); } catch {}
+        setUserPreference(user?.id, 'kanban_column_order', ids).catch(() => {});
         // Update sort_order for custom columns in DB
         const customCols = newColumns.filter(c => c.db_id);
         customCols.forEach((col, idx) => {

@@ -84,16 +84,19 @@ const TaskDetail = () => {
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   // Persisted block order for the main task tab (per user, in localStorage)
-  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'dependencies', 'timeTracker', 'comments'];
+  const REQUIRED_BLOCKS = ['details', 'subtasks', 'comments'];
+  const OPTIONAL_BLOCKS = ['dependencies', 'timeTracker'];
+  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'comments'];
   const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}`;
+  const enabledOptionalKey = `taskDetail.enabledOptional.${user?.id || 'guest'}.${id || ''}`;
+
   const [blockOrder, setBlockOrder] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}`);
       if (stored) {
         const parsed: string[] = JSON.parse(stored);
-        // Ensure all default blocks are present (backwards compat for new blocks)
-        const merged = [...parsed.filter(id => DEFAULT_BLOCK_ORDER.includes(id))];
-        DEFAULT_BLOCK_ORDER.forEach(id => {
+        const merged = parsed.filter(id => REQUIRED_BLOCKS.includes(id) || OPTIONAL_BLOCKS.includes(id));
+        REQUIRED_BLOCKS.forEach(id => {
           if (!merged.includes(id)) merged.push(id);
         });
         return merged;
@@ -102,19 +105,58 @@ const TaskDetail = () => {
     return DEFAULT_BLOCK_ORDER;
   });
 
-  useEffect(() => {
+  const [enabledOptional, setEnabledOptional] = useState<string[]>(() => {
     try {
-      localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder));
+      const stored = localStorage.getItem(`taskDetail.enabledOptional.${user?.id || 'guest'}.${id || ''}`);
+      if (stored) return JSON.parse(stored);
     } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder)); } catch {}
   }, [blockOrder, blockOrderStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(enabledOptionalKey, JSON.stringify(enabledOptional)); } catch {}
+  }, [enabledOptional, enabledOptionalKey]);
+
+  const visibleBlockOrder = blockOrder.filter(b =>
+    REQUIRED_BLOCKS.includes(b) || enabledOptional.includes(b)
+  );
+
+  const toggleOptionalBlock = (block: string) => {
+    setEnabledOptional(prev => {
+      if (prev.includes(block)) return prev.filter(b => b !== block);
+      return [...prev, block];
+    });
+    setBlockOrder(prev => {
+      if (prev.includes(block)) return prev;
+      // Insert optional block before comments if present, otherwise append
+      const idx = prev.indexOf('comments');
+      if (idx === -1) return [...prev, block];
+      return [...prev.slice(0, idx), block, ...prev.slice(idx)];
+    });
+  };
 
   const handleBlocksDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
-    const next = Array.from(blockOrder);
-    const [moved] = next.splice(result.source.index, 1);
-    next.splice(result.destination.index, 0, moved);
-    setBlockOrder(next);
+    // Reorder operates on visibleBlockOrder; map back to full blockOrder
+    const visible = visibleBlockOrder;
+    const moved = visible[result.source.index];
+    const target = visible[result.destination.index];
+    setBlockOrder(prev => {
+      const next = prev.filter(id => id !== moved);
+      const insertAt = next.indexOf(target);
+      if (insertAt === -1) next.push(moved);
+      else {
+        // If moving down, insert after target; otherwise insert at target's index
+        const movingDown = result.destination!.index > result.source.index;
+        next.splice(insertAt + (movingDown ? 1 : 0), 0, moved);
+      }
+      return next;
+    });
   };
 
   const statusLabels: Record<string, string> = {
@@ -1042,9 +1084,10 @@ const TaskDetail = () => {
                       {...provided.droppableProps}
                       className="space-y-6"
                     >
-                      {blockOrder.map((blockId, index) => {
+                      {visibleBlockOrder.map((blockId, index) => {
                         const content = blocks[blockId];
                         if (!content) return null;
+                        const isOptional = OPTIONAL_BLOCKS.includes(blockId);
                         return (
                           <Draggable key={blockId} draggableId={blockId} index={index}>
                             {(prov, snapshot) => (
@@ -1071,6 +1114,18 @@ const TaskDetail = () => {
                                 >
                                   <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
                                 </div>
+                                {isOptional && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => toggleOptionalBlock(blockId)}
+                                    className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                    title={t('removeBlock') || 'Прибрати блок'}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {content}
                               </div>
                             )}
@@ -1078,6 +1133,35 @@ const TaskDetail = () => {
                         );
                       })}
                       {provided.placeholder}
+
+                      {(() => {
+                        const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
+                        if (available.length === 0) return null;
+                        const blockLabel = (b: string) =>
+                          b === 'dependencies' ? (t('dependencies') || 'Залежності')
+                          : b === 'timeTracker' ? (t('timeTracker') || 'Облік часу')
+                          : b;
+                        return (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            <span className="text-xs text-muted-foreground self-center mr-1">
+                              {t('addBlock') || 'Додати блок:'}
+                            </span>
+                            {available.map(b => (
+                              <Button
+                                key={b}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleOptionalBlock(b)}
+                                className="gap-1 h-8"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                {blockLabel(b)}
+                              </Button>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </Droppable>
@@ -1085,6 +1169,7 @@ const TaskDetail = () => {
             );
           })()}
         </TabsContent>
+
 
         <TabsContent value="files" className="mt-4">
           <Card>

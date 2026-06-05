@@ -81,6 +81,7 @@ const ProjectDetail = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -118,12 +119,13 @@ const ProjectDetail = () => {
     if (!id) return;
     setLoading(true);
     try {
-      const [{ data: pData }, { data: tData }, { data: hData }, { data: profData }] =
+      const [{ data: pData }, { data: tData }, { data: hData }, { data: profData }, { data: mData }] =
         await Promise.all([
           supabase.from('projects').select('*').eq('id', id).maybeSingle(),
           supabase.from('tasks').select('*').eq('project_id', id).order('created_at', { ascending: false }),
           supabase.from('project_history').select('*').eq('project_id', id).order('created_at', { ascending: false }).limit(200),
           supabase.from('profiles').select('user_id, name, email, avatar_url, avatar_color'),
+          supabase.from('project_members').select('user_id').eq('project_id', id),
         ]);
       setProject(pData as unknown as Project);
       setTasks((tData || []) as unknown as Task[]);
@@ -131,6 +133,7 @@ const ProjectDetail = () => {
       const map: Record<string, Profile> = {};
       (profData || []).forEach((p: any) => { map[p.user_id] = p as Profile; });
       setProfiles(map);
+      setMemberIds(((mData || []) as any[]).map(m => m.user_id));
     } catch (e) {
       console.error(e);
     } finally {
@@ -370,8 +373,62 @@ const ProjectDetail = () => {
               <span>{t('completion') || 'Виконання'}: {stats.completion}%</span>
             </div>
           </div>
+
+          {(() => {
+            const seen = new Set<string>();
+            const peopleIds: { id: string; role: 'manager' | 'creator' | 'member' }[] = [];
+            if (project.manager_id && !seen.has(project.manager_id)) {
+              seen.add(project.manager_id);
+              peopleIds.push({ id: project.manager_id, role: 'manager' });
+            }
+            if (project.created_by && !seen.has(project.created_by)) {
+              seen.add(project.created_by);
+              peopleIds.push({ id: project.created_by, role: 'creator' });
+            }
+            memberIds.forEach(uid => {
+              if (!seen.has(uid)) {
+                seen.add(uid);
+                peopleIds.push({ id: uid, role: 'member' });
+              }
+            });
+            if (peopleIds.length === 0) return null;
+            const roleLabel = (r: 'manager' | 'creator' | 'member') =>
+              r === 'manager' ? (t('manager') || 'Менеджер')
+              : r === 'creator' ? (t('createdBy') || 'Створив')
+              : (t('participant') || 'Учасник');
+            return (
+              <div className="pt-3">
+                <div className="text-xs text-muted-foreground mb-2">{t('participants') || 'Учасники'}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {peopleIds.map(({ id: uid, role }) => {
+                    const p = profiles[uid];
+                    if (!p) return null;
+                    const initials = (p.name || '?').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+                    return (
+                      <div key={uid} className="flex items-center gap-2 pr-2 pl-0.5 py-0.5 rounded-full bg-muted/50">
+                        <div
+                          className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-medium text-white overflow-hidden"
+                          style={{ backgroundColor: p.avatar_color || 'hsl(var(--primary))' }}
+                          title={`${p.name} • ${roleLabel(role)}`}
+                        >
+                          {p.avatar_url ? (
+                            <img src={p.avatar_url} alt={p.name} className="h-full w-full object-cover" />
+                          ) : initials}
+                        </div>
+                        <span className="text-xs">
+                          {p.name}
+                          <span className="text-muted-foreground"> · {roleLabel(role)}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
