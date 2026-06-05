@@ -406,10 +406,10 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
         const newColumns = [...prevColumns];
         const [movedColumn] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, movedColumn);
-        // Persist full column order locally so it survives reloads
-        try {
-          localStorage.setItem('kanban-column-order-v1', JSON.stringify(newColumns.map(c => c.id)));
-        } catch {}
+        const ids = newColumns.map(c => c.id);
+        // Persist full column order: localStorage for instant reads + per-user DB for cross-device.
+        try { localStorage.setItem('kanban-column-order-v1', JSON.stringify(ids)); } catch {}
+        setUserPreference(user?.id, 'kanban_column_order', ids).catch(() => {});
         // Update sort_order for custom columns in DB
         const customCols = newColumns.filter(c => c.db_id);
         customCols.forEach((col, idx) => {
