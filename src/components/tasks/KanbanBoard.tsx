@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { KANBAN_CHANGED_EVENT } from '@/hooks/useKanbanColumns';
 import { loadColumnColorOverrides, saveColumnColorOverride } from '@/lib/columnColors';
 import { getTaskCardStyle, getTaskTitleStyle } from '@/lib/taskStyle';
+import { fetchUserPreferences, readCachedPrefs, setUserPreference } from '@/lib/userPreferences';
 
 const notifyKanbanChange = () => window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
 
