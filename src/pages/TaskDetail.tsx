@@ -84,16 +84,19 @@ const TaskDetail = () => {
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   // Persisted block order for the main task tab (per user, in localStorage)
-  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'dependencies', 'timeTracker', 'comments'];
+  const REQUIRED_BLOCKS = ['details', 'subtasks', 'comments'];
+  const OPTIONAL_BLOCKS = ['dependencies', 'timeTracker'];
+  const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'comments'];
   const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}`;
+  const enabledOptionalKey = `taskDetail.enabledOptional.${user?.id || 'guest'}.${id || ''}`;
+
   const [blockOrder, setBlockOrder] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}`);
       if (stored) {
         const parsed: string[] = JSON.parse(stored);
-        // Ensure all default blocks are present (backwards compat for new blocks)
-        const merged = [...parsed.filter(id => DEFAULT_BLOCK_ORDER.includes(id))];
-        DEFAULT_BLOCK_ORDER.forEach(id => {
+        const merged = parsed.filter(id => REQUIRED_BLOCKS.includes(id) || OPTIONAL_BLOCKS.includes(id));
+        REQUIRED_BLOCKS.forEach(id => {
           if (!merged.includes(id)) merged.push(id);
         });
         return merged;
@@ -102,19 +105,58 @@ const TaskDetail = () => {
     return DEFAULT_BLOCK_ORDER;
   });
 
-  useEffect(() => {
+  const [enabledOptional, setEnabledOptional] = useState<string[]>(() => {
     try {
-      localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder));
+      const stored = localStorage.getItem(`taskDetail.enabledOptional.${user?.id || 'guest'}.${id || ''}`);
+      if (stored) return JSON.parse(stored);
     } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder)); } catch {}
   }, [blockOrder, blockOrderStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(enabledOptionalKey, JSON.stringify(enabledOptional)); } catch {}
+  }, [enabledOptional, enabledOptionalKey]);
+
+  const visibleBlockOrder = blockOrder.filter(b =>
+    REQUIRED_BLOCKS.includes(b) || enabledOptional.includes(b)
+  );
+
+  const toggleOptionalBlock = (block: string) => {
+    setEnabledOptional(prev => {
+      if (prev.includes(block)) return prev.filter(b => b !== block);
+      return [...prev, block];
+    });
+    setBlockOrder(prev => {
+      if (prev.includes(block)) return prev;
+      // Insert optional block before comments if present, otherwise append
+      const idx = prev.indexOf('comments');
+      if (idx === -1) return [...prev, block];
+      return [...prev.slice(0, idx), block, ...prev.slice(idx)];
+    });
+  };
 
   const handleBlocksDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
-    const next = Array.from(blockOrder);
-    const [moved] = next.splice(result.source.index, 1);
-    next.splice(result.destination.index, 0, moved);
-    setBlockOrder(next);
+    // Reorder operates on visibleBlockOrder; map back to full blockOrder
+    const visible = visibleBlockOrder;
+    const moved = visible[result.source.index];
+    const target = visible[result.destination.index];
+    setBlockOrder(prev => {
+      const next = prev.filter(id => id !== moved);
+      const insertAt = next.indexOf(target);
+      if (insertAt === -1) next.push(moved);
+      else {
+        // If moving down, insert after target; otherwise insert at target's index
+        const movingDown = result.destination!.index > result.source.index;
+        next.splice(insertAt + (movingDown ? 1 : 0), 0, moved);
+      }
+      return next;
+    });
   };
 
   const statusLabels: Record<string, string> = {
