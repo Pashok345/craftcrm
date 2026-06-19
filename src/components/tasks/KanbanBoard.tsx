@@ -484,6 +484,30 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
             await supabase.from('task_status_history').insert({
               task_id: taskId, old_status: oldStatus, new_status: newStatus, changed_by: user.id,
             });
+
+            // Notify assignees + creator about status change
+            try {
+              const { data: assigneeRows } = await supabase
+                .from('task_assignees').select('user_id').eq('task_id', taskId);
+              const { data: myProfile } = await supabase
+                .from('profiles').select('name').eq('user_id', user.id).maybeSingle();
+              const notify = new Set<string>();
+              (assigneeRows || []).forEach((a: any) => notify.add(a.user_id));
+              if (movedTask.created_by) notify.add(movedTask.created_by);
+              notify.delete(user.id);
+              const statusLabel = (s: string) => t(s === 'todo' ? 'statusTodo' : s === 'in_progress' ? 'statusInProgress' : s === 'review' ? 'statusReview' : 'statusDone');
+              for (const userId of notify) {
+                await supabase.from('notifications').insert({
+                  user_id: userId,
+                  type: 'status_change',
+                  title: t('taskStatusChanged') || 'Статус задачи изменён',
+                  message: `${myProfile?.name || ''}: "${movedTask.title}" → ${statusLabel(newStatus)}`,
+                  task_id: taskId,
+                });
+              }
+            } catch (notifyErr) {
+              console.error('Notify error:', notifyErr);
+            }
           }
           notifyKanbanChange();
           onTaskUpdate();
