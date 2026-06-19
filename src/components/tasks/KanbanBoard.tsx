@@ -715,6 +715,13 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                           ...getTaskCardStyle(task, task.color || '#3b82f6'),
                                         }}
                                         onClick={() => { if (!isDraggingRef.current) onTaskClick(task); }}
+                                        onAuxClick={(e) => {
+                                          if (e.button === 1) {
+                                            e.preventDefault();
+                                            window.open(`/tasks/${task.id}`, '_blank', 'noopener');
+                                          }
+                                        }}
+                                        onMouseDown={(e) => { if (e.button === 1) e.preventDefault(); }}
                                       >
                                         <CardContent className="p-3">
                                           <h4 className="font-medium text-foreground mb-1 line-clamp-2 flex items-center gap-1.5" style={getTaskTitleStyle(task)}>
