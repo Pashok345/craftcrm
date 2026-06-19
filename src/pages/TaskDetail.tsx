@@ -456,6 +456,7 @@ const TaskDetail = () => {
               title: t('mentionInComment') || 'Згадка в коментарі',
               message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
               task_id: task.id,
+              created_by: user.id,
             });
           }
         }
