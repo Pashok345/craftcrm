@@ -436,6 +436,7 @@ const TaskDetail = () => {
           title: t('newCommentOnTask') || 'Новий коментар до завдання',
           message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
           task_id: task.id,
+          created_by: user.id,
         });
       }
 
@@ -455,6 +456,7 @@ const TaskDetail = () => {
               title: t('mentionInComment') || 'Згадка в коментарі',
               message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
               task_id: task.id,
+              created_by: user.id,
             });
           }
         }
@@ -680,25 +682,8 @@ const TaskDetail = () => {
         </div>
       </div>
 
-      {task.bg_image_url && (
-        <div
-          className="relative rounded-xl overflow-hidden border shadow-md h-48 md:h-64 flex items-end"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.65)), url(${task.bg_image_url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="p-5 md:p-8 w-full">
-            <h2
-              className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
-              style={task.title_font ? { fontFamily: task.title_font } : undefined}
-            >
-              {(task as any).header_title?.trim() || task.title}
-            </h2>
-          </div>
-        </div>
-      )}
+      <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+
 
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-muted/60 border border-border p-1 gap-1 shadow-sm">
@@ -1036,6 +1021,7 @@ const TaskDetail = () => {
                 onSubmit={handleSubmitComment}
                 onPasteImage={(file) => {
                   setFiles(prev => [...prev, file]);
+                  toast({ title: t('imagePasted') || 'Изображение добавлено из буфера', description: file.name });
                 }}
               />
               <input
@@ -1312,4 +1298,102 @@ const TaskDesignTab = ({ task, onSaved }: TaskDesignTabProps) => {
     </>
   );
 };
+
+interface TaskHeaderCoverProps {
+  task: Task;
+  onChanged: (url: string | null) => void;
+}
+
+const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { t } = useLanguage();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const sanitized = file.name.replace(/[^\w.-]/g, '_');
+      const path = `${task.id}/bg-${Date.now()}-${sanitized}`;
+      const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: signed } = await supabase.storage.from('task-attachments').createSignedUrl(path, 60 * 60 * 24 * 365);
+      const url = signed?.signedUrl || null;
+      if (url) {
+        const { error } = await supabase.from('tasks').update({ bg_image_url: url } as any).eq('id', task.id);
+        if (error) throw error;
+        onChanged(url);
+        toast({ title: t('coverUpdated') || 'Обложка обновлена' });
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Ошибка загрузки фото', description: err?.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleRemove = async () => {
+    const { error } = await supabase.from('tasks').update({ bg_image_url: null } as any).eq('id', task.id);
+    if (!error) {
+      onChanged(null);
+      toast({ title: t('coverRemoved') || 'Обложка удалена' });
+    }
+  };
+
+  if (!task.bg_image_url) {
+    return (
+      <div className="flex">
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 border-dashed"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+          {t('addCoverPhoto') || 'Добавить обложку'}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="relative group rounded-xl overflow-hidden border shadow-md h-48 md:h-64 flex items-end"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.65)), url(${task.bg_image_url})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button size="sm" variant="secondary" className="gap-1" disabled={uploading} onClick={() => inputRef.current?.click()}>
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />}
+          {t('replaceCover') || 'Заменить'}
+        </Button>
+        <Button size="sm" variant="destructive" className="gap-1" onClick={handleRemove}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      <div className="p-5 md:p-8 w-full">
+        <h2
+          className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
+          style={task.title_font ? { fontFamily: task.title_font } : undefined}
+        >
+          {(task as any).header_title?.trim() || task.title}
+        </h2>
+      </div>
+    </div>
+  );
+};
+
+
+
 

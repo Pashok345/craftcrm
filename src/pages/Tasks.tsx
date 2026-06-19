@@ -659,6 +659,16 @@ const Tasks = () => {
                                       }
                                       handleTaskClick(task);
                                     }}
+                                    onAuxClick={(e) => {
+                                      if (e.button === 1) {
+                                        e.preventDefault();
+                                        window.open(`/tasks/${task.id}`, '_blank', 'noopener');
+                                      }
+                                    }}
+                                    onMouseDown={(e) => {
+                                      // Prevent browser's middle-click autoscroll
+                                      if (e.button === 1) e.preventDefault();
+                                    }}
                                   >
                                     <CardContent className="p-4">
                                       <div className="flex items-start justify-between gap-4 min-w-0">

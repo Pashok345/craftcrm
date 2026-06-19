@@ -185,16 +185,22 @@ export const MentionInput = ({
     if (!onPasteImage) return;
     const items = e.clipboardData?.items;
     if (!items) return;
+    let handled = false;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.startsWith('image/')) {
-        e.preventDefault();
-        const file = items[i].getAsFile();
-        if (file) {
-          onPasteImage(file);
+        const raw = items[i].getAsFile();
+        if (raw) {
+          // Clipboard images often have a generic / empty name — ensure a sensible filename
+          const ext = (raw.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          const named = raw.name && raw.name !== 'image.png'
+            ? raw
+            : new File([raw], `pasted-${Date.now()}.${ext}`, { type: raw.type });
+          onPasteImage(named);
+          handled = true;
         }
-        return;
       }
     }
+    if (handled) e.preventDefault();
   }, [onPasteImage]);
 
   const getInitials = (name: string) =>

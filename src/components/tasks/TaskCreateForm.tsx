@@ -118,6 +118,24 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
       ];
       if (assignees.length > 0) await supabase.from('task_assignees').insert(assignees);
 
+      // Notify everyone added to the task (except the creator)
+      try {
+        const { data: myProfile } = await supabase
+          .from('profiles').select('name').eq('user_id', user.id).maybeSingle();
+        const recipients = new Set<string>([...executors, ...observers]);
+        recipients.delete(user.id);
+        for (const userId of recipients) {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'task_assigned',
+            title: 'Вас добавили в задачу',
+            message: `${myProfile?.name || ''}: "${title}"`,
+            task_id: task.id,
+            created_by: user.id,
+          });
+        }
+      } catch (e) { console.error('Notify on create error:', e); }
+
       if (subtasks.length > 0) {
         await supabase.from('subtasks').insert(
           subtasks.map((s, i) => ({ task_id: task.id, title: s, sort_order: i, created_by: user.id }))
