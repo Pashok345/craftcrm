@@ -436,6 +436,7 @@ const TaskDetail = () => {
           title: t('newCommentOnTask') || 'Новий коментар до завдання',
           message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
           task_id: task.id,
+          created_by: user.id,
         });
       }
 
