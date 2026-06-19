@@ -1392,6 +1392,8 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
       </div>
     </div>
   );
+};
+
 
 
 
