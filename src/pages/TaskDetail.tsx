@@ -1036,6 +1036,7 @@ const TaskDetail = () => {
                 onSubmit={handleSubmitComment}
                 onPasteImage={(file) => {
                   setFiles(prev => [...prev, file]);
+                  toast({ title: t('imagePasted') || 'Изображение добавлено из буфера', description: file.name });
                 }}
               />
               <input
