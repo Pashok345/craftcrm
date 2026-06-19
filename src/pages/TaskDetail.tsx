@@ -682,25 +682,8 @@ const TaskDetail = () => {
         </div>
       </div>
 
-      {task.bg_image_url && (
-        <div
-          className="relative rounded-xl overflow-hidden border shadow-md h-48 md:h-64 flex items-end"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.65)), url(${task.bg_image_url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="p-5 md:p-8 w-full">
-            <h2
-              className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
-              style={task.title_font ? { fontFamily: task.title_font } : undefined}
-            >
-              {(task as any).header_title?.trim() || task.title}
-            </h2>
-          </div>
-        </div>
-      )}
+      <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+
 
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="bg-muted/60 border border-border p-1 gap-1 shadow-sm">
