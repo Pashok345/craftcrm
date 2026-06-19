@@ -503,6 +503,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                   title: t('taskStatusChanged') || 'Статус задачи изменён',
                   message: `${myProfile?.name || ''}: "${movedTask.title}" → ${statusLabel(newStatus)}`,
                   task_id: taskId,
+                  created_by: user.id,
                 });
               }
             } catch (notifyErr) {
