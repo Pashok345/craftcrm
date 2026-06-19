@@ -1392,18 +1392,6 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
       </div>
     </div>
   );
-};
 
-  return (
-    <>
-      <TaskCustomization value={value} onChange={setValue} previewTitle={task.title} uploadFolder={task.id} />
-      <div className="flex justify-end pt-2">
-        <Button onClick={save} disabled={saving}>
-          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Сохранить
-        </Button>
-      </div>
-    </>
-  );
-};
+
 
