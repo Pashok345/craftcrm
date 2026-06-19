@@ -131,6 +131,7 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
             title: 'Вас добавили в задачу',
             message: `${myProfile?.name || ''}: "${title}"`,
             task_id: task.id,
+            created_by: user.id,
           });
         }
       } catch (e) { console.error('Notify on create error:', e); }
