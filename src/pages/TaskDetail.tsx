@@ -1158,7 +1158,43 @@ const TaskDetail = () => {
               </DragDropContext>
             );
           })()}
+              <div className="mt-6">
+                <TaskCustomBlocks taskId={task.id} canEdit={user?.id === task.created_by} />
+              </div>
+            </div>
+            {user?.id === task.created_by && (
+              <div className="hidden md:block w-12 shrink-0">
+                <TaskBlocksToolbar onAdd={async (type) => {
+                  // Insert directly through Supabase from here to avoid prop drilling
+                  if (!user) return;
+                  const { data: existing } = await supabase
+                    .from('task_content_blocks')
+                    .select('position')
+                    .eq('task_id', task.id)
+                    .order('position', { ascending: false })
+                    .limit(1);
+                  const nextPos = (existing?.[0]?.position ?? -1) + 1;
+                  const initial: Record<BlockType, any> = {
+                    heading: { text: 'Новый заголовок' },
+                    text: { text: '' },
+                    image: { url: '', caption: '' },
+                    video: { url: '' },
+                    divider: {},
+                    file: { url: '', label: '' },
+                    form: { title: 'Новая форма', description: '', questions: [] },
+                  };
+                  await supabase.from('task_content_blocks').insert({
+                    task_id: task.id, type, content: initial[type], position: nextPos, created_by: user.id,
+                  });
+                  // Trigger re-render by reloading: dispatch custom event
+                  window.dispatchEvent(new CustomEvent('task-blocks-changed', { detail: { taskId: task.id } }));
+                }} />
+              </div>
+            )}
+          </div>
         </TabsContent>
+
+
 
 
         <TabsContent value="files" className="mt-4">
