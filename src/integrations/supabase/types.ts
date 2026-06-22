@@ -1480,6 +1480,47 @@ export type Database = {
           },
         ]
       }
+      task_content_blocks: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string
+          id: string
+          position: number
+          task_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          position?: number
+          task_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          position?: number
+          task_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_content_blocks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_dependencies: {
         Row: {
           created_at: string
@@ -1515,6 +1556,51 @@ export type Database = {
           },
           {
             foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_form_responses: {
+        Row: {
+          answers: Json
+          block_id: string
+          created_at: string
+          id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          block_id: string
+          created_at?: string
+          id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          block_id?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_form_responses_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "task_content_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_form_responses_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
