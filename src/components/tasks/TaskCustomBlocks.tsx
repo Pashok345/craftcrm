@@ -119,7 +119,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
     }
   };
 
-  if (blocks.length === 0) return null;
+  if (blocks.length === 0) return <div className="hidden" data-empty-blocks />;
 
   return (
     <div className="space-y-4">
