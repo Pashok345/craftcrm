@@ -85,7 +85,7 @@ export const TaskFormBlock = ({ blockId, taskId, content, canEdit, onChange }: P
       const mine = (data || []).find((r: any) => r.user_id === user.id);
       if (mine) {
         setMyResponseId(mine.id);
-        setAnswers(mine.answers || {});
+        setAnswers((mine.answers as Record<string, any>) || {});
       }
       setAllResponses(data || []);
     })();
