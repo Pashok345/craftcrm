@@ -43,7 +43,15 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
     setBlocks((data || []) as TaskContentBlock[]);
   };
 
-  useEffect(() => { load(); }, [taskId]);
+  useEffect(() => {
+    load();
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.taskId === taskId) load();
+    };
+    window.addEventListener('task-blocks-changed', onChange);
+    return () => window.removeEventListener('task-blocks-changed', onChange);
+  }, [taskId]);
 
   const addBlock = async (type: BlockType) => {
     if (!user) return;
