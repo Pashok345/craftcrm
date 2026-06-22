@@ -34,6 +34,8 @@ import { SubtasksList } from '@/components/tasks/SubtasksList';
 import { TaskFilesGallery } from '@/components/tasks/TaskFilesGallery';
 import { TaskDependencies } from '@/components/tasks/TaskDependencies';
 import { TaskCustomization, TaskCustomizationValue } from '@/components/tasks/TaskCustomization';
+import { TaskBlocksToolbar, BlockType } from '@/components/tasks/TaskBlocksToolbar';
+import { TaskCustomBlocks } from '@/components/tasks/TaskCustomBlocks';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { ImageThumbnail, isImageFile } from '@/components/ui/image-lightbox';
