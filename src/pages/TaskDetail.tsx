@@ -708,6 +708,8 @@ const TaskDetail = () => {
         </TabsList>
 
         <TabsContent value="main" className="mt-4 md:pl-8">
+          <div className="flex gap-4 items-start">
+            <div className="flex-1 min-w-0">
           {(() => {
             const blocks: Record<string, JSX.Element | null> = {
               details: (
