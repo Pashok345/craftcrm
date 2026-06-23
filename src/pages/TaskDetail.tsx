@@ -1159,45 +1159,23 @@ const TaskDetail = () => {
             );
           })()}
               <div className="mt-6">
-                <TaskCustomBlocks taskId={task.id} canEdit={!!user} />
+                <TaskCustomBlocks
+                  taskId={task.id}
+                  canEdit={!!user}
+                  registerAddHandler={(fn) => { (window as any).__taskAddBlock = fn; }}
+                />
               </div>
             </div>
             {user && (
-              <div className="hidden md:block w-12 shrink-0">
-                <TaskBlocksToolbar onAdd={async (type) => {
-                  if (!user) return;
-                  const { data: existing } = await supabase
-                    .from('task_content_blocks')
-                    .select('position')
-                    .eq('task_id', task.id)
-                    .order('position', { ascending: false })
-                    .limit(1);
-                  const nextPos = (existing?.[0]?.position ?? -1) + 1;
-                  const initial: Record<BlockType, any> = {
-                    empty: {},
-                    heading: { text: 'Новый заголовок' },
-                    text: { text: '' },
-                    image: { url: '', caption: '' },
-                    video: { url: '' },
-                    divider: {},
-                    file: { url: '', label: '' },
-                    form: { title: 'Новая форма', description: '', questions: [] },
-                  };
-
-                  const { error } = await supabase.from('task_content_blocks').insert({
-                    task_id: task.id, type, content: initial[type], position: nextPos, created_by: user.id,
-                  });
-                  if (error) {
-                    toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
-                    return;
-                  }
-                  window.dispatchEvent(new CustomEvent('task-blocks-changed', { detail: { taskId: task.id } }));
-                }} />
-              </div>
+              <TaskBlocksToolbar onAdd={(type) => {
+                const fn = (window as any).__taskAddBlock;
+                if (typeof fn === 'function') fn(type);
+              }} />
             )}
 
           </div>
         </TabsContent>
+
 
 
 
