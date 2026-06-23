@@ -57,6 +57,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
   const addBlock = async (type: BlockType) => {
     if (!user) return;
     const initialContent: Record<BlockType, any> = {
+      empty: {},
       heading: { text: 'Новый заголовок' },
       text: { text: '' },
       image: { url: '', caption: '' },
@@ -65,6 +66,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
       file: { url: '', label: '' },
       form: { title: 'Новая форма', description: '', questions: [] } as FormContent,
     };
+
     const position = blocks.length ? Math.max(...blocks.map(b => b.position)) + 1 : 0;
     const { data, error } = await supabase
       .from('task_content_blocks')
