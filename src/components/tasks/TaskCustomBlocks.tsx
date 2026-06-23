@@ -170,7 +170,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
   return (
     <div className="space-y-4">
       {blocks.map(block => (
-        <div key={block.id} className="relative group/cblock">
+        <div key={block.id} data-block-id={block.id} className="relative group/cblock">
           {canEdit && (
             <Button variant="ghost" size="icon"
               onClick={() => deleteBlock(block.id)}
