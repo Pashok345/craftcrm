@@ -4,12 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Pencil, Check, Upload, Loader2 } from 'lucide-react';
+import { X, Pencil, Check, Upload, Loader2, Type, Image as ImageIcon, Film, FileText, ListChecks, Minus, Heading } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { TaskFormBlock, FormContent } from './TaskFormBlock';
 import type { BlockType } from './TaskBlocksToolbar';
 import { linkifyText } from '@/utils/linkifyText';
+
 
 export interface TaskContentBlock {
   id: string;
