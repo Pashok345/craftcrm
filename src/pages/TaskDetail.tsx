@@ -1159,13 +1159,12 @@ const TaskDetail = () => {
             );
           })()}
               <div className="mt-6">
-                <TaskCustomBlocks taskId={task.id} canEdit={user?.id === task.created_by} />
+                <TaskCustomBlocks taskId={task.id} canEdit={!!user} />
               </div>
             </div>
-            {user?.id === task.created_by && (
+            {user && (
               <div className="hidden md:block w-12 shrink-0">
                 <TaskBlocksToolbar onAdd={async (type) => {
-                  // Insert directly through Supabase from here to avoid prop drilling
                   if (!user) return;
                   const { data: existing } = await supabase
                     .from('task_content_blocks')
@@ -1183,14 +1182,18 @@ const TaskDetail = () => {
                     file: { url: '', label: '' },
                     form: { title: 'Новая форма', description: '', questions: [] },
                   };
-                  await supabase.from('task_content_blocks').insert({
+                  const { error } = await supabase.from('task_content_blocks').insert({
                     task_id: task.id, type, content: initial[type], position: nextPos, created_by: user.id,
                   });
-                  // Trigger re-render by reloading: dispatch custom event
+                  if (error) {
+                    toast({ title: 'Ошибка', description: error.message, variant: 'destructive' });
+                    return;
+                  }
                   window.dispatchEvent(new CustomEvent('task-blocks-changed', { detail: { taskId: task.id } }));
                 }} />
               </div>
             )}
+
           </div>
         </TabsContent>
 
