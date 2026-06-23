@@ -392,6 +392,8 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
             </CardContent></Card>
           )}
         </div>
+        <Inserter index={idx + 1} />
+        </div>
       ))}
     </div>
   );
