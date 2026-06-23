@@ -67,22 +67,65 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
       form: { title: 'Новая форма', description: '', questions: [] } as FormContent,
     };
 
-    const position = blocks.length ? Math.max(...blocks.map(b => b.position)) + 1 : 0;
+    // Find insertion index based on viewport (block closest to center of screen).
+    const viewportCenter = window.innerHeight / 2;
+    let insertIndex = blocks.length;
+    let bestDist = Infinity;
+    for (let i = 0; i < blocks.length; i++) {
+      const el = document.querySelector<HTMLElement>(`[data-block-id="${blocks[i].id}"]`);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      const blockCenter = rect.top + rect.height / 2;
+      const dist = Math.abs(blockCenter - viewportCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        // Insert after the block if it's above viewport center, before if below
+        insertIndex = blockCenter < viewportCenter ? i + 1 : i;
+      }
+    }
+
+    const newPosition = insertIndex;
+    // Shift positions of blocks at/after insertIndex
+    const toShift = blocks.slice(insertIndex);
+    if (toShift.length) {
+      await Promise.all(
+        toShift.map(b =>
+          supabase.from('task_content_blocks').update({ position: b.position + 1 }).eq('id', b.id)
+        )
+      );
+    }
+
     const { data, error } = await supabase
       .from('task_content_blocks')
-      .insert({ task_id: taskId, type, content: initialContent[type], position, created_by: user.id })
+      .insert({ task_id: taskId, type, content: initialContent[type], position: newPosition, created_by: user.id })
       .select()
       .single();
     if (error) {
       toast({ title: 'Не удалось добавить блок', description: error.message, variant: 'destructive' });
       return;
     }
-    setBlocks(b => [...b, data as TaskContentBlock]);
+
+    const newBlock = data as TaskContentBlock;
+    setBlocks(bs => {
+      const shifted = bs.map((b, i) => i >= insertIndex ? { ...b, position: b.position + 1 } : b);
+      const next = [...shifted];
+      next.splice(insertIndex, 0, newBlock);
+      return next;
+    });
+
+    // Auto-open in edit mode
     if (type === 'text' || type === 'heading') {
-      setEditingId(data.id);
+      setEditingId(newBlock.id);
       setDraftText('');
     }
+
+    // Scroll the new block into view
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-block-id="${newBlock.id}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
   };
+
 
   useEffect(() => {
     registerAddHandler?.(addBlock);
