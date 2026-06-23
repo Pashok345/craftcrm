@@ -4,12 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Pencil, Check, Upload, Loader2 } from 'lucide-react';
+import { X, Pencil, Check, Upload, Loader2, Type, Image as ImageIcon, Film, FileText, ListChecks, Minus, Heading } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { TaskFormBlock, FormContent } from './TaskFormBlock';
 import type { BlockType } from './TaskBlocksToolbar';
 import { linkifyText } from '@/utils/linkifyText';
+
 
 export interface TaskContentBlock {
   id: string;
@@ -56,6 +57,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
   const addBlock = async (type: BlockType) => {
     if (!user) return;
     const initialContent: Record<BlockType, any> = {
+      empty: {},
       heading: { text: 'Новый заголовок' },
       text: { text: '' },
       image: { url: '', caption: '' },
@@ -64,6 +66,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
       file: { url: '', label: '' },
       form: { title: 'Новая форма', description: '', questions: [] } as FormContent,
     };
+
     const position = blocks.length ? Math.max(...blocks.map(b => b.position)) + 1 : 0;
     const { data, error } = await supabase
       .from('task_content_blocks')
@@ -134,9 +137,53 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
             </Button>
           )}
 
+          {block.type === 'empty' && (
+            <Card className="border-dashed">
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground mb-3">Выберите тип блока:</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {[
+                    { t: 'heading' as const, icon: Heading, label: 'Заголовок' },
+                    { t: 'text' as const, icon: Type, label: 'Текст' },
+                    { t: 'image' as const, icon: ImageIcon, label: 'Изображение' },
+                    { t: 'video' as const, icon: Film, label: 'Видео' },
+                    { t: 'file' as const, icon: FileText, label: 'Файл / ссылка' },
+                    { t: 'form' as const, icon: ListChecks, label: 'Форма' },
+                    { t: 'divider' as const, icon: Minus, label: 'Разделитель' },
+                  ].map(({ t, icon: Icon, label }) => (
+                    <button
+                      key={t}
+                      onClick={async () => {
+                        const initial: Record<string, any> = {
+                          heading: { text: 'Новый заголовок' },
+                          text: { text: '' },
+                          image: { url: '', caption: '' },
+                          video: { url: '' },
+                          divider: {},
+                          file: { url: '', label: '' },
+                          form: { title: 'Новая форма', description: '', questions: [] },
+                        };
+                        setBlocks(bs => bs.map(b => b.id === block.id ? { ...b, type: t, content: initial[t] } : b));
+                        await supabase.from('task_content_blocks')
+                          .update({ type: t, content: initial[t] })
+                          .eq('id', block.id);
+                      }}
+                      className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border bg-card hover:bg-accent hover:border-primary transition-colors text-sm"
+                    >
+                      <Icon className="h-5 w-5 text-muted-foreground" />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {block.type === 'divider' && (
             <div className="py-2"><div className="h-px bg-border" /></div>
           )}
+
+
 
           {block.type === 'heading' && (
             <Card><CardContent className="p-4">
