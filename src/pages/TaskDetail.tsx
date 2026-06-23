@@ -1174,6 +1174,7 @@ const TaskDetail = () => {
                     .limit(1);
                   const nextPos = (existing?.[0]?.position ?? -1) + 1;
                   const initial: Record<BlockType, any> = {
+                    empty: {},
                     heading: { text: 'Новый заголовок' },
                     text: { text: '' },
                     image: { url: '', caption: '' },
@@ -1182,6 +1183,7 @@ const TaskDetail = () => {
                     file: { url: '', label: '' },
                     form: { title: 'Новая форма', description: '', questions: [] },
                   };
+
                   const { error } = await supabase.from('task_content_blocks').insert({
                     task_id: task.id, type, content: initial[type], position: nextPos, created_by: user.id,
                   });
