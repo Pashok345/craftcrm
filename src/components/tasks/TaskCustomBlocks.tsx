@@ -54,7 +54,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
     return () => window.removeEventListener('task-blocks-changed', onChange);
   }, [taskId]);
 
-  const addBlock = async (type: BlockType) => {
+  const addBlock = async (type: BlockType, atIndex?: number) => {
     if (!user) return;
     const initialContent: Record<BlockType, any> = {
       empty: {},
@@ -67,25 +67,28 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
       form: { title: 'Новая форма', description: '', questions: [] } as FormContent,
     };
 
-    // Find insertion index based on viewport (block closest to center of screen).
-    const viewportCenter = window.innerHeight / 2;
-    let insertIndex = blocks.length;
-    let bestDist = Infinity;
-    for (let i = 0; i < blocks.length; i++) {
-      const el = document.querySelector<HTMLElement>(`[data-block-id="${blocks[i].id}"]`);
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      const blockCenter = rect.top + rect.height / 2;
-      const dist = Math.abs(blockCenter - viewportCenter);
-      if (dist < bestDist) {
-        bestDist = dist;
-        // Insert after the block if it's above viewport center, before if below
-        insertIndex = blockCenter < viewportCenter ? i + 1 : i;
+    let insertIndex: number;
+    if (typeof atIndex === 'number') {
+      insertIndex = Math.max(0, Math.min(atIndex, blocks.length));
+    } else {
+      // Find insertion index based on viewport (block closest to center of screen).
+      const viewportCenter = window.innerHeight / 2;
+      insertIndex = blocks.length;
+      let bestDist = Infinity;
+      for (let i = 0; i < blocks.length; i++) {
+        const el = document.querySelector<HTMLElement>(`[data-block-id="${blocks[i].id}"]`);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const blockCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(blockCenter - viewportCenter);
+        if (dist < bestDist) {
+          bestDist = dist;
+          insertIndex = blockCenter < viewportCenter ? i + 1 : i;
+        }
       }
     }
 
     const newPosition = insertIndex;
-    // Shift positions of blocks at/after insertIndex
     const toShift = blocks.slice(insertIndex);
     if (toShift.length) {
       await Promise.all(
@@ -113,13 +116,11 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
       return next;
     });
 
-    // Auto-open in edit mode
     if (type === 'text' || type === 'heading') {
       setEditingId(newBlock.id);
       setDraftText('');
     }
 
-    // Scroll the new block into view
     setTimeout(() => {
       const el = document.querySelector<HTMLElement>(`[data-block-id="${newBlock.id}"]`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -128,7 +129,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
 
 
   useEffect(() => {
-    registerAddHandler?.(addBlock);
+    registerAddHandler?.((type) => addBlock(type));
   }, [registerAddHandler, blocks.length, user?.id]);
 
   const updateBlock = async (id: string, content: any) => {
@@ -165,12 +166,50 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
     }
   };
 
-  if (blocks.length === 0) return <div className="hidden" data-empty-blocks />;
+  const Inserter = ({ index }: { index: number }) => {
+    if (!canEdit) return null;
+    return (
+      <div className="relative h-0 my-1 group/ins z-10">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover/ins:opacity-100 transition-opacity">
+          <div className="flex-1 h-px bg-primary/40" />
+          <button
+            type="button"
+            onClick={() => addBlock('empty', index)}
+            className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shadow hover:scale-110 transition"
+            title="Вставить блок здесь"
+            aria-label="Вставить блок здесь"
+          >
+            <span className="text-base leading-none">+</span>
+          </button>
+          <div className="flex-1 h-px bg-primary/40" />
+        </div>
+        {/* Larger invisible hover target */}
+        <div className="absolute inset-x-0 -top-3 h-6" />
+      </div>
+    );
+  };
+
+  if (blocks.length === 0) {
+    if (!canEdit) return <div className="hidden" data-empty-blocks />;
+    return (
+      <div className="flex justify-center py-4">
+        <button
+          type="button"
+          onClick={() => addBlock('empty', 0)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition"
+        >
+          <span className="text-lg leading-none">+</span> Добавить блок
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {blocks.map(block => (
-        <div key={block.id} data-block-id={block.id} className="relative group/cblock">
+    <div className="space-y-2">
+      <Inserter index={0} />
+      {blocks.map((block, idx) => (
+        <div key={block.id}>
+        <div data-block-id={block.id} className="relative group/cblock">
           {canEdit && (
             <Button variant="ghost" size="icon"
               onClick={() => deleteBlock(block.id)}
@@ -352,6 +391,8 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler }: Props)
               />
             </CardContent></Card>
           )}
+        </div>
+        <Inserter index={idx + 1} />
         </div>
       ))}
     </div>
