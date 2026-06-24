@@ -7,6 +7,75 @@ import { isImageFile } from '@/components/ui/image-lightbox';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { TaskAttachment } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
+
+const extractStoragePath = (url: string, bucket: string): string | null => {
+  const markers = [`/storage/v1/object/sign/${bucket}/`, `/storage/v1/object/public/${bucket}/`, `/${bucket}/`];
+  for (const m of markers) {
+    const i = url.indexOf(m);
+    if (i !== -1) return url.substring(i + m.length).split('?')[0];
+  }
+  if (!/^https?:/i.test(url)) return url;
+  return null;
+};
+
+const useResolvedUrl = (fileUrl: string, bucket = 'task-attachments') => {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    (async () => {
+      const path = extractStoragePath(fileUrl, bucket);
+      if (!path) { if (!cancelled) setSrc(fileUrl); return; }
+      const { data, error } = await supabase.storage.from(bucket).download(path);
+      if (cancelled) return;
+      if (error || !data) {
+        const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+        if (signed?.signedUrl && !cancelled) setSrc(signed.signedUrl);
+        return;
+      }
+      blobUrl = URL.createObjectURL(data);
+      if (!cancelled) setSrc(blobUrl);
+    })();
+    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [fileUrl, bucket]);
+  return src;
+};
+
+const ResolvedImg = ({ fileUrl, alt, className }: { fileUrl: string; alt: string; className?: string }) => {
+  const src = useResolvedUrl(fileUrl);
+  if (!src) return <div className={`${className || ''} flex items-center justify-center bg-muted`}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  return <img src={src} alt={alt} loading="lazy" className={className} />;
+};
+
+const ResolvedVideo = ({ fileUrl, className }: { fileUrl: string; className?: string }) => {
+  const src = useResolvedUrl(fileUrl);
+  if (!src) return <div className={`${className || ''} flex items-center justify-center bg-muted`}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  return <video src={src} className={className} preload="metadata" muted />;
+};
+
+const LightboxBody = ({ att }: { att: TaskAttachment }) => {
+  const src = useResolvedUrl(att.file_url);
+  const ext = (att.file_name.split('.').pop() || '').toLowerCase();
+  const isImg = isImageFile(att.file_type, att.file_name);
+  const isVid = att.file_type?.startsWith('video/') || VIDEO_EXT.includes(ext);
+  const isAud = att.file_type?.startsWith('audio/') || AUDIO_EXT.includes(ext);
+  const isPdf = att.file_type?.includes('pdf') || ext === 'pdf';
+  const isOff = OFFICE_EXT.includes(ext);
+  if (!src) return <Loader2 className="h-8 w-8 animate-spin text-white" />;
+  if (isImg) return <img src={src} alt={att.file_name} className="max-w-full max-h-full object-contain" />;
+  if (isVid) return <video src={src} controls autoPlay className="max-w-full max-h-full" />;
+  if (isAud) return (
+    <div className="flex flex-col items-center gap-4 text-white w-full max-w-md">
+      <FileIcon fileName={att.file_name} className="h-24 w-24" />
+      <p className="text-lg text-center break-all">{att.file_name}</p>
+      <audio src={src} controls autoPlay className="w-full" />
+    </div>
+  );
+  if (isPdf) return <iframe src={src} title={att.file_name} className="w-full h-full bg-white rounded" />;
+  if (isOff) return <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`} title={att.file_name} className="w-full h-full bg-white rounded" />;
+  return <iframe src={src} title={att.file_name} className="w-full h-full bg-white rounded" />;
+};
 
 interface TaskFilesGalleryProps {
   attachments: TaskAttachment[];
@@ -92,9 +161,18 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
   }, [lightboxOpen, goPrev, goNext]);
 
   const downloadFile = async (att: TaskAttachment) => {
+    const bucket = 'task-attachments';
+    const path = extractStoragePath(att.file_url, bucket);
     try {
-      const res = await fetch(att.file_url);
-      const blob = await res.blob();
+      let blob: Blob | null = null;
+      if (path) {
+        const { data } = await supabase.storage.from(bucket).download(path);
+        if (data) blob = data;
+      }
+      if (!blob) {
+        const res = await fetch(att.file_url);
+        blob = await res.blob();
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -160,10 +238,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted hover:opacity-90 transition-opacity"
           title={att.file_name}
         >
-          <img
-            src={att.file_url}
+          <ResolvedImg
+            fileUrl={att.file_url}
             alt={att.file_name}
-            loading="lazy"
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -180,11 +257,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-black hover:opacity-90 transition-opacity"
           title={att.file_name}
         >
-          <video
-            src={att.file_url}
+          <ResolvedVideo
+            fileUrl={att.file_url}
             className="h-full w-full object-cover"
-            preload="metadata"
-            muted
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
             <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center">
@@ -344,55 +419,7 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
 
               {/* Content */}
               <div className="flex-1 flex items-center justify-center p-4 pt-16 pb-20 overflow-hidden">
-                {currentIsImage ? (
-                  <img
-                    src={current.file_url}
-                    alt={current.file_name}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                ) : currentIsVideo ? (
-                  <video
-                    src={current.file_url}
-                    controls
-                    autoPlay
-                    className="max-w-full max-h-full"
-                  >
-                    {current.file_name}
-                  </video>
-                ) : currentIsAudio ? (
-                  <div className="flex flex-col items-center gap-4 text-white w-full max-w-md">
-                    <FileIcon fileName={current.file_name} className="h-24 w-24" />
-                    <p className="text-lg text-center break-all">{current.file_name}</p>
-                    <audio src={current.file_url} controls autoPlay className="w-full" />
-                  </div>
-                ) : currentIsPdf ? (
-                  <iframe
-                    src={current.file_url}
-                    title={current.file_name}
-                    className="w-full h-full bg-white rounded"
-                  />
-                ) : currentIsOffice ? (
-                  <iframe
-                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(current.file_url)}`}
-                    title={current.file_name}
-                    className="w-full h-full bg-white rounded"
-                  />
-                ) : isPreviewable(current) ? (
-                  <iframe
-                    src={current.file_url}
-                    title={current.file_name}
-                    className="w-full h-full bg-white rounded"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-4 text-white">
-                    <FileIcon fileName={current.file_name} className="h-24 w-24" />
-                    <p className="text-lg">{current.file_name}</p>
-                    <Button onClick={() => downloadFile(current)} variant="secondary">
-                      <Download className="h-4 w-4 mr-2" />
-                      {t('download') || 'Скачать'}
-                    </Button>
-                  </div>
-                )}
+                <LightboxBody att={current} />
               </div>
 
               {/* Thumbnails strip */}
@@ -412,8 +439,8 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
                           }`}
                         >
                           {thumbIsImg ? (
-                            <img
-                              src={att.file_url}
+                            <ResolvedImg
+                              fileUrl={att.file_url}
                               alt={att.file_name}
                               className="h-full w-full object-cover"
                             />
