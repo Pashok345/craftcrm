@@ -1124,34 +1124,6 @@ const TaskDetail = () => {
                       })}
                       {provided.placeholder}
 
-                      {(() => {
-                        const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
-                        if (available.length === 0) return null;
-                        const blockLabel = (b: string) =>
-                          b === 'dependencies' ? (t('dependencies') || 'Залежності')
-                          : b === 'timeTracker' ? (t('timeTracker') || 'Облік часу')
-                          : b;
-                        return (
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            <span className="text-xs text-muted-foreground self-center mr-1">
-                              {t('addBlock') || 'Додати блок:'}
-                            </span>
-                            {available.map(b => (
-                              <Button
-                                key={b}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleOptionalBlock(b)}
-                                className="gap-1 h-8"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                {blockLabel(b)}
-                              </Button>
-                            ))}
-                          </div>
-                        );
-                      })()}
                     </div>
                   )}
                 </Droppable>
@@ -1163,15 +1135,30 @@ const TaskDetail = () => {
                   taskId={task.id}
                   canEdit={!!user}
                   registerAddHandler={(fn) => { (window as any).__taskAddBlock = fn; }}
+                  registerBlocksGetter={(fn) => { (window as any).__taskGetBlocks = fn; }}
                 />
               </div>
             </div>
-            {user && (
-              <TaskBlocksToolbar onAdd={(type) => {
-                const fn = (window as any).__taskAddBlock;
-                if (typeof fn === 'function') fn(type);
-              }} />
-            )}
+            {user && (() => {
+              const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
+              const blockLabel = (b: string) =>
+                b === 'dependencies' ? (t('dependencies') || 'Залежності')
+                : b === 'timeTracker' ? (t('timeTracker') || 'Облік часу')
+                : b;
+              return (
+                <TaskBlocksToolbar
+                  onAdd={(type) => {
+                    const getBlocks = (window as any).__taskGetBlocks;
+                    const blocks = typeof getBlocks === 'function' ? getBlocks() : [];
+                    window.dispatchEvent(new CustomEvent('task-block-add-request', {
+                      detail: { type, blocks },
+                    }));
+                  }}
+                  optionalBlocks={available.map(b => ({ id: b, label: blockLabel(b) }))}
+                  onToggleOptional={toggleOptionalBlock}
+                />
+              );
+            })()}
 
           </div>
         </TabsContent>
