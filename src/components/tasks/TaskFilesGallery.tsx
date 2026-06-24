@@ -225,11 +225,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-black hover:opacity-90 transition-opacity"
           title={att.file_name}
         >
-          <video
-            src={att.file_url}
+          <ResolvedVideo
+            fileUrl={att.file_url}
             className="h-full w-full object-cover"
-            preload="metadata"
-            muted
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
             <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center">
