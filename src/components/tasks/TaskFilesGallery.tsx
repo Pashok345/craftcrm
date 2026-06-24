@@ -206,10 +206,9 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted hover:opacity-90 transition-opacity"
           title={att.file_name}
         >
-          <img
-            src={att.file_url}
+          <ResolvedImg
+            fileUrl={att.file_url}
             alt={att.file_name}
-            loading="lazy"
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
