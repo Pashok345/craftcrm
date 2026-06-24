@@ -54,6 +54,29 @@ const ResolvedVideo = ({ fileUrl, className }: { fileUrl: string; className?: st
   return <video src={src} className={className} preload="metadata" muted />;
 };
 
+const LightboxBody = ({ att }: { att: TaskAttachment }) => {
+  const src = useResolvedUrl(att.file_url);
+  const ext = (att.file_name.split('.').pop() || '').toLowerCase();
+  const isImg = isImageFile(att.file_type, att.file_name);
+  const isVid = att.file_type?.startsWith('video/') || VIDEO_EXT.includes(ext);
+  const isAud = att.file_type?.startsWith('audio/') || AUDIO_EXT.includes(ext);
+  const isPdf = att.file_type?.includes('pdf') || ext === 'pdf';
+  const isOff = OFFICE_EXT.includes(ext);
+  if (!src) return <Loader2 className="h-8 w-8 animate-spin text-white" />;
+  if (isImg) return <img src={src} alt={att.file_name} className="max-w-full max-h-full object-contain" />;
+  if (isVid) return <video src={src} controls autoPlay className="max-w-full max-h-full" />;
+  if (isAud) return (
+    <div className="flex flex-col items-center gap-4 text-white w-full max-w-md">
+      <FileIcon fileName={att.file_name} className="h-24 w-24" />
+      <p className="text-lg text-center break-all">{att.file_name}</p>
+      <audio src={src} controls autoPlay className="w-full" />
+    </div>
+  );
+  if (isPdf) return <iframe src={src} title={att.file_name} className="w-full h-full bg-white rounded" />;
+  if (isOff) return <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`} title={att.file_name} className="w-full h-full bg-white rounded" />;
+  return <iframe src={src} title={att.file_name} className="w-full h-full bg-white rounded" />;
+};
+
 interface TaskFilesGalleryProps {
   attachments: TaskAttachment[];
   onUpload?: (files: FileList) => Promise<void> | void;
