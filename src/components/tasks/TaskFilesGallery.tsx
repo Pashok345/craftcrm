@@ -138,9 +138,18 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
   }, [lightboxOpen, goPrev, goNext]);
 
   const downloadFile = async (att: TaskAttachment) => {
+    const bucket = 'task-attachments';
+    const path = extractStoragePath(att.file_url, bucket);
     try {
-      const res = await fetch(att.file_url);
-      const blob = await res.blob();
+      let blob: Blob | null = null;
+      if (path) {
+        const { data } = await supabase.storage.from(bucket).download(path);
+        if (data) blob = data;
+      }
+      if (!blob) {
+        const res = await fetch(att.file_url);
+        blob = await res.blob();
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
