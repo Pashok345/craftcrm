@@ -416,8 +416,8 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
                           }`}
                         >
                           {thumbIsImg ? (
-                            <img
-                              src={att.file_url}
+                            <ResolvedImg
+                              fileUrl={att.file_url}
                               alt={att.file_name}
                               className="h-full w-full object-cover"
                             />
