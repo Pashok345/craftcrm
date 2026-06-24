@@ -7,6 +7,52 @@ import { isImageFile } from '@/components/ui/image-lightbox';
 import { FileIcon, getFileIcon } from '@/components/ui/file-icon';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { TaskAttachment } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
+
+const extractStoragePath = (url: string, bucket: string): string | null => {
+  const markers = [`/storage/v1/object/sign/${bucket}/`, `/storage/v1/object/public/${bucket}/`, `/${bucket}/`];
+  for (const m of markers) {
+    const i = url.indexOf(m);
+    if (i !== -1) return url.substring(i + m.length).split('?')[0];
+  }
+  if (!/^https?:/i.test(url)) return url;
+  return null;
+};
+
+const useResolvedUrl = (fileUrl: string, bucket = 'task-attachments') => {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    (async () => {
+      const path = extractStoragePath(fileUrl, bucket);
+      if (!path) { if (!cancelled) setSrc(fileUrl); return; }
+      const { data, error } = await supabase.storage.from(bucket).download(path);
+      if (cancelled) return;
+      if (error || !data) {
+        const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+        if (signed?.signedUrl && !cancelled) setSrc(signed.signedUrl);
+        return;
+      }
+      blobUrl = URL.createObjectURL(data);
+      if (!cancelled) setSrc(blobUrl);
+    })();
+    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [fileUrl, bucket]);
+  return src;
+};
+
+const ResolvedImg = ({ fileUrl, alt, className }: { fileUrl: string; alt: string; className?: string }) => {
+  const src = useResolvedUrl(fileUrl);
+  if (!src) return <div className={`${className || ''} flex items-center justify-center bg-muted`}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  return <img src={src} alt={alt} loading="lazy" className={className} />;
+};
+
+const ResolvedVideo = ({ fileUrl, className }: { fileUrl: string; className?: string }) => {
+  const src = useResolvedUrl(fileUrl);
+  if (!src) return <div className={`${className || ''} flex items-center justify-center bg-muted`}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  return <video src={src} className={className} preload="metadata" muted />;
+};
 
 interface TaskFilesGalleryProps {
   attachments: TaskAttachment[];
