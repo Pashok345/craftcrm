@@ -304,8 +304,16 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       {block.type === 'image' && (
         <Card><CardContent className="p-4 space-y-2">
           {block.content?.url ? (
-            <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              <AttachmentImage fileUrl={block.content.url} fileName={block.content?.caption || 'image'} />
+            <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center relative group/img">
+              <AttachmentImage fileUrl={block.content.url} fileName={block.content?.caption || 'image'} large />
+              {canEdit && (
+                <label className="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 transition cursor-pointer bg-background/90 backdrop-blur rounded-md px-2 py-1 text-xs border shadow flex items-center gap-1">
+                  {uploadingId === block.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  Заменить
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={(e) => e.target.files?.[0] && uploadMedia(block.id, e.target.files[0], 'image')} />
+                </label>
+              )}
             </div>
           ) : canEdit ? (
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:bg-muted/50">
