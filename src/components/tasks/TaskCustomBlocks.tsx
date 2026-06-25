@@ -444,6 +444,11 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     </Dialog>
   );
 
+  if (inline) {
+    // Parent owns rendering; we only emit data via onInlineReady and render PositionPicker
+    return <>{PositionPicker}</>;
+  }
+
   if (blocks.length === 0) {
     return (
       <>
