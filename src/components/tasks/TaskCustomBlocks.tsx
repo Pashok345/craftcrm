@@ -33,6 +33,15 @@ interface Props {
   canEdit: boolean;
   registerAddHandler?: (fn: (type: BlockType, atIndex?: number) => Promise<void>) => void;
   registerBlocksGetter?: (fn: () => TaskContentBlock[]) => void;
+  /** When true, do not render outer DnD/items — only emit blocks/renderBody upward.
+   *  Used so a parent (TaskDetail) can integrate custom blocks into a unified
+   *  drag-and-drop list together with standard task blocks. */
+  inline?: boolean;
+  onInlineReady?: (data: {
+    blocks: TaskContentBlock[];
+    renderBody: (block: TaskContentBlock) => React.ReactNode;
+    deleteBlock: (id: string) => Promise<void>;
+  }) => void;
 }
 
 const INITIAL_CONTENT: Record<BlockType, any> = {
@@ -59,7 +68,7 @@ const blockShortLabel = (b: TaskContentBlock): string => {
   }
 };
 
-export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, registerBlocksGetter }: Props) => {
+export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, registerBlocksGetter, inline = false, onInlineReady }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [blocks, setBlocks] = useState<TaskContentBlock[]>([]);
@@ -173,6 +182,14 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     setBlocks(bs => bs.filter(b => b.id !== id));
     await supabase.from('task_content_blocks').delete().eq('id', id);
   };
+
+  // In inline mode, expose blocks + render function to a parent that owns the DnD
+  useEffect(() => {
+    if (inline && onInlineReady) {
+      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inline, blocks, editingId, draftText, uploadingId]);
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
@@ -304,8 +321,16 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       {block.type === 'image' && (
         <Card><CardContent className="p-4 space-y-2">
           {block.content?.url ? (
-            <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              <AttachmentImage fileUrl={block.content.url} fileName={block.content?.caption || 'image'} />
+            <div className="rounded-lg overflow-hidden bg-muted flex items-center justify-center relative group/img">
+              <AttachmentImage fileUrl={block.content.url} fileName={block.content?.caption || 'image'} large />
+              {canEdit && (
+                <label className="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 transition cursor-pointer bg-background/90 backdrop-blur rounded-md px-2 py-1 text-xs border shadow flex items-center gap-1">
+                  {uploadingId === block.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  Заменить
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={(e) => e.target.files?.[0] && uploadMedia(block.id, e.target.files[0], 'image')} />
+                </label>
+              )}
             </div>
           ) : canEdit ? (
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer hover:bg-muted/50">
@@ -418,6 +443,11 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       </DialogContent>
     </Dialog>
   );
+
+  if (inline) {
+    // Parent owns rendering; we only emit data via onInlineReady and render PositionPicker
+    return <>{PositionPicker}</>;
+  }
 
   if (blocks.length === 0) {
     return (

@@ -19,13 +19,14 @@ interface Props {
   fileUrl: string;
   fileName: string;
   bucket?: string;
+  large?: boolean;
 }
 
 /**
  * Resilient image loader that bypasses expired signed URLs and ad-blockers
  * by downloading the file via Supabase Storage SDK and rendering a blob URL.
  */
-export const AttachmentImage = ({ fileUrl, fileName, bucket = 'task-attachments' }: Props) => {
+export const AttachmentImage = ({ fileUrl, fileName, bucket = 'task-attachments', large = false }: Props) => {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
@@ -65,10 +66,10 @@ export const AttachmentImage = ({ fileUrl, fileName, bucket = 'task-attachments'
   }
   if (!src) {
     return (
-      <div className="w-[120px] h-[90px] rounded-lg border border-border bg-muted flex items-center justify-center">
+      <div className={large ? "w-full h-64 rounded-lg border border-border bg-muted flex items-center justify-center" : "w-[120px] h-[90px] rounded-lg border border-border bg-muted flex items-center justify-center"}>
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
       </div>
     );
   }
-  return <ImageThumbnail src={src} alt={fileName} />;
+  return <ImageThumbnail src={src} alt={fileName} large={large} />;
 };

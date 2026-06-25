@@ -14,17 +14,22 @@ interface ImageThumbnailProps {
   src: string;
   alt: string;
   className?: string;
+  large?: boolean;
 }
 
-export const ImageThumbnail = ({ src, alt, className }: ImageThumbnailProps) => {
+export const ImageThumbnail = ({ src, alt, className, large = false }: ImageThumbnailProps) => {
   const [open, setOpen] = useState(false);
+
+  const sizeClasses = large
+    ? 'w-full max-h-[600px] object-contain'
+    : 'max-w-[200px] max-h-[150px] object-cover';
 
   return (
     <>
       <img
         src={src}
         alt={alt}
-        className={`max-w-[200px] max-h-[150px] rounded-lg border border-border object-cover cursor-pointer hover:opacity-80 transition-opacity ${className || ''}`}
+        className={`${sizeClasses} rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity ${className || ''}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

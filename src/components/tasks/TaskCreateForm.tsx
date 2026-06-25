@@ -49,6 +49,26 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
   const [newSubtask, setNewSubtask] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [headerPhoto, setHeaderPhoto] = useState<File | null>(null);
+  const [headerPhotoPreview, setHeaderPhotoPreview] = useState<string | null>(null);
+
+  const setHeaderPhotoFromFile = (file: File) => {
+    setHeaderPhoto(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setHeaderPhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleDescriptionPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.files;
+    if (!items || items.length === 0) return;
+    const img = Array.from(items).find(f => f.type.startsWith('image/'));
+    if (img) {
+      e.preventDefault();
+      setHeaderPhotoFromFile(img);
+      toast({ title: 'Главное фото добавлено из буфера' });
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -158,6 +178,20 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
         await moveTaskToColumn({ ...task, status: finalStatus } as any, targetCol, user.id);
       }
 
+      // Upload header photo (if any) after task is created
+      if (headerPhoto) {
+        try {
+          const safe = headerPhoto.name.replace(/[^\w.-]/g, '_');
+          const path = `${task.id}/header-${Date.now()}-${safe}`;
+          const { error: upErr } = await supabase.storage.from('task-attachments').upload(path, headerPhoto);
+          if (!upErr) {
+            const { data: signed } = await supabase.storage.from('task-attachments').createSignedUrl(path, 60 * 60 * 24 * 365);
+            const url = signed?.signedUrl || path;
+            await supabase.from('tasks').update({ bg_image_url: url } as any).eq('id', task.id);
+          }
+        } catch (e) { console.error('Header photo upload error:', e); }
+      }
+
       toast({ title: 'Задача создана' });
       onSuccess(task.id);
     } catch (error) {
@@ -175,17 +209,45 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
           <TabsTrigger value="main">Основное</TabsTrigger>
           <TabsTrigger value="subtasks">Подзадачи {subtasks.length > 0 && `(${subtasks.length})`}</TabsTrigger>
           <TabsTrigger value="files">Файлы {files.length > 0 && `(${files.length})`}</TabsTrigger>
-          <TabsTrigger value="customize">🎨 Дизайн</TabsTrigger>
+          <TabsTrigger value="customize">🎨 Кастомизация</TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label>Главное фото (обложка задачи)</Label>
+            {headerPhotoPreview ? (
+              <div className="relative rounded-lg overflow-hidden border h-40 bg-muted">
+                <img src={headerPhotoPreview} alt="header" className="w-full h-full object-cover" />
+                <Button
+                  type="button" size="icon" variant="destructive"
+                  className="absolute top-2 right-2 h-7 w-7"
+                  onClick={() => { setHeaderPhoto(null); setHeaderPhotoPreview(null); }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 text-sm text-muted-foreground">
+                <Paperclip className="h-4 w-4" />
+                Загрузить фото или вставьте Ctrl+V в описание
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && setHeaderPhotoFromFile(e.target.files[0])} />
+              </label>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="title">Название задачи *</Label>
             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label>Описание</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onPaste={handleDescriptionPaste}
+              placeholder="Введите описание. Вставьте Ctrl+V изображение — оно станет главным фото задачи."
+              rows={3}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
