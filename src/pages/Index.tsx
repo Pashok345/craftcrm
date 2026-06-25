@@ -102,7 +102,7 @@ const Index = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <img src={logo} alt="CraftCRM" className="h-10 w-auto" />
+          <img src={logo} alt="CraftCRM" width="160" height="40" fetchPriority="high" className="h-10 w-auto" />
           <Button 
             onClick={openLoginModal} 
             variant="outline"
