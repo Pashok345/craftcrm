@@ -86,21 +86,24 @@ const TaskDetail = () => {
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   // Persisted block order for the main task tab (per user, in localStorage)
+  // Standard ids: 'details', 'subtasks', 'comments', 'dependencies', 'timeTracker'
+  // Custom block ids are prefixed: 'cb:<uuid>'
   const REQUIRED_BLOCKS = ['details', 'subtasks', 'comments'];
   const OPTIONAL_BLOCKS = ['dependencies', 'timeTracker'];
   const DEFAULT_BLOCK_ORDER = ['details', 'subtasks', 'comments'];
-  const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}`;
+  const blockOrderStorageKey = `taskDetail.blockOrder.${user?.id || 'guest'}.${id || ''}`;
   const enabledOptionalKey = `taskDetail.enabledOptional.${user?.id || 'guest'}.${id || ''}`;
 
   const [blockOrder, setBlockOrder] = useState<string[]>(() => {
     try {
-      const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}`);
+      const stored = localStorage.getItem(`taskDetail.blockOrder.${user?.id || 'guest'}.${id || ''}`);
       if (stored) {
         const parsed: string[] = JSON.parse(stored);
-        const merged = parsed.filter(id => REQUIRED_BLOCKS.includes(id) || OPTIONAL_BLOCKS.includes(id));
-        REQUIRED_BLOCKS.forEach(id => {
-          if (!merged.includes(id)) merged.push(id);
-        });
+        // Keep required, optional and custom (cb:*) ids
+        const merged = parsed.filter(b =>
+          REQUIRED_BLOCKS.includes(b) || OPTIONAL_BLOCKS.includes(b) || b.startsWith('cb:')
+        );
+        REQUIRED_BLOCKS.forEach(b => { if (!merged.includes(b)) merged.push(b); });
         return merged;
       }
     } catch {}
@@ -115,6 +118,26 @@ const TaskDetail = () => {
     return [];
   });
 
+  // Inline data from TaskCustomBlocks (custom user-created blocks)
+  const [customData, setCustomData] = useState<{
+    blocks: Array<{ id: string; type: string; content: any }>;
+    renderBody: (block: any) => React.ReactNode;
+    deleteBlock: (id: string) => Promise<void>;
+  } | null>(null);
+
+  // When custom blocks load/change, ensure they appear in blockOrder
+  useEffect(() => {
+    if (!customData) return;
+    const currentCb = customData.blocks.map(b => `cb:${b.id}`);
+    setBlockOrder(prev => {
+      // Remove cb ids that no longer exist
+      const filtered = prev.filter(b => !b.startsWith('cb:') || currentCb.includes(b));
+      // Append any new cb ids that aren't yet in the order
+      const missing = currentCb.filter(cb => !filtered.includes(cb));
+      return missing.length ? [...filtered, ...missing] : filtered;
+    });
+  }, [customData?.blocks.map(b => b.id).join(',')]);
+
   useEffect(() => {
     try { localStorage.setItem(blockOrderStorageKey, JSON.stringify(blockOrder)); } catch {}
   }, [blockOrder, blockOrderStorageKey]);
@@ -124,7 +147,7 @@ const TaskDetail = () => {
   }, [enabledOptional, enabledOptionalKey]);
 
   const visibleBlockOrder = blockOrder.filter(b =>
-    REQUIRED_BLOCKS.includes(b) || enabledOptional.includes(b)
+    REQUIRED_BLOCKS.includes(b) || enabledOptional.includes(b) || b.startsWith('cb:')
   );
 
   const toggleOptionalBlock = (block: string) => {
