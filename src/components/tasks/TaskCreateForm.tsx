@@ -49,6 +49,26 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
   const [newSubtask, setNewSubtask] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [headerPhoto, setHeaderPhoto] = useState<File | null>(null);
+  const [headerPhotoPreview, setHeaderPhotoPreview] = useState<string | null>(null);
+
+  const setHeaderPhotoFromFile = (file: File) => {
+    setHeaderPhoto(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setHeaderPhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleDescriptionPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.files;
+    if (!items || items.length === 0) return;
+    const img = Array.from(items).find(f => f.type.startsWith('image/'));
+    if (img) {
+      e.preventDefault();
+      setHeaderPhotoFromFile(img);
+      toast({ title: 'Главное фото добавлено из буфера' });
+    }
+  };
 
   useEffect(() => {
     (async () => {
