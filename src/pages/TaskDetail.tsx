@@ -1098,8 +1098,17 @@ const TaskDetail = () => {
                       className="space-y-6"
                     >
                       {visibleBlockOrder.map((blockId, index) => {
-                        const content = blocks[blockId];
-                        if (!content) return null;
+                        const isCustom = blockId.startsWith('cb:');
+                        let content: React.ReactNode = null;
+                        if (isCustom) {
+                          const cbId = blockId.slice(3);
+                          const cb = customData?.blocks.find(b => b.id === cbId);
+                          if (!cb || !customData) return null;
+                          content = customData.renderBody(cb);
+                        } else {
+                          content = blocks[blockId];
+                          if (!content) return null;
+                        }
                         const isOptional = OPTIONAL_BLOCKS.includes(blockId);
                         return (
                           <Draggable key={blockId} draggableId={blockId} index={index}>
@@ -1139,6 +1148,18 @@ const TaskDetail = () => {
                                     <X className="h-4 w-4" />
                                   </Button>
                                 )}
+                                {isCustom && user && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => customData?.deleteBlock(blockId.slice(3))}
+                                    className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity bg-background border shadow"
+                                    title="Удалить блок"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {content}
                               </div>
                             )}
@@ -1153,14 +1174,15 @@ const TaskDetail = () => {
               </DragDropContext>
             );
           })()}
-              <div className="mt-6">
-                <TaskCustomBlocks
-                  taskId={task.id}
-                  canEdit={!!user}
-                  registerAddHandler={(fn) => { (window as any).__taskAddBlock = fn; }}
-                  registerBlocksGetter={(fn) => { (window as any).__taskGetBlocks = fn; }}
-                />
-              </div>
+              {/* Inline data source for custom blocks (no visible UI) */}
+              <TaskCustomBlocks
+                taskId={task.id}
+                canEdit={!!user}
+                inline
+                onInlineReady={setCustomData}
+                registerAddHandler={(fn) => { (window as any).__taskAddBlock = fn; }}
+                registerBlocksGetter={(fn) => { (window as any).__taskGetBlocks = fn; }}
+              />
             </div>
             {user && (() => {
               const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
