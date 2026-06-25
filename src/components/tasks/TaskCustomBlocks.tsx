@@ -33,6 +33,15 @@ interface Props {
   canEdit: boolean;
   registerAddHandler?: (fn: (type: BlockType, atIndex?: number) => Promise<void>) => void;
   registerBlocksGetter?: (fn: () => TaskContentBlock[]) => void;
+  /** When true, do not render outer DnD/items — only emit blocks/renderBody upward.
+   *  Used so a parent (TaskDetail) can integrate custom blocks into a unified
+   *  drag-and-drop list together with standard task blocks. */
+  inline?: boolean;
+  onInlineReady?: (data: {
+    blocks: TaskContentBlock[];
+    renderBody: (block: TaskContentBlock) => React.ReactNode;
+    deleteBlock: (id: string) => Promise<void>;
+  }) => void;
 }
 
 const INITIAL_CONTENT: Record<BlockType, any> = {
