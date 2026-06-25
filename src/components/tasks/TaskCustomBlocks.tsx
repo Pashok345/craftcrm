@@ -68,7 +68,7 @@ const blockShortLabel = (b: TaskContentBlock): string => {
   }
 };
 
-export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, registerBlocksGetter }: Props) => {
+export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, registerBlocksGetter, inline = false, onInlineReady }: Props) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [blocks, setBlocks] = useState<TaskContentBlock[]>([]);
