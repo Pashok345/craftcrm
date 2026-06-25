@@ -183,6 +183,14 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     await supabase.from('task_content_blocks').delete().eq('id', id);
   };
 
+  // In inline mode, expose blocks + render function to a parent that owns the DnD
+  useEffect(() => {
+    if (inline && onInlineReady) {
+      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inline, blocks, editingId, draftText, uploadingId]);
+
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
     const from = result.source.index;
