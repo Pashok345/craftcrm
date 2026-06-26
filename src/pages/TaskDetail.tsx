@@ -1198,11 +1198,12 @@ const TaskDetail = () => {
               return (
                 <TaskBlocksToolbar
                   onAdd={(type) => {
-                    const getBlocks = (window as any).__taskGetBlocks;
-                    const blocks = typeof getBlocks === 'function' ? getBlocks() : [];
-                    window.dispatchEvent(new CustomEvent('task-block-add-request', {
-                      detail: { type, blocks },
-                    }));
+                    setPendingBlock({ type, index: visibleBlockOrder.length });
+                    setTimeout(() => {
+                      document.querySelector('[data-insertion-bar]')?.scrollIntoView({
+                        behavior: 'smooth', block: 'center',
+                      });
+                    }, 50);
                   }}
                   optionalBlocks={available.map(b => ({ id: b, label: blockLabel(b) }))}
                   onToggleOptional={toggleOptionalBlock}
@@ -1212,6 +1213,7 @@ const TaskDetail = () => {
 
           </div>
         </TabsContent>
+
 
 
 
