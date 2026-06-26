@@ -212,8 +212,8 @@ serve(async (req) => {
       }
     }
 
-    // Get the origin for redirect URL
-    const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
+    // Use server-side configured site URL to avoid open-redirect via Origin header
+    const origin = Deno.env.get('SITE_URL') || 'https://craftcrm.lovable.app'
 
     // Create user with the provided password
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
