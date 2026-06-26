@@ -31,7 +31,7 @@ export interface TaskContentBlock {
 interface Props {
   taskId: string;
   canEdit: boolean;
-  registerAddHandler?: (fn: (type: BlockType, atIndex?: number) => Promise<void>) => void;
+  registerAddHandler?: (fn: (type: BlockType, atIndex?: number) => Promise<string | null>) => void;
   registerBlocksGetter?: (fn: () => TaskContentBlock[]) => void;
   /** When true, do not render outer DnD/items — only emit blocks/renderBody upward.
    *  Used so a parent (TaskDetail) can integrate custom blocks into a unified
@@ -103,8 +103,8 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     return () => window.removeEventListener('task-blocks-changed', onChange);
   }, [taskId]);
 
-  const addBlock = async (type: BlockType, atIndex?: number) => {
-    if (!user) return;
+  const addBlock = async (type: BlockType, atIndex?: number): Promise<string | null> => {
+    if (!user) return null;
 
     const current = blocksRef.current;
     const insertIndex = typeof atIndex === 'number'
@@ -128,7 +128,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       .single();
     if (error) {
       toast({ title: 'Не удалось добавить блок', description: error.message, variant: 'destructive' });
-      return;
+      return null;
     }
 
     const newBlock = data as TaskContentBlock;
@@ -148,6 +148,8 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       const el = document.querySelector<HTMLElement>(`[data-block-id="${newBlock.id}"]`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 50);
+
+    return newBlock.id;
   };
 
   // Register external handlers
@@ -156,22 +158,7 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     registerBlocksGetter?.(() => blocksRef.current);
   }, [registerAddHandler, registerBlocksGetter, user?.id]);
 
-  // Listen for position-picker request from toolbar
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { type: BlockType };
-      if (!detail?.type) return;
-      if (blocksRef.current.length === 0) {
-        addBlock(detail.type, 0);
-        return;
-      }
-      setPickerType(detail.type);
-      setPickerIndex(String(blocksRef.current.length));
-      setPickerOpen(true);
-    };
-    window.addEventListener('task-block-add-request', handler);
-    return () => window.removeEventListener('task-block-add-request', handler);
-  }, [user?.id]);
+  // Position picker dialog is no longer used; TaskDetail handles in-flow insertion UI.
 
   const updateBlock = async (id: string, content: any) => {
     setBlocks(bs => bs.map(b => b.id === id ? { ...b, content } : b));
