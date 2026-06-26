@@ -137,7 +137,7 @@ serve(async (req) => {
       )
     }
 
-    const origin = req.headers.get('origin') || 'https://craftcrm.lovable.app'
+    const origin = Deno.env.get('SITE_URL') || 'https://craftcrm.lovable.app'
     const normalizedEmail = email.trim().toLowerCase()
 
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
