@@ -218,7 +218,7 @@ serve(async (req) => {
     if (emailError) {
       console.warn('Email sending skipped (Resend):', emailError);
       return new Response(
-        JSON.stringify({ success: true, email: profile.email, email_sent: false, warning: 'Email delivery restricted by Resend domain settings' }),
+        JSON.stringify({ success: true, email_sent: false, warning: 'Email delivery restricted by Resend domain settings' }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
