@@ -225,7 +225,7 @@ serve(async (req) => {
 
     console.log(`Email sent to ${profile.email}`);
     return new Response(
-      JSON.stringify({ success: true, email: profile.email, email_sent: true }),
+      JSON.stringify({ success: true, email_sent: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
