@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks, LayoutGrid, GripVertical } from 'lucide-react';
+import { Send, Paperclip, Calendar, Loader2, Pencil, Link2, ArrowLeft, Trash2, Plus, UserPlus, CheckSquare, MoreVertical, X, Check, Files, ListChecks, LayoutGrid, GripVertical, ChevronUp, ChevronDown, CornerDownRight } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { TaskBoardsTab } from '@/components/tasks/TaskBoardsTab';
 import { CommentReactions } from '@/components/comments/CommentReactions';
@@ -117,6 +117,11 @@ const TaskDetail = () => {
     } catch {}
     return [];
   });
+
+  // In-flow block insertion: when user picks a type from the toolbar,
+  // a visual "Insert here" bar appears between blocks; user moves it and confirms.
+  const [pendingBlock, setPendingBlock] = useState<{ type: BlockType; index: number } | null>(null);
+  const [creatingBlock, setCreatingBlock] = useState(false);
 
   // Inline data from TaskCustomBlocks (custom user-created blocks)
   const [customData, setCustomData] = useState<{
@@ -1097,76 +1102,190 @@ const TaskDetail = () => {
                       {...provided.droppableProps}
                       className="space-y-6"
                     >
-                      {visibleBlockOrder.map((blockId, index) => {
-                        const isCustom = blockId.startsWith('cb:');
-                        let content: React.ReactNode = null;
-                        if (isCustom) {
-                          const cbId = blockId.slice(3);
-                          const cb = customData?.blocks.find(b => b.id === cbId);
-                          if (!cb || !customData) return null;
-                          content = customData.renderBody(cb);
-                        } else {
-                          content = blocks[blockId];
-                          if (!content) return null;
-                        }
-                        const isOptional = OPTIONAL_BLOCKS.includes(blockId);
-                        return (
-                          <Draggable key={blockId} draggableId={blockId} index={index}>
-                            {(prov, snapshot) => (
-                              <div
-                                ref={prov.innerRef}
-                                {...prov.draggableProps}
-                                className={`relative group/block rounded-lg ${
-                                  snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
-                                }`}
+                      {(() => {
+                        const renderInsertionBar = (idx: number) => {
+                          if (!pendingBlock) return null;
+                          const isActive = pendingBlock.index === idx;
+                          const total = visibleBlockOrder.length;
+                          const labelByType: Record<string, string> = {
+                            heading: 'Заголовок', text: 'Текст', image: 'Изображение',
+                            video: 'Видео', file: 'Файл / ссылка', form: 'Форма',
+                            divider: 'Разделитель', empty: 'Новый блок',
+                          };
+                          const typeLabel = labelByType[pendingBlock.type] || 'Блок';
+                          if (!isActive) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => setPendingBlock(p => p ? { ...p, index: idx } : p)}
+                                className="group/gap w-full h-3 -my-2 flex items-center justify-center"
+                                aria-label="Вставить здесь"
                               >
-                                <div
-                                  {...prov.dragHandleProps}
-                                  className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
-                                  title={t('dragBlock')}
-                                  aria-label="drag-block"
+                                <div className="w-full h-px bg-transparent group-hover/gap:bg-primary/40 transition-colors" />
+                              </button>
+                            );
+                          }
+                          return (
+                            <div
+                              data-insertion-bar
+                              className="flex items-center gap-2 -my-2 px-3 py-2 rounded-lg border-2 border-dashed border-primary bg-primary/5 shadow-sm"
+                            >
+                              <CornerDownRight className="h-4 w-4 text-primary shrink-0" />
+                              <span className="text-sm font-medium text-primary truncate">
+                                Вставить «{typeLabel}» сюда
+                              </span>
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({idx + 1} из {total + 1})
+                              </span>
+                              <div className="ml-auto flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  disabled={idx === 0}
+                                  onClick={() => setPendingBlock(p => p ? { ...p, index: Math.max(0, p.index - 1) } : p)}
+                                  title="Выше"
                                 >
-                                  <GripVertical className="h-5 w-5" />
-                                </div>
-                                <div
-                                  {...prov.dragHandleProps}
-                                  className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
-                                  title={t('dragBlock')}
-                                  aria-label="drag-block"
+                                  <ChevronUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  disabled={idx === total}
+                                  onClick={() => setPendingBlock(p => p ? { ...p, index: Math.min(total, p.index + 1) } : p)}
+                                  title="Ниже"
                                 >
-                                  <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
-                                </div>
-                                {isOptional && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => toggleOptionalBlock(blockId)}
-                                    className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity"
-                                    title={t('removeBlock') || 'Прибрати блок'}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {isCustom && user && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => customData?.deleteBlock(blockId.slice(3))}
-                                    className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity bg-background border shadow"
-                                    title="Удалить блок"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {content}
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7"
+                                  onClick={() => setPendingBlock(null)}
+                                >
+                                  Отмена
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-7"
+                                  disabled={creatingBlock}
+                                  onClick={async () => {
+                                    if (!pendingBlock) return;
+                                    const addFn = (window as any).__taskAddBlock as
+                                      | ((type: BlockType, atIndex?: number) => Promise<string | null>)
+                                      | undefined;
+                                    if (!addFn) { setPendingBlock(null); return; }
+                                    setCreatingBlock(true);
+                                    try {
+                                      const newId = await addFn(pendingBlock.type);
+                                      const targetIndex = pendingBlock.index;
+                                      if (newId) {
+                                        setBlockOrder(prev => {
+                                          const cbKey = `cb:${newId}`;
+                                          const without = prev.filter(b => b !== cbKey);
+                                          const idx2 = Math.max(0, Math.min(targetIndex, without.length));
+                                          without.splice(idx2, 0, cbKey);
+                                          return without;
+                                        });
+                                      }
+                                    } finally {
+                                      setCreatingBlock(false);
+                                      setPendingBlock(null);
+                                    }
+                                  }}
+                                >
+                                  {creatingBlock ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Создать'}
+                                </Button>
                               </div>
-                            )}
-                          </Draggable>
+                            </div>
+                          );
+                        };
+
+                        return (
+                          <>
+                            {renderInsertionBar(0)}
+                            {visibleBlockOrder.map((blockId, index) => {
+                              const isCustom = blockId.startsWith('cb:');
+                              let content: React.ReactNode = null;
+                              if (isCustom) {
+                                const cbId = blockId.slice(3);
+                                const cb = customData?.blocks.find(b => b.id === cbId);
+                                if (!cb || !customData) return null;
+                                content = customData.renderBody(cb);
+                              } else {
+                                content = blocks[blockId];
+                                if (!content) return null;
+                              }
+                              const isOptional = OPTIONAL_BLOCKS.includes(blockId);
+                              return (
+                                <div key={blockId}>
+                                  <Draggable draggableId={blockId} index={index}>
+                                    {(prov, snapshot) => (
+                                      <div
+                                        ref={prov.innerRef}
+                                        {...prov.draggableProps}
+                                        className={`relative group/block rounded-lg ${
+                                          snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
+                                        }`}
+                                      >
+                                        <div
+                                          {...prov.dragHandleProps}
+                                          className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                          title={t('dragBlock')}
+                                          aria-label="drag-block"
+                                        >
+                                          <GripVertical className="h-5 w-5" />
+                                        </div>
+                                        <div
+                                          {...prov.dragHandleProps}
+                                          className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
+                                          title={t('dragBlock')}
+                                          aria-label="drag-block"
+                                        >
+                                          <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+                                        </div>
+                                        {isOptional && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => toggleOptionalBlock(blockId)}
+                                            className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                            title={t('removeBlock') || 'Прибрати блок'}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                        {isCustom && user && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => customData?.deleteBlock(blockId.slice(3))}
+                                            className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity bg-background border shadow"
+                                            title="Удалить блок"
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                        {content}
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                  {renderInsertionBar(index + 1)}
+                                </div>
+                              );
+                            })}
+                          </>
                         );
-                      })}
+                      })()}
                       {provided.placeholder}
+
 
                     </div>
                   )}
@@ -1193,11 +1312,12 @@ const TaskDetail = () => {
               return (
                 <TaskBlocksToolbar
                   onAdd={(type) => {
-                    const getBlocks = (window as any).__taskGetBlocks;
-                    const blocks = typeof getBlocks === 'function' ? getBlocks() : [];
-                    window.dispatchEvent(new CustomEvent('task-block-add-request', {
-                      detail: { type, blocks },
-                    }));
+                    setPendingBlock({ type, index: visibleBlockOrder.length });
+                    setTimeout(() => {
+                      document.querySelector('[data-insertion-bar]')?.scrollIntoView({
+                        behavior: 'smooth', block: 'center',
+                      });
+                    }, 50);
                   }}
                   optionalBlocks={available.map(b => ({ id: b, label: blockLabel(b) }))}
                   onToggleOptional={toggleOptionalBlock}
@@ -1207,6 +1327,7 @@ const TaskDetail = () => {
 
           </div>
         </TabsContent>
+
 
 
 
