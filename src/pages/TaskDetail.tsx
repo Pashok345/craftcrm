@@ -128,7 +128,9 @@ const TaskDetail = () => {
     blocks: Array<{ id: string; type: string; content: any }>;
     renderBody: (block: any) => React.ReactNode;
     deleteBlock: (id: string) => Promise<void>;
+    moveBlock: (id: string, toIndex: number) => Promise<void>;
   } | null>(null);
+
 
   // When custom blocks load/change, ensure they appear in blockOrder
   useEffect(() => {
