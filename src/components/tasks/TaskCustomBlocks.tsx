@@ -172,13 +172,31 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     await supabase.from('task_content_blocks').delete().eq('id', id);
   };
 
+  const moveBlock = async (id: string, toIndex: number) => {
+    const current = blocksRef.current;
+    const from = current.findIndex(b => b.id === id);
+    if (from === -1) return;
+    const reordered = Array.from(current);
+    const [moved] = reordered.splice(from, 1);
+    const clamped = Math.max(0, Math.min(toIndex, reordered.length));
+    reordered.splice(clamped, 0, moved);
+    const withPos = reordered.map((b, i) => ({ ...b, position: i }));
+    setBlocks(withPos);
+    await Promise.all(
+      withPos.map(b =>
+        supabase.from('task_content_blocks').update({ position: b.position }).eq('id', b.id)
+      )
+    );
+  };
+
   // In inline mode, expose blocks + render function to a parent that owns the DnD
   useEffect(() => {
     if (inline && onInlineReady) {
-      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock });
+      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock, moveBlock });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inline, blocks, editingId, draftText, uploadingId]);
+
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
