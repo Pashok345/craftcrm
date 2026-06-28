@@ -118,17 +118,21 @@ const TaskDetail = () => {
     return [];
   });
 
-  // In-flow block insertion: when user picks a type from the toolbar,
-  // a visual "Insert here" bar appears between blocks; user moves it and confirms.
-  const [pendingBlock, setPendingBlock] = useState<{ type: BlockType; index: number } | null>(null);
+  // Draft block: created immediately when user picks a type from the toolbar.
+  // The block appears in place with a halo + ⬆/⬇/Add/Cancel controls so the
+  // user can edit it, reposition it, then confirm or discard.
+  const [draftBlockId, setDraftBlockId] = useState<string | null>(null);
   const [creatingBlock, setCreatingBlock] = useState(false);
+
 
   // Inline data from TaskCustomBlocks (custom user-created blocks)
   const [customData, setCustomData] = useState<{
     blocks: Array<{ id: string; type: string; content: any }>;
     renderBody: (block: any) => React.ReactNode;
     deleteBlock: (id: string) => Promise<void>;
+    moveBlock: (id: string, toIndex: number) => Promise<void>;
   } | null>(null);
+
 
   // When custom blocks load/change, ensure they appear in blockOrder
   useEffect(() => {
@@ -1103,112 +1107,39 @@ const TaskDetail = () => {
                       className="space-y-6"
                     >
                       {(() => {
-                        const renderInsertionBar = (idx: number) => {
-                          if (!pendingBlock) return null;
-                          const isActive = pendingBlock.index === idx;
-                          const total = visibleBlockOrder.length;
-                          const labelByType: Record<string, string> = {
-                            heading: 'Заголовок', text: 'Текст', image: 'Изображение',
-                            video: 'Видео', file: 'Файл / ссылка', form: 'Форма',
-                            divider: 'Разделитель', empty: 'Новый блок',
-                          };
-                          const typeLabel = labelByType[pendingBlock.type] || 'Блок';
-                          if (!isActive) {
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setPendingBlock(p => p ? { ...p, index: idx } : p)}
-                                className="group/gap w-full h-3 -my-2 flex items-center justify-center"
-                                aria-label="Вставить здесь"
-                              >
-                                <div className="w-full h-px bg-transparent group-hover/gap:bg-primary/40 transition-colors" />
-                              </button>
+                        const draftKey = draftBlockId ? `cb:${draftBlockId}` : null;
+                        const moveDraft = async (dir: -1 | 1) => {
+                          if (!draftKey) return;
+                          const curIdx = visibleBlockOrder.indexOf(draftKey);
+                          if (curIdx === -1) return;
+                          const newIdx = curIdx + dir;
+                          if (newIdx < 0 || newIdx >= visibleBlockOrder.length) return;
+                          // Visual reorder
+                          setBlockOrder(prev => {
+                            const next = prev.filter(b => b !== draftKey);
+                            const visibleWithout = next.filter(b =>
+                              REQUIRED_BLOCKS.includes(b) || enabledOptional.includes(b) || b.startsWith('cb:')
                             );
+                            const targetId = visibleWithout[Math.min(newIdx, visibleWithout.length - 1)];
+                            const insertAt = next.indexOf(targetId);
+                            if (insertAt === -1) next.push(draftKey);
+                            else next.splice(insertAt + (dir > 0 ? 1 : 0), 0, draftKey);
+                            return next;
+                          });
+                          // Persist cb order: compute new index among cb blocks only
+                          const newCbOrder = visibleBlockOrder
+                            .filter(b => b !== draftKey && b.startsWith('cb:'));
+                          let cbIndex = 0;
+                          for (let i = 0; i < newIdx; i++) {
+                            const at = visibleBlockOrder[i];
+                            if (at && at.startsWith('cb:') && at !== draftKey) cbIndex++;
                           }
-                          return (
-                            <div
-                              data-insertion-bar
-                              className="flex items-center gap-2 -my-2 px-3 py-2 rounded-lg border-2 border-dashed border-primary bg-primary/5 shadow-sm"
-                            >
-                              <CornerDownRight className="h-4 w-4 text-primary shrink-0" />
-                              <span className="text-sm font-medium text-primary truncate">
-                                Вставить «{typeLabel}» сюда
-                              </span>
-                              <span className="text-xs text-muted-foreground ml-1">
-                                ({idx + 1} из {total + 1})
-                              </span>
-                              <div className="ml-auto flex items-center gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  disabled={idx === 0}
-                                  onClick={() => setPendingBlock(p => p ? { ...p, index: Math.max(0, p.index - 1) } : p)}
-                                  title="Выше"
-                                >
-                                  <ChevronUp className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  disabled={idx === total}
-                                  onClick={() => setPendingBlock(p => p ? { ...p, index: Math.min(total, p.index + 1) } : p)}
-                                  title="Ниже"
-                                >
-                                  <ChevronDown className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7"
-                                  onClick={() => setPendingBlock(null)}
-                                >
-                                  Отмена
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="h-7"
-                                  disabled={creatingBlock}
-                                  onClick={async () => {
-                                    if (!pendingBlock) return;
-                                    const addFn = (window as any).__taskAddBlock as
-                                      | ((type: BlockType, atIndex?: number) => Promise<string | null>)
-                                      | undefined;
-                                    if (!addFn) { setPendingBlock(null); return; }
-                                    setCreatingBlock(true);
-                                    try {
-                                      const newId = await addFn(pendingBlock.type);
-                                      const targetIndex = pendingBlock.index;
-                                      if (newId) {
-                                        setBlockOrder(prev => {
-                                          const cbKey = `cb:${newId}`;
-                                          const without = prev.filter(b => b !== cbKey);
-                                          const idx2 = Math.max(0, Math.min(targetIndex, without.length));
-                                          without.splice(idx2, 0, cbKey);
-                                          return without;
-                                        });
-                                      }
-                                    } finally {
-                                      setCreatingBlock(false);
-                                      setPendingBlock(null);
-                                    }
-                                  }}
-                                >
-                                  {creatingBlock ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Создать'}
-                                </Button>
-                              </div>
-                            </div>
-                          );
+                          await customData?.moveBlock(draftBlockId!, Math.min(cbIndex, newCbOrder.length));
                         };
 
                         return (
                           <>
-                            {renderInsertionBar(0)}
+
                             {visibleBlockOrder.map((blockId, index) => {
                               const isCustom = blockId.startsWith('cb:');
                               let content: React.ReactNode = null;
@@ -1222,34 +1153,91 @@ const TaskDetail = () => {
                                 if (!content) return null;
                               }
                               const isOptional = OPTIONAL_BLOCKS.includes(blockId);
+                              const isDraft = draftKey === blockId;
                               return (
                                 <div key={blockId}>
-                                  <Draggable draggableId={blockId} index={index}>
+                                  <Draggable draggableId={blockId} index={index} isDragDisabled={isDraft}>
                                     {(prov, snapshot) => (
                                       <div
                                         ref={prov.innerRef}
                                         {...prov.draggableProps}
                                         className={`relative group/block rounded-lg ${
                                           snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
-                                        }`}
+                                        } ${isDraft ? 'ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5 p-3' : ''}`}
                                       >
-                                        <div
-                                          {...prov.dragHandleProps}
-                                          className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
-                                          title={t('dragBlock')}
-                                          aria-label="drag-block"
-                                        >
-                                          <GripVertical className="h-5 w-5" />
-                                        </div>
-                                        <div
-                                          {...prov.dragHandleProps}
-                                          className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
-                                          title={t('dragBlock')}
-                                          aria-label="drag-block"
-                                        >
-                                          <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
-                                        </div>
-                                        {isOptional && (
+                                        {isDraft && (
+                                          <div className="mb-3 flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-primary/10 border border-primary/30">
+                                            <span className="text-xs font-medium text-primary">
+                                              Новый блок — позиция {index + 1} из {visibleBlockOrder.length}
+                                            </span>
+                                            <div className="ml-auto flex items-center gap-1">
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                disabled={index === 0}
+                                                onClick={() => moveDraft(-1)}
+                                                title="Выше"
+                                              >
+                                                <ChevronUp className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                disabled={index === visibleBlockOrder.length - 1}
+                                                onClick={() => moveDraft(1)}
+                                                title="Ниже"
+                                              >
+                                                <ChevronDown className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7"
+                                                onClick={async () => {
+                                                  if (!draftBlockId) return;
+                                                  await customData?.deleteBlock(draftBlockId);
+                                                  setDraftBlockId(null);
+                                                }}
+                                              >
+                                                Отмена
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                size="sm"
+                                                className="h-7"
+                                                onClick={() => setDraftBlockId(null)}
+                                              >
+                                                Добавить
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                        {!isDraft && (
+                                          <div
+                                            {...prov.dragHandleProps}
+                                            className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                            title={t('dragBlock')}
+                                            aria-label="drag-block"
+                                          >
+                                            <GripVertical className="h-5 w-5" />
+                                          </div>
+                                        )}
+                                        {!isDraft && (
+                                          <div
+                                            {...prov.dragHandleProps}
+                                            className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
+                                            title={t('dragBlock')}
+                                            aria-label="drag-block"
+                                          >
+                                            <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+                                          </div>
+                                        )}
+                                        {isOptional && !isDraft && (
                                           <Button
                                             type="button"
                                             variant="ghost"
@@ -1261,7 +1249,7 @@ const TaskDetail = () => {
                                             <X className="h-4 w-4" />
                                           </Button>
                                         )}
-                                        {isCustom && user && (
+                                        {isCustom && user && !isDraft && (
                                           <Button
                                             type="button"
                                             variant="ghost"
@@ -1277,10 +1265,10 @@ const TaskDetail = () => {
                                       </div>
                                     )}
                                   </Draggable>
-                                  {renderInsertionBar(index + 1)}
                                 </div>
                               );
                             })}
+
                           </>
                         );
                       })()}
@@ -1311,17 +1299,30 @@ const TaskDetail = () => {
                 : b;
               return (
                 <TaskBlocksToolbar
-                  onAdd={(type) => {
-                    setPendingBlock({ type, index: visibleBlockOrder.length });
-                    setTimeout(() => {
-                      document.querySelector('[data-insertion-bar]')?.scrollIntoView({
-                        behavior: 'smooth', block: 'center',
-                      });
-                    }, 50);
+                  onAdd={async (type) => {
+                    if (creatingBlock || draftBlockId) return;
+                    const addFn = (window as any).__taskAddBlock as
+                      | ((type: BlockType, atIndex?: number) => Promise<string | null>)
+                      | undefined;
+                    if (!addFn) return;
+                    setCreatingBlock(true);
+                    try {
+                      const newId = await addFn(type);
+                      if (newId) {
+                        setDraftBlockId(newId);
+                        setTimeout(() => {
+                          document.querySelector(`[data-block-id="${newId}"]`)
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 80);
+                      }
+                    } finally {
+                      setCreatingBlock(false);
+                    }
                   }}
                   optionalBlocks={available.map(b => ({ id: b, label: blockLabel(b) }))}
                   onToggleOptional={toggleOptionalBlock}
                 />
+
               );
             })()}
 
