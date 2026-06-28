@@ -156,7 +156,7 @@ export const AIAssistant = () => {
       <Button
         onClick={() => setOpen(true)}
         size="icon"
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform bg-gradient-to-br from-primary to-primary/80"
+        className="fixed bottom-6 right-16 z-40 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform bg-gradient-to-br from-primary to-primary/80"
         aria-label={titles.title}
       >
         <Sparkles className="h-6 w-6" />
