@@ -1153,34 +1153,91 @@ const TaskDetail = () => {
                                 if (!content) return null;
                               }
                               const isOptional = OPTIONAL_BLOCKS.includes(blockId);
+                              const isDraft = draftKey === blockId;
                               return (
                                 <div key={blockId}>
-                                  <Draggable draggableId={blockId} index={index}>
+                                  <Draggable draggableId={blockId} index={index} isDragDisabled={isDraft}>
                                     {(prov, snapshot) => (
                                       <div
                                         ref={prov.innerRef}
                                         {...prov.draggableProps}
                                         className={`relative group/block rounded-lg ${
                                           snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
-                                        }`}
+                                        } ${isDraft ? 'ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5 p-3' : ''}`}
                                       >
-                                        <div
-                                          {...prov.dragHandleProps}
-                                          className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
-                                          title={t('dragBlock')}
-                                          aria-label="drag-block"
-                                        >
-                                          <GripVertical className="h-5 w-5" />
-                                        </div>
-                                        <div
-                                          {...prov.dragHandleProps}
-                                          className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
-                                          title={t('dragBlock')}
-                                          aria-label="drag-block"
-                                        >
-                                          <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
-                                        </div>
-                                        {isOptional && (
+                                        {isDraft && (
+                                          <div className="mb-3 flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-primary/10 border border-primary/30">
+                                            <span className="text-xs font-medium text-primary">
+                                              Новый блок — позиция {index + 1} из {visibleBlockOrder.length}
+                                            </span>
+                                            <div className="ml-auto flex items-center gap-1">
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                disabled={index === 0}
+                                                onClick={() => moveDraft(-1)}
+                                                title="Выше"
+                                              >
+                                                <ChevronUp className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                disabled={index === visibleBlockOrder.length - 1}
+                                                onClick={() => moveDraft(1)}
+                                                title="Ниже"
+                                              >
+                                                <ChevronDown className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7"
+                                                onClick={async () => {
+                                                  if (!draftBlockId) return;
+                                                  await customData?.deleteBlock(draftBlockId);
+                                                  setDraftBlockId(null);
+                                                }}
+                                              >
+                                                Отмена
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                size="sm"
+                                                className="h-7"
+                                                onClick={() => setDraftBlockId(null)}
+                                              >
+                                                Добавить
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                        {!isDraft && (
+                                          <div
+                                            {...prov.dragHandleProps}
+                                            className="absolute -left-7 top-3 z-10 hidden md:flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted opacity-40 group-hover/block:opacity-100 transition-opacity"
+                                            title={t('dragBlock')}
+                                            aria-label="drag-block"
+                                          >
+                                            <GripVertical className="h-5 w-5" />
+                                          </div>
+                                        )}
+                                        {!isDraft && (
+                                          <div
+                                            {...prov.dragHandleProps}
+                                            className="md:hidden flex items-center justify-center gap-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground py-1 -mb-2 rounded hover:bg-muted/50"
+                                            title={t('dragBlock')}
+                                            aria-label="drag-block"
+                                          >
+                                            <div className="w-8 h-1 rounded-full bg-muted-foreground/30" />
+                                          </div>
+                                        )}
+                                        {isOptional && !isDraft && (
                                           <Button
                                             type="button"
                                             variant="ghost"
@@ -1192,7 +1249,7 @@ const TaskDetail = () => {
                                             <X className="h-4 w-4" />
                                           </Button>
                                         )}
-                                        {isCustom && user && (
+                                        {isCustom && user && !isDraft && (
                                           <Button
                                             type="button"
                                             variant="ghost"
@@ -1208,10 +1265,10 @@ const TaskDetail = () => {
                                       </div>
                                     )}
                                   </Draggable>
-                                  {renderInsertionBar(index + 1)}
                                 </div>
                               );
                             })}
+
                           </>
                         );
                       })()}
