@@ -1299,17 +1299,30 @@ const TaskDetail = () => {
                 : b;
               return (
                 <TaskBlocksToolbar
-                  onAdd={(type) => {
-                    setPendingBlock({ type, index: visibleBlockOrder.length });
-                    setTimeout(() => {
-                      document.querySelector('[data-insertion-bar]')?.scrollIntoView({
-                        behavior: 'smooth', block: 'center',
-                      });
-                    }, 50);
+                  onAdd={async (type) => {
+                    if (creatingBlock || draftBlockId) return;
+                    const addFn = (window as any).__taskAddBlock as
+                      | ((type: BlockType, atIndex?: number) => Promise<string | null>)
+                      | undefined;
+                    if (!addFn) return;
+                    setCreatingBlock(true);
+                    try {
+                      const newId = await addFn(type);
+                      if (newId) {
+                        setDraftBlockId(newId);
+                        setTimeout(() => {
+                          document.querySelector(`[data-block-id="${newId}"]`)
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 80);
+                      }
+                    } finally {
+                      setCreatingBlock(false);
+                    }
                   }}
                   optionalBlocks={available.map(b => ({ id: b, label: blockLabel(b) }))}
                   onToggleOptional={toggleOptionalBlock}
                 />
+
               );
             })()}
 
