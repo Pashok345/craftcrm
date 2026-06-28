@@ -41,7 +41,9 @@ interface Props {
     blocks: TaskContentBlock[];
     renderBody: (block: TaskContentBlock) => React.ReactNode;
     deleteBlock: (id: string) => Promise<void>;
+    moveBlock: (id: string, toIndex: number) => Promise<void>;
   }) => void;
+
 }
 
 const INITIAL_CONTENT: Record<BlockType, any> = {
