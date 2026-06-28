@@ -118,10 +118,12 @@ const TaskDetail = () => {
     return [];
   });
 
-  // In-flow block insertion: when user picks a type from the toolbar,
-  // a visual "Insert here" bar appears between blocks; user moves it and confirms.
-  const [pendingBlock, setPendingBlock] = useState<{ type: BlockType; index: number } | null>(null);
+  // Draft block: created immediately when user picks a type from the toolbar.
+  // The block appears in place with a halo + ⬆/⬇/Add/Cancel controls so the
+  // user can edit it, reposition it, then confirm or discard.
+  const [draftBlockId, setDraftBlockId] = useState<string | null>(null);
   const [creatingBlock, setCreatingBlock] = useState(false);
+
 
   // Inline data from TaskCustomBlocks (custom user-created blocks)
   const [customData, setCustomData] = useState<{
