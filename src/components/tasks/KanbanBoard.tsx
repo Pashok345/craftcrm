@@ -481,9 +481,8 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
           onTaskUpdate();
         } else {
           if (user) {
-            await supabase.from('task_status_history').insert({
-              task_id: taskId, old_status: oldStatus, new_status: newStatus, changed_by: user.id,
-            });
+            // task_status_history is now written automatically by a DB trigger
+
 
             // Notify assignees + creator about status change
             try {

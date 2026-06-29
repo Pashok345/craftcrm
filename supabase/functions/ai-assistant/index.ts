@@ -1091,12 +1091,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
-    if (!Array.isArray(messages) || messages.length === 0) {
+    const { messages: rawMessages } = await req.json();
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: "messages required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Enforce limits to prevent token quota exhaustion / cost abuse
+    const MAX_MESSAGES = 50;
+    const MAX_TEXT_CHARS = 4000;
+    const truncateText = (s: unknown): string => {
+      if (typeof s !== "string") return "";
+      return s.length > MAX_TEXT_CHARS ? s.slice(0, MAX_TEXT_CHARS) : s;
+    };
+    const messages = rawMessages.slice(-MAX_MESSAGES).map((m: any) => {
+      if (!m || typeof m !== "object") return m;
+      if (typeof m.content === "string") return { ...m, content: truncateText(m.content) };
+      if (Array.isArray(m.content)) {
+        return {
+          ...m,
+          content: m.content.map((p: any) =>
+            p && p.type === "text" ? { ...p, text: truncateText(p.text) } : p
+          ),
+        };
+      }
+      return m;
+    });
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
