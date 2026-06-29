@@ -192,13 +192,38 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
     );
   };
 
+  const startEdit = (id: string) => {
+    const b = blocksRef.current.find(x => x.id === id);
+    if (!b) return;
+    if (b.type === 'heading' || b.type === 'text') {
+      setEditingId(id);
+      setDraftText(b.content?.text || '');
+      setTimeout(() => {
+        document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    } else {
+      // Just scroll into view for non-text blocks (they have inline edit controls)
+      document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const updateBlockStyle = async (id: string, style: { bgColor?: string; borderColor?: string }) => {
+    const b = blocksRef.current.find(x => x.id === id);
+    if (!b) return;
+    const nextContent = { ...(b.content || {}), __style: { ...(b.content?.__style || {}), ...style } };
+    await updateBlock(id, nextContent);
+  };
+
   // In inline mode, expose blocks + render function to a parent that owns the DnD
   useEffect(() => {
     if (inline && onInlineReady) {
-      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock, moveBlock });
+      onInlineReady({ blocks, renderBody: renderBlockBody, deleteBlock, moveBlock, startEdit, updateBlockStyle });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inline, blocks, editingId, draftText, uploadingId]);
+
 
 
   const handleDragEnd = async (result: DropResult) => {
