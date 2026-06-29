@@ -117,14 +117,7 @@ export function useKanbanColumns() {
       });
       if (task.status !== column.status) {
         await supabase.from('tasks').update({ status: column.status as TaskStatus }).eq('id', task.id);
-        if (userId) {
-          await supabase.from('task_status_history').insert({
-            task_id: task.id,
-            old_status: task.status,
-            new_status: column.status,
-            changed_by: userId,
-          });
-        }
+        // task_status_history is written automatically by a DB trigger
       }
     }
     window.dispatchEvent(new Event(KANBAN_CHANGED_EVENT));
