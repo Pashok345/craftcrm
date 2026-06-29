@@ -1148,10 +1148,12 @@ const TaskDetail = () => {
                             {visibleBlockOrder.map((blockId, index) => {
                               const isCustom = blockId.startsWith('cb:');
                               let content: React.ReactNode = null;
+                              let cbRef: any = null;
                               if (isCustom) {
                                 const cbId = blockId.slice(3);
                                 const cb = customData?.blocks.find(b => b.id === cbId);
                                 if (!cb || !customData) return null;
+                                cbRef = cb;
                                 content = customData.renderBody(cb);
                               } else {
                                 content = blocks[blockId];
@@ -1159,6 +1161,14 @@ const TaskDetail = () => {
                               }
                               const isOptional = OPTIONAL_BLOCKS.includes(blockId);
                               const isDraft = draftKey === blockId;
+                              const cbStyle = (cbRef?.content?.__style || {}) as { bgColor?: string; borderColor?: string };
+                              const wrapperInlineStyle: React.CSSProperties = isCustom
+                                ? {
+                                    backgroundColor: cbStyle.bgColor || undefined,
+                                    border: cbStyle.borderColor ? `2px solid ${cbStyle.borderColor}` : undefined,
+                                    padding: (cbStyle.bgColor || cbStyle.borderColor) ? 12 : undefined,
+                                  }
+                                : {};
                               return (
                                 <div key={blockId}>
                                   <Draggable draggableId={blockId} index={index} isDragDisabled={isDraft}>
@@ -1166,10 +1176,12 @@ const TaskDetail = () => {
                                       <div
                                         ref={prov.innerRef}
                                         {...prov.draggableProps}
+                                        style={{ ...prov.draggableProps.style, ...wrapperInlineStyle }}
                                         className={`relative group/block rounded-lg ${
                                           snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
                                         } ${isDraft ? 'ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5 p-3' : ''}`}
                                       >
+
                                         {isDraft && (
                                           <div className="mb-3 flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-primary/10 border border-primary/30">
                                             <span className="text-xs font-medium text-primary">
