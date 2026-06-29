@@ -27,6 +27,8 @@ import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/da
 import { useAuth } from '@/hooks/useAuth';
 import { linkifyText } from '@/utils/linkifyText';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
+import { BlockMenu } from '@/components/tasks/BlockMenu';
+
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
 import { TagsManager } from '@/components/tasks/TagsManager';
