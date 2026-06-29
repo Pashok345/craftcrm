@@ -1266,18 +1266,17 @@ const TaskDetail = () => {
                                             <X className="h-4 w-4" />
                                           </Button>
                                         )}
-                                        {isCustom && user && !isDraft && (
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => customData?.deleteBlock(blockId.slice(3))}
-                                            className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity bg-background border shadow"
-                                            title="Удалить блок"
-                                          >
-                                            <X className="h-4 w-4" />
-                                          </Button>
+                                        {isCustom && user && !isDraft && customData && (
+                                          <BlockMenu
+                                            canEdit
+                                            bgColor={cbStyle.bgColor}
+                                            borderColor={cbStyle.borderColor}
+                                            onEdit={() => customData.startEdit(blockId.slice(3))}
+                                            onDelete={() => customData.deleteBlock(blockId.slice(3))}
+                                            onStyleChange={(s) => customData.updateBlockStyle(blockId.slice(3), s)}
+                                          />
                                         )}
+
                                         {content}
                                       </div>
                                     )}
