@@ -42,7 +42,10 @@ interface Props {
     renderBody: (block: TaskContentBlock) => React.ReactNode;
     deleteBlock: (id: string) => Promise<void>;
     moveBlock: (id: string, toIndex: number) => Promise<void>;
+    startEdit: (id: string) => void;
+    updateBlockStyle: (id: string, style: { bgColor?: string; borderColor?: string }) => Promise<void>;
   }) => void;
+
 
 }
 
