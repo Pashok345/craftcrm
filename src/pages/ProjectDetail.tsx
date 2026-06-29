@@ -193,13 +193,9 @@ const ProjectDetail = () => {
     return Object.values(buckets).sort((a, b) => a.date.localeCompare(b.date));
   }, [tasks]);
 
-  const logHistory = async (entry: Omit<HistoryEntry, 'id' | 'user_id' | 'created_at'>) => {
-    if (!user || !id) return;
-    await supabase.from('project_history').insert({
-      project_id: id,
-      user_id: user.id,
-      ...entry,
-    });
+  // project_history rows are now written automatically by DB triggers on projects
+  const logHistory = async (_entry: Omit<HistoryEntry, 'id' | 'user_id' | 'created_at'>) => {
+    return;
   };
 
   const handleStatusChange = async (newStatus: ProjectStatus) => {
