@@ -27,6 +27,8 @@ import { Task, TaskComment, TaskAttachment, Profile, TaskLink } from '@/types/da
 import { useAuth } from '@/hooks/useAuth';
 import { linkifyText } from '@/utils/linkifyText';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
+import { BlockMenu } from '@/components/tasks/BlockMenu';
+
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
 import { TagsManager } from '@/components/tasks/TagsManager';
@@ -131,7 +133,10 @@ const TaskDetail = () => {
     renderBody: (block: any) => React.ReactNode;
     deleteBlock: (id: string) => Promise<void>;
     moveBlock: (id: string, toIndex: number) => Promise<void>;
+    startEdit: (id: string) => void;
+    updateBlockStyle: (id: string, style: { bgColor?: string; borderColor?: string }) => Promise<void>;
   } | null>(null);
+
 
 
   // When custom blocks load/change, ensure they appear in blockOrder
@@ -1143,10 +1148,12 @@ const TaskDetail = () => {
                             {visibleBlockOrder.map((blockId, index) => {
                               const isCustom = blockId.startsWith('cb:');
                               let content: React.ReactNode = null;
+                              let cbRef: any = null;
                               if (isCustom) {
                                 const cbId = blockId.slice(3);
                                 const cb = customData?.blocks.find(b => b.id === cbId);
                                 if (!cb || !customData) return null;
+                                cbRef = cb;
                                 content = customData.renderBody(cb);
                               } else {
                                 content = blocks[blockId];
@@ -1154,6 +1161,14 @@ const TaskDetail = () => {
                               }
                               const isOptional = OPTIONAL_BLOCKS.includes(blockId);
                               const isDraft = draftKey === blockId;
+                              const cbStyle = (cbRef?.content?.__style || {}) as { bgColor?: string; borderColor?: string };
+                              const wrapperInlineStyle: React.CSSProperties = isCustom
+                                ? {
+                                    backgroundColor: cbStyle.bgColor || undefined,
+                                    border: cbStyle.borderColor ? `2px solid ${cbStyle.borderColor}` : undefined,
+                                    padding: (cbStyle.bgColor || cbStyle.borderColor) ? 12 : undefined,
+                                  }
+                                : {};
                               return (
                                 <div key={blockId}>
                                   <Draggable draggableId={blockId} index={index} isDragDisabled={isDraft}>
@@ -1161,10 +1176,12 @@ const TaskDetail = () => {
                                       <div
                                         ref={prov.innerRef}
                                         {...prov.draggableProps}
+                                        style={{ ...prov.draggableProps.style, ...wrapperInlineStyle }}
                                         className={`relative group/block rounded-lg ${
                                           snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary/40' : ''
                                         } ${isDraft ? 'ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/5 p-3' : ''}`}
                                       >
+
                                         {isDraft && (
                                           <div className="mb-3 flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-md bg-primary/10 border border-primary/30">
                                             <span className="text-xs font-medium text-primary">
@@ -1249,18 +1266,17 @@ const TaskDetail = () => {
                                             <X className="h-4 w-4" />
                                           </Button>
                                         )}
-                                        {isCustom && user && !isDraft && (
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => customData?.deleteBlock(blockId.slice(3))}
-                                            className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity bg-background border shadow"
-                                            title="Удалить блок"
-                                          >
-                                            <X className="h-4 w-4" />
-                                          </Button>
+                                        {isCustom && user && !isDraft && customData && (
+                                          <BlockMenu
+                                            canEdit
+                                            bgColor={cbStyle.bgColor}
+                                            borderColor={cbStyle.borderColor}
+                                            onEdit={() => customData.startEdit(blockId.slice(3))}
+                                            onDelete={() => customData.deleteBlock(blockId.slice(3))}
+                                            onStyleChange={(s) => customData.updateBlockStyle(blockId.slice(3), s)}
+                                          />
                                         )}
+
                                         {content}
                                       </div>
                                     )}
