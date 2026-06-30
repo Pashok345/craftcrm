@@ -32,7 +32,7 @@ const OPTIONAL_ICONS: Record<string, React.ElementType> = {
 export const TaskBlocksToolbar = ({ onAdd, optionalBlocks = [], onToggleOptional }: Props) => {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="fixed right-4 top-56 max-h-[calc(100vh-5rem)] overflow-y-auto z-30 hidden md:flex flex-col items-center gap-1 rounded-2xl border bg-background/95 backdrop-blur p-1.5 shadow-xl">
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col items-center gap-1 rounded-2xl border bg-background/95 backdrop-blur p-1.5 shadow-xl max-h-[calc(100vh-12rem)] overflow-y-auto">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
