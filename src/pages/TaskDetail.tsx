@@ -721,7 +721,7 @@ const TaskDetail = () => {
         </div>
       </div>
 
-      <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+
 
 
       <Tabs defaultValue="main" className="w-full">
