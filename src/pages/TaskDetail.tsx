@@ -753,9 +753,13 @@ const TaskDetail = () => {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-foreground">{task.title}</h1>
+              <div className="mt-3">
+                <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+              </div>
               {task.description && (
+
                 <p className="text-muted-foreground mt-2 whitespace-pre-wrap">{linkifyText(task.description)}</p>
               )}
             </div>
