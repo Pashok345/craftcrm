@@ -220,14 +220,22 @@ export const AIAssistant = () => {
                 <History className="h-4 w-4" />
               </Button>
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={newConversation}
-                className="h-8 w-8"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  newConversation();
+                  setShowHistory(false);
+                  setInput('');
+                  setAttachments([]);
+                }}
+                className="h-8 gap-1.5 px-2.5"
                 title={titles.new}
+                disabled={!currentId && messages.length === 0}
               >
                 <Plus className="h-4 w-4" />
+                <span className="text-xs font-medium hidden sm:inline">{titles.new}</span>
               </Button>
+
             </div>
           </SheetHeader>
 
