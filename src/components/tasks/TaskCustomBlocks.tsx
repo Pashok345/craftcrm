@@ -12,6 +12,7 @@ import type { BlockType } from './TaskBlocksToolbar';
 import { linkifyText } from '@/utils/linkifyText';
 import { AttachmentImage } from '@/components/ui/attachment-image';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { RichTextEditor, renderFormattedText } from './RichTextEditor';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
