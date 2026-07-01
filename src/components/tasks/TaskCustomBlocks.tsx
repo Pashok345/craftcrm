@@ -331,24 +331,20 @@ export const TaskCustomBlocks = ({ taskId, canEdit, registerAddHandler, register
       {block.type === 'text' && (
         <Card><CardContent className="p-4">
           {editingId === block.id && canEdit ? (
-            <div className="space-y-2">
-              <Textarea value={draftText} onChange={(e) => setDraftText(e.target.value)} rows={5} autoFocus />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>Отмена</Button>
-                <Button size="sm" onClick={async () => { await updateBlock(block.id, { text: draftText }); setEditingId(null); }}>Сохранить</Button>
-              </div>
-            </div>
+            <RichTextEditor
+              value={draftText}
+              onChange={setDraftText}
+              onCancel={() => setEditingId(null)}
+              onSave={async () => { await updateBlock(block.id, { text: draftText }); setEditingId(null); }}
+            />
           ) : (
-            <div className="group/text relative">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {block.content?.text ? linkifyText(block.content.text) : <span className="text-muted-foreground italic">Пустой текстовый блок</span>}
-              </p>
-              {canEdit && (
-                <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-7 w-7 opacity-0 group-hover/text:opacity-100"
-                  onClick={() => { setEditingId(block.id); setDraftText(block.content?.text || ''); }}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              )}
+            <div
+              className="text-sm leading-relaxed whitespace-pre-wrap cursor-text"
+              onClick={() => { if (canEdit) { setEditingId(block.id); setDraftText(block.content?.text || ''); } }}
+            >
+              {block.content?.text
+                ? renderFormattedText(block.content.text)
+                : <span className="text-muted-foreground italic">Пустой текстовый блок</span>}
             </div>
           )}
         </CardContent></Card>
