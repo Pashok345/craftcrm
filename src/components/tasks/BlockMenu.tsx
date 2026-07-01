@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -43,82 +43,91 @@ interface Props {
 export const BlockMenu = ({ bgColor, borderColor, canEdit, onEdit, onDelete, onStyleChange }: Props) => {
   const [customOpen, setCustomOpen] = useState(false);
   return (
-    <div className="absolute right-2 top-2 z-20 flex items-center gap-1 opacity-40 group-hover/block:opacity-100 transition-opacity">
-      <Popover open={customOpen} onOpenChange={setCustomOpen}>
-        <PopoverTrigger asChild>
-          <span />
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-64 p-3 space-y-3">
-          <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Цвет фона</div>
-            <div className="flex flex-wrap gap-1.5">
-              {BG_COLORS.map((c) => (
-                <button
-                  key={c.v || 'none'}
-                  type="button"
-                  title={c.label}
-                  onClick={() => onStyleChange({ bgColor: c.v, borderColor })}
-                  className={cn(
-                    'w-7 h-7 rounded-md border-2 flex items-center justify-center text-xs',
-                    bgColor === c.v ? 'border-foreground scale-110' : 'border-border'
-                  )}
-                  style={{ backgroundColor: c.v || 'transparent' }}
-                >
-                  {!c.v && '✕'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <div className="text-xs text-muted-foreground">Цвет рамки</div>
-            <div className="flex flex-wrap gap-1.5">
-              {BORDER_COLORS.map((c) => (
-                <button
-                  key={c.v || 'none'}
-                  type="button"
-                  title={c.label}
-                  onClick={() => onStyleChange({ bgColor, borderColor: c.v })}
-                  className={cn(
-                    'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs',
-                    borderColor === c.v ? 'border-foreground scale-110' : 'border-transparent'
-                  )}
-                  style={{ backgroundColor: c.v || 'transparent', borderColor: c.v ? undefined : 'hsl(var(--border))' }}
-                >
-                  {!c.v && '✕'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 bg-background border shadow"
-            title="Меню блока"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          {canEdit && onEdit && (
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="h-4 w-4 mr-2" /> Редактировать
+    <>
+      <div className="absolute right-2 top-2 z-20 flex items-center gap-1 opacity-40 group-hover/block:opacity-100 transition-opacity">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 bg-background border shadow"
+              title="Меню блока"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {canEdit && onEdit && (
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="h-4 w-4 mr-2" /> Редактировать
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setCustomOpen(true);
+              }}
+            >
+              <Palette className="h-4 w-4 mr-2" /> Кастомизация
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onClick={() => setCustomOpen(true)}>
-            <Palette className="h-4 w-4 mr-2" /> Кастомизация
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-            <Trash2 className="h-4 w-4 mr-2" /> Удалить
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" /> Удалить
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Кастомизация блока</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Цвет фона</div>
+              <div className="flex flex-wrap gap-2">
+                {BG_COLORS.map((c) => (
+                  <button
+                    key={c.v || 'none'}
+                    type="button"
+                    title={c.label}
+                    onClick={() => onStyleChange({ bgColor: c.v, borderColor })}
+                    className={cn(
+                      'w-8 h-8 rounded-md border-2 flex items-center justify-center text-xs',
+                      bgColor === c.v ? 'border-foreground scale-110' : 'border-border'
+                    )}
+                    style={{ backgroundColor: c.v || 'transparent' }}
+                  >
+                    {!c.v && '✕'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Цвет рамки</div>
+              <div className="flex flex-wrap gap-2">
+                {BORDER_COLORS.map((c) => (
+                  <button
+                    key={c.v || 'none'}
+                    type="button"
+                    title={c.label}
+                    onClick={() => onStyleChange({ bgColor, borderColor: c.v })}
+                    className={cn(
+                      'w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs',
+                      borderColor === c.v ? 'border-foreground scale-110' : 'border-transparent'
+                    )}
+                    style={{ backgroundColor: c.v || 'transparent', borderColor: c.v ? undefined : 'hsl(var(--border))' }}
+                  >
+                    {!c.v && '✕'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
