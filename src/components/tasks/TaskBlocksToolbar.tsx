@@ -37,10 +37,11 @@ export const TaskBlocksToolbar = ({ onAdd, optionalBlocks = [], onToggleOptional
           <TooltipTrigger asChild>
             <button
               onClick={() => onAdd('empty')}
-              className="h-10 w-10 inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition shadow"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition shadow"
               aria-label="Добавить блок"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
+
             </button>
           </TooltipTrigger>
           <TooltipContent side="left">Добавить блок</TooltipContent>
