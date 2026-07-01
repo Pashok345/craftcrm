@@ -32,15 +32,16 @@ const OPTIONAL_ICONS: Record<string, React.ElementType> = {
 export const TaskBlocksToolbar = ({ onAdd, optionalBlocks = [], onToggleOptional }: Props) => {
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-30 hidden md:flex flex-col items-center gap-1 rounded-2xl border bg-background/95 backdrop-blur p-1.5 shadow-xl max-h-[calc(100vh-12rem)] overflow-y-auto">
+      <div className="fixed right-3 top-40 bottom-24 z-30 hidden md:flex flex-col items-center gap-0.5 rounded-2xl border bg-background/95 backdrop-blur p-1 shadow-xl overflow-y-auto">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => onAdd('empty')}
-              className="h-10 w-10 inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition shadow"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition shadow"
               aria-label="Добавить блок"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
+
             </button>
           </TooltipTrigger>
           <TooltipContent side="left">Добавить блок</TooltipContent>
@@ -53,10 +54,11 @@ export const TaskBlocksToolbar = ({ onAdd, optionalBlocks = [], onToggleOptional
             <TooltipTrigger asChild>
               <button
                 onClick={() => onAdd(type)}
-                className="h-9 w-9 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 aria-label={label}
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className="h-4 w-4" />
+
               </button>
             </TooltipTrigger>
             <TooltipContent side="left">{label}</TooltipContent>
@@ -73,10 +75,11 @@ export const TaskBlocksToolbar = ({ onAdd, optionalBlocks = [], onToggleOptional
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onToggleOptional(id)}
-                      className="h-9 w-9 inline-flex items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                       aria-label={label}
                     >
-                      <Icon className="h-[18px] w-[18px]" />
+                      <Icon className="h-4 w-4" />
+
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="left">{label}</TooltipContent>
