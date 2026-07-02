@@ -39,7 +39,12 @@ export const renderFormattedText = (text: string) => {
   html = html.replace(/(^|[\s(])\*([^\n*]+)\*(?=[\s.,!?):]|$)/g, '$1<em>$2</em>');
   html = html.replace(
     /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
+    (match) => {
+      const safe = sanitizeUrl(match);
+      if (!safe) return match;
+      const escaped = safe.replace(/"/g, '&quot;');
+      return `<a href="${escaped}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${escaped}</a>`;
+    }
   );
   html = html.replace(/\n/g, '<br />');
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
