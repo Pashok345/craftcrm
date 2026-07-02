@@ -12,7 +12,22 @@ const EMOJIS = [
 ];
 
 const escapeHtml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const sanitizeUrl = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+};
 
 // Very small, safe markdown-ish renderer.
 // Supports **bold**, *italic*, __underline__, links, and preserves line breaks.
@@ -24,7 +39,12 @@ export const renderFormattedText = (text: string) => {
   html = html.replace(/(^|[\s(])\*([^\n*]+)\*(?=[\s.,!?):]|$)/g, '$1<em>$2</em>');
   html = html.replace(
     /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>'
+    (match) => {
+      const safe = sanitizeUrl(match);
+      if (!safe) return match;
+      const escaped = safe.replace(/"/g, '&quot;');
+      return `<a href="${escaped}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${escaped}</a>`;
+    }
   );
   html = html.replace(/\n/g, '<br />');
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
