@@ -52,6 +52,9 @@ import {
 import { Project, Task, ProjectStatus, Profile, PROJECT_STATUS_COLORS } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
+import { ProjectAttachments } from '@/components/projects/ProjectAttachments';
+import { ProjectComments } from '@/components/projects/ProjectComments';
+import { ProjectTaskActivity } from '@/components/projects/ProjectTaskActivity';
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -446,6 +449,8 @@ const ProjectDetail = () => {
         <TabsList>
           <TabsTrigger value="analytics">{t('analytics') || 'Аналітика'}</TabsTrigger>
           <TabsTrigger value="tasks">{t('projectTasks')}</TabsTrigger>
+          <TabsTrigger value="files">Файли</TabsTrigger>
+          <TabsTrigger value="comments">Коментарі</TabsTrigger>
           <TabsTrigger value="history">{t('history') || 'Історія'}</TabsTrigger>
         </TabsList>
 
@@ -558,6 +563,22 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="files">
+          <Card>
+            <CardContent className="p-4">
+              <ProjectAttachments projectId={project.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="comments">
+          <Card>
+            <CardContent className="p-4">
+              <ProjectComments projectId={project.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="history">
           <Card>
             <CardContent className="p-4">
@@ -572,6 +593,10 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="pt-2">
+        <ProjectTaskActivity projectId={project.id} />
+      </div>
 
       <TaskDialog
         open={taskDialogOpen}
