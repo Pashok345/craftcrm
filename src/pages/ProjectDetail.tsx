@@ -449,6 +449,8 @@ const ProjectDetail = () => {
         <TabsList>
           <TabsTrigger value="analytics">{t('analytics') || 'Аналітика'}</TabsTrigger>
           <TabsTrigger value="tasks">{t('projectTasks')}</TabsTrigger>
+          <TabsTrigger value="files">Файли</TabsTrigger>
+          <TabsTrigger value="comments">Коментарі</TabsTrigger>
           <TabsTrigger value="history">{t('history') || 'Історія'}</TabsTrigger>
         </TabsList>
 
