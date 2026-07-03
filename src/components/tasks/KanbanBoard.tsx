@@ -731,7 +731,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                         className={cn(
-                                          'cursor-pointer hover:shadow-md transition-shadow bg-background',
+                                          'cursor-pointer hover:shadow-md transition-shadow bg-background overflow-hidden',
                                           snapshot.isDragging && 'shadow-lg rotate-2'
                                         )}
                                         style={{
@@ -747,6 +747,12 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                         }}
                                         onMouseDown={(e) => { if (e.button === 1) e.preventDefault(); }}
                                       >
+                                        {task.bg_image_url && (
+                                          <div
+                                            className="w-full h-28 rounded-t-lg bg-cover bg-center"
+                                            style={{ backgroundImage: `url(${task.bg_image_url})` }}
+                                          />
+                                        )}
                                         <CardContent className="p-3">
                                           <h4 className="font-medium text-foreground mb-1 line-clamp-2 flex items-center gap-1.5" style={getTaskTitleStyle(task)}>
                                             {task.icon && <span className="text-base">{task.icon}</span>}
