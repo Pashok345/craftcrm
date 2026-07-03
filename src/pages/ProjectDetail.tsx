@@ -52,6 +52,9 @@ import {
 import { Project, Task, ProjectStatus, Profile, PROJECT_STATUS_COLORS } from '@/types/database';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
+import { ProjectAttachments } from '@/components/projects/ProjectAttachments';
+import { ProjectComments } from '@/components/projects/ProjectComments';
+import { ProjectTaskActivity } from '@/components/projects/ProjectTaskActivity';
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
