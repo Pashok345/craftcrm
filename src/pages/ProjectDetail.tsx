@@ -563,6 +563,22 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="files">
+          <Card>
+            <CardContent className="p-4">
+              <ProjectAttachments projectId={project.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="comments">
+          <Card>
+            <CardContent className="p-4">
+              <ProjectComments projectId={project.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="history">
           <Card>
             <CardContent className="p-4">
@@ -577,6 +593,10 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="pt-2">
+        <ProjectTaskActivity projectId={project.id} />
+      </div>
 
       <TaskDialog
         open={taskDialogOpen}
