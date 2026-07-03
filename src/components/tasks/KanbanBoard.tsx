@@ -731,7 +731,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
                                         className={cn(
-                                          'cursor-pointer hover:shadow-md transition-shadow bg-background',
+                                          'cursor-pointer hover:shadow-md transition-shadow bg-background overflow-hidden',
                                           snapshot.isDragging && 'shadow-lg rotate-2'
                                         )}
                                         style={{
