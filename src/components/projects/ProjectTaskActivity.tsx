@@ -14,7 +14,7 @@ interface StatusEntry {
   old_status: string | null;
   new_status: string;
   changed_by: string | null;
-  created_at: string;
+  changed_at: string;
 }
 interface TaskMini { id: string; title: string; updated_at: string; }
 interface ProfileMini { user_id: string; name: string | null; avatar_url: string | null; avatar_color: string | null; }
@@ -75,7 +75,7 @@ export const ProjectTaskActivity = ({ projectId }: { projectId: string }) => {
           .from('task_status_history')
           .select('*')
           .in('task_id', ids)
-          .order('created_at', { ascending: false })
+          .order("changed_at", { ascending: false })
           .limit(30);
         hist = (h || []) as StatusEntry[];
       }
@@ -154,7 +154,7 @@ export const ProjectTaskActivity = ({ projectId }: { projectId: string }) => {
                         </Avatar>
                       )}
                       <span className="text-xs text-muted-foreground">
-                        {p?.name || 'Система'} · {format(new Date(h.created_at), 'd MMM HH:mm', { locale: ru })}
+                        {p?.name || 'Система'} · {format(new Date(h.changed_at), 'd MMM HH:mm', { locale: ru })}
                       </span>
                     </div>
                     <div className="font-medium truncate">{taskTitles[h.task_id] || 'Задача'}</div>
