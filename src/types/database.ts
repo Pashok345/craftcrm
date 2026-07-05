@@ -164,9 +164,20 @@ export interface Project {
   currency: string;
   start_date?: string;
   end_date?: string;
+  cover_image_url?: string | null;
+  accent_color?: string | null;
+  icon?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProjectCoverLibraryItem {
+  id: string;
+  url: string;
+  name?: string;
+  category?: string;
+  created_at: string;
 }
 
 export interface ChatGroup {
