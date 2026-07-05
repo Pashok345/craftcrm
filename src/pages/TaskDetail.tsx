@@ -28,6 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { linkifyText } from '@/utils/linkifyText';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { BlockMenu } from '@/components/tasks/BlockMenu';
+import { ShareButton } from '@/components/share/ShareButton';
 
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
@@ -708,6 +709,7 @@ const TaskDetail = () => {
             )}
             {t('addFile')}
           </Button>
+          <ShareButton type="task" id={task.id} title={task.title} />
           <Button variant="outline" onClick={() => navigate(`/tasks/${task.id}/edit`)}>
             <Pencil className="h-4 w-4 mr-2" />
             {t('edit')}
