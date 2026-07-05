@@ -1099,6 +1099,30 @@ export type Database = {
           },
         ]
       }
+      project_cover_library: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string | null
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       project_history: {
         Row: {
           action: string
@@ -1174,12 +1198,15 @@ export type Database = {
       }
       projects: {
         Row: {
+          accent_color: string | null
           budget: number | null
+          cover_image_url: string | null
           created_at: string
           created_by: string
           currency: string
           description: string | null
           end_date: string | null
+          icon: string | null
           id: string
           manager_id: string | null
           reviewer_id: string | null
@@ -1189,12 +1216,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           budget?: number | null
+          cover_image_url?: string | null
           created_at?: string
           created_by: string
           currency?: string
           description?: string | null
           end_date?: string | null
+          icon?: string | null
           id?: string
           manager_id?: string | null
           reviewer_id?: string | null
@@ -1204,12 +1234,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           budget?: number | null
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string
           currency?: string
           description?: string | null
           end_date?: string | null
+          icon?: string | null
           id?: string
           manager_id?: string | null
           reviewer_id?: string | null
