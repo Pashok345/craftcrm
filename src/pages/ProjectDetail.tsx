@@ -317,11 +317,25 @@ const ProjectDetail = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        {(project.cover_image_url || project.accent_color) && (
+          <ProjectCoverImage
+            url={project.cover_image_url}
+            fallbackColor={project.accent_color}
+            className="h-32 md:h-40 w-full"
+            alt={project.title}
+          />
+        )}
         <CardContent className="p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">{project.title}</h1>
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                {project.icon && <span className="text-2xl leading-none">{project.icon}</span>}
+                <span>{project.title}</span>
+                {project.accent_color && (
+                  <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: project.accent_color }} title={project.accent_color} />
+                )}
+              </h1>
               {project.description && (
                 <p className="mt-2 text-muted-foreground whitespace-pre-wrap">
                   {linkifyText(project.description)}
@@ -626,6 +640,13 @@ const ProjectDetail = () => {
           load();
           setEditOpen(false);
         }}
+      />
+
+      <ProjectCustomizeDialog
+        project={project}
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        onSaved={() => load()}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
