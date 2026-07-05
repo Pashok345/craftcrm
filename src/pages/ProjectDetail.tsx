@@ -33,6 +33,7 @@ import {
   History as HistoryIcon,
   CheckCircle2,
   AlertCircle,
+  Palette,
 } from 'lucide-react';
 import {
   PieChart,
@@ -55,6 +56,9 @@ import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
 import { ProjectAttachments } from '@/components/projects/ProjectAttachments';
 import { ProjectComments } from '@/components/projects/ProjectComments';
 import { ProjectTaskActivity } from '@/components/projects/ProjectTaskActivity';
+import { ProjectCustomizeDialog } from '@/components/projects/ProjectCustomizeDialog';
+import { ProjectCoverImage } from '@/components/projects/ProjectCoverImage';
+import { ShareButton } from '@/components/share/ShareButton';
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -88,6 +92,7 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -291,25 +296,46 @@ const ProjectDetail = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('backToProjects') || 'Назад'}
         </Button>
-        {isCreator && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              {t('edit')}
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              {t('delete')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <ShareButton type="project" id={project.id} title={project.title} />
+          {isCreator && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setCustomizeOpen(true)}>
+                <Palette className="h-4 w-4 mr-1" />
+                Оформление
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                {t('edit')}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                {t('delete')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        {(project.cover_image_url || project.accent_color) && (
+          <ProjectCoverImage
+            url={project.cover_image_url}
+            fallbackColor={project.accent_color}
+            className="h-32 md:h-40 w-full"
+            alt={project.title}
+          />
+        )}
         <CardContent className="p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">{project.title}</h1>
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                {project.icon && <span className="text-2xl leading-none">{project.icon}</span>}
+                <span>{project.title}</span>
+                {project.accent_color && (
+                  <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: project.accent_color }} title={project.accent_color} />
+                )}
+              </h1>
               {project.description && (
                 <p className="mt-2 text-muted-foreground whitespace-pre-wrap">
                   {linkifyText(project.description)}
@@ -614,6 +640,13 @@ const ProjectDetail = () => {
           load();
           setEditOpen(false);
         }}
+      />
+
+      <ProjectCustomizeDialog
+        project={project}
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        onSaved={() => load()}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
