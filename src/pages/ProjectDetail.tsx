@@ -33,6 +33,7 @@ import {
   History as HistoryIcon,
   CheckCircle2,
   AlertCircle,
+  Palette,
 } from 'lucide-react';
 import {
   PieChart,
@@ -55,6 +56,9 @@ import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
 import { ProjectAttachments } from '@/components/projects/ProjectAttachments';
 import { ProjectComments } from '@/components/projects/ProjectComments';
 import { ProjectTaskActivity } from '@/components/projects/ProjectTaskActivity';
+import { ProjectCustomizeDialog } from '@/components/projects/ProjectCustomizeDialog';
+import { ProjectCoverImage } from '@/components/projects/ProjectCoverImage';
+import { ShareButton } from '@/components/share/ShareButton';
 import { format, parseISO } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -88,6 +92,7 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -291,18 +296,25 @@ const ProjectDetail = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('backToProjects') || 'Назад'}
         </Button>
-        {isCreator && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              {t('edit')}
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              {t('delete')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <ShareButton type="project" id={project.id} title={project.title} />
+          {isCreator && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setCustomizeOpen(true)}>
+                <Palette className="h-4 w-4 mr-1" />
+                Оформление
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                {t('edit')}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                {t('delete')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <Card>
