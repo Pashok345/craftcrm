@@ -39,7 +39,10 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
   const [deadline, setDeadline] = useState<Date>();
   const [status, setStatus] = useState<TaskStatus>('todo');
   const [columnId, setColumnId] = useState<string>('');
-  const [projectId, setProjectId] = useState<string>(defaultProjectId || '');
+  const [projectId, setProjectId] = useState<string>(() => {
+    if (defaultProjectId) return defaultProjectId;
+    try { return localStorage.getItem('taskCreate.lastProjectId') || ''; } catch { return ''; }
+  });
   const [custom, setCustom] = useState<TaskCustomizationValue>(emptyCustomization);
   const [users, setUsers] = useState<Profile[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,6 +87,13 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
   useEffect(() => {
     if (columns.length > 0 && !columnId) setColumnId(columns[0].id);
   }, [columns, columnId]);
+
+  // If no project preselected/remembered, fall back to first project in list
+  useEffect(() => {
+    if (!projectId && !defaultProjectId && projects.length > 0) {
+      setProjectId(projects[0].id);
+    }
+  }, [projects, projectId, defaultProjectId]);
 
   useEffect(() => {
     if (user?.id && executors.length === 0) setExecutors([user.id]);
@@ -192,6 +202,7 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
         } catch (e) { console.error('Header photo upload error:', e); }
       }
 
+      try { localStorage.setItem('taskCreate.lastProjectId', projectId || ''); } catch {}
       toast({ title: 'Задача создана' });
       onSuccess(task.id);
     } catch (error) {
