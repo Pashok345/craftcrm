@@ -6,54 +6,32 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import {
-  Plus, Folder, Search, LayoutGrid, List as ListIcon, Clock, Star,
-} from 'lucide-react';
+import { Plus, Folder, Search, Clock, Star } from 'lucide-react';
 import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
 import { ProjectCoverImage } from '@/components/projects/ProjectCoverImage';
-import { ShareButton } from '@/components/share/ShareButton';
 
-import { format, parseISO } from 'date-fns';
-import { ru, enUS, uk } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type SortOption = 'date_desc' | 'date_asc' | 'status' | 'name';
 type StatusFilter = 'all' | 'active' | 'completed';
-type ViewMode = 'table' | 'cards';
 
-const VIEW_STORAGE_KEY = 'projects.viewMode';
 const RECENT_STORAGE_KEY = 'projects.recentIds';
 const RECENT_MAX = 4;
 
 const Projects = () => {
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [managers, setManagers] = useState<Record<string, Profile>>({});
+  const [, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') return 'cards';
-    const v = localStorage.getItem(VIEW_STORAGE_KEY);
-    return v === 'table' ? 'table' : 'cards';
-  });
   const [recentIds, setRecentIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try { return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || '[]'); } catch { return []; }
   });
-
-  useEffect(() => {
-    try { localStorage.setItem(VIEW_STORAGE_KEY, viewMode); } catch {}
-  }, [viewMode]);
-
-  const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const statusLabels: Record<string, string> = {
     planning: t('projectPlanning'),
@@ -135,9 +113,6 @@ const Projects = () => {
     return recentIds.map((id) => map.get(id)).filter(Boolean) as Project[];
   }, [projects, recentIds]);
 
-  const formatDate = (d?: string | null) =>
-    d ? format(parseISO(d), 'd MMM yyyy', { locale: dateLocale }) : null;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -146,7 +121,6 @@ const Projects = () => {
     );
   }
 
-  // Trello-style tile
   const ProjectTile = ({ project }: { project: Project }) => (
     <button
       onClick={() => openProject(project.id)}
@@ -189,7 +163,7 @@ const Projects = () => {
         </Button>
       </div>
 
-      {recentProjects.length > 0 && viewMode === 'cards' && (
+      {recentProjects.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Clock className="h-4 w-4" />
@@ -228,19 +202,6 @@ const Projects = () => {
             <SelectItem value="name">{t('sortByName')}</SelectItem>
           </SelectContent>
         </Select>
-        <ToggleGroup
-          type="single"
-          value={viewMode}
-          onValueChange={(v) => v && setViewMode(v as ViewMode)}
-          className="border rounded-md p-0.5"
-        >
-          <ToggleGroupItem value="cards" size="sm" className="h-8 px-2" title="Плитка">
-            <LayoutGrid className="h-4 w-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="table" size="sm" className="h-8 px-2" title="Список">
-            <ListIcon className="h-4 w-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
 
       {filteredAndSortedProjects.length === 0 ? (
@@ -254,7 +215,7 @@ const Projects = () => {
             <Button onClick={() => navigate('/projects/new')}>{t('createProject')}</Button>
           </CardContent>
         </Card>
-      ) : viewMode === 'cards' ? (
+      ) : (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Star className="h-4 w-4" />
@@ -266,78 +227,6 @@ const Projects = () => {
             ))}
           </div>
         </div>
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16"></TableHead>
-                  <TableHead>{t('projectsTitle')}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t('manager') || 'Менеджер'}</TableHead>
-                  <TableHead className="hidden lg:table-cell">{t('sortByStatus')}</TableHead>
-                  <TableHead className="hidden xl:table-cell">Сроки</TableHead>
-                  <TableHead className="w-24 text-right"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedProjects.map((project) => (
-                  <TableRow
-                    key={project.id}
-                    className="cursor-pointer"
-                    onClick={() => openProject(project.id)}
-                  >
-                    <TableCell>
-                      <ProjectCoverImage
-                        url={project.cover_image_url}
-                        fallbackColor={project.accent_color}
-                        className="h-10 w-16 rounded-md border"
-                        alt={project.title}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {project.icon && <span className="text-base leading-none">{project.icon}</span>}
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{project.title}</div>
-                          {project.description && (
-                            <div className="text-xs text-muted-foreground truncate max-w-md">
-                              {project.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {project.manager_id && managers[project.manager_id]?.name || '—'}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                        {statusLabels[project.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
-                      {formatDate(project.start_date)}
-                      {project.start_date && project.end_date && ' – '}
-                      {formatDate(project.end_date)}
-                      {!project.start_date && !project.end_date && '—'}
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <ShareButton
-                        type="project"
-                        id={project.id}
-                        title={project.title}
-                        variant="ghost"
-                        size="icon"
-                        compact
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
       )}
     </div>
   );
