@@ -163,18 +163,6 @@ const Projects = () => {
         </Button>
       </div>
 
-      {recentProjects.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>{t('recentlyViewed') || 'Недавно открытые'}</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {recentProjects.map((p) => <ProjectTile key={p.id} project={p} />)}
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -204,6 +192,18 @@ const Projects = () => {
         </Select>
       </div>
 
+      {recentProjects.length > 0 && projects.length > RECENT_MAX && !searchQuery.trim() && statusFilter === 'all' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>Нещодавно переглянуті</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {recentProjects.map((p) => <ProjectTile key={p.id} project={p} />)}
+          </div>
+        </div>
+      )}
+
       {filteredAndSortedProjects.length === 0 ? (
         <Card className="py-12">
           <CardContent className="text-center">
@@ -219,7 +219,7 @@ const Projects = () => {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Star className="h-4 w-4" />
-            <span>{t('allYourProjects') || 'Всі проєкти'}</span>
+            <span>Усі проєкти</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {filteredAndSortedProjects.map((project) => (
