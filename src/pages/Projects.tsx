@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
-  Plus, Folder, Calendar, DollarSign, User, Search, LayoutGrid, List as ListIcon,
+  Plus, Folder, Search, LayoutGrid, List as ListIcon, Clock, Star,
 } from 'lucide-react';
 import { Project, PROJECT_STATUS_COLORS, Profile } from '@/types/database';
 import { ProjectCoverImage } from '@/components/projects/ProjectCoverImage';
@@ -26,22 +26,27 @@ type StatusFilter = 'all' | 'active' | 'completed';
 type ViewMode = 'table' | 'cards';
 
 const VIEW_STORAGE_KEY = 'projects.viewMode';
+const RECENT_STORAGE_KEY = 'projects.recentIds';
+const RECENT_MAX = 4;
 
 const Projects = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
   const [managers, setManagers] = useState<Record<string, Profile>>({});
-  const [creators, setCreators] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') return 'table';
+    if (typeof window === 'undefined') return 'cards';
     const v = localStorage.getItem(VIEW_STORAGE_KEY);
-    return v === 'cards' ? 'cards' : 'table';
+    return v === 'table' ? 'table' : 'cards';
+  });
+  const [recentIds, setRecentIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || '[]'); } catch { return []; }
   });
 
   useEffect(() => {
@@ -88,16 +93,16 @@ const Projects = () => {
       const map: Record<string, Profile> = {};
       (data as Profile[]).forEach((p) => { map[p.user_id] = p; });
       setManagers(map);
-      setCreators(map);
     }
   };
 
-  const formatBudget = (budget?: number, currency?: string) => {
-    if (!budget) return null;
-    const cur = currency || 'USD';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency', currency: cur, maximumFractionDigits: 0,
-    }).format(budget);
+  const openProject = (id: string) => {
+    try {
+      const next = [id, ...recentIds.filter((x) => x !== id)].slice(0, RECENT_MAX);
+      setRecentIds(next);
+      localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    navigate(`/projects/${id}`);
   };
 
   const filteredAndSortedProjects = useMemo(() => {
@@ -125,6 +130,14 @@ const Projects = () => {
     });
   }, [projects, searchQuery, sortBy, statusFilter]);
 
+  const recentProjects = useMemo(() => {
+    const map = new Map(projects.map((p) => [p.id, p]));
+    return recentIds.map((id) => map.get(id)).filter(Boolean) as Project[];
+  }, [projects, recentIds]);
+
+  const formatDate = (d?: string | null) =>
+    d ? format(parseISO(d), 'd MMM yyyy', { locale: dateLocale }) : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -132,6 +145,36 @@ const Projects = () => {
       </div>
     );
   }
+
+  // Trello-style tile
+  const ProjectTile = ({ project }: { project: Project }) => (
+    <button
+      onClick={() => openProject(project.id)}
+      className="group relative h-24 w-full rounded-lg overflow-hidden border bg-card text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+    >
+      <ProjectCoverImage
+        url={project.cover_image_url}
+        fallbackColor={project.accent_color}
+        className="absolute inset-0 h-full w-full"
+        alt={project.title}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      </ProjectCoverImage>
+      <div className="absolute inset-0 p-2.5 flex flex-col justify-between">
+        <div className="flex items-start justify-between gap-1">
+          {project.icon ? (
+            <span className="text-lg leading-none drop-shadow">{project.icon}</span>
+          ) : <span />}
+          <Badge className={`${PROJECT_STATUS_COLORS[project.status]} text-[10px] px-1.5 py-0`}>
+            {statusLabels[project.status]}
+          </Badge>
+        </div>
+        <div className="text-white font-semibold text-sm leading-tight line-clamp-2 drop-shadow">
+          {project.title}
+        </div>
+      </div>
+    </button>
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -146,7 +189,19 @@ const Projects = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+      {recentProjects.length > 0 && viewMode === 'cards' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>{t('recentlyViewed') || 'Недавно открытые'}</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {recentProjects.map((p) => <ProjectTile key={p.id} project={p} />)}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -179,11 +234,11 @@ const Projects = () => {
           onValueChange={(v) => v && setViewMode(v as ViewMode)}
           className="border rounded-md p-0.5"
         >
-          <ToggleGroupItem value="table" size="sm" className="h-8 px-2" title="Таблица">
-            <ListIcon className="h-4 w-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="cards" size="sm" className="h-8 px-2" title="Карточки">
+          <ToggleGroupItem value="cards" size="sm" className="h-8 px-2" title="Плитка">
             <LayoutGrid className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="table" size="sm" className="h-8 px-2" title="Список">
+            <ListIcon className="h-4 w-4" />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
@@ -199,7 +254,19 @@ const Projects = () => {
             <Button onClick={() => navigate('/projects/new')}>{t('createProject')}</Button>
           </CardContent>
         </Card>
-      ) : viewMode === 'table' ? (
+      ) : viewMode === 'cards' ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Star className="h-4 w-4" />
+            <span>{t('allYourProjects') || 'Всі проєкти'}</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {filteredAndSortedProjects.map((project) => (
+              <ProjectTile key={project.id} project={project} />
+            ))}
+          </div>
+        </div>
+      ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
@@ -209,7 +276,6 @@ const Projects = () => {
                   <TableHead>{t('projectsTitle')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('manager') || 'Менеджер'}</TableHead>
                   <TableHead className="hidden lg:table-cell">{t('sortByStatus')}</TableHead>
-                  <TableHead className="hidden lg:table-cell">Бюджет</TableHead>
                   <TableHead className="hidden xl:table-cell">Сроки</TableHead>
                   <TableHead className="w-24 text-right"></TableHead>
                 </TableRow>
@@ -219,7 +285,7 @@ const Projects = () => {
                   <TableRow
                     key={project.id}
                     className="cursor-pointer"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() => openProject(project.id)}
                   >
                     <TableCell>
                       <ProjectCoverImage
@@ -250,13 +316,10 @@ const Projects = () => {
                         {statusLabels[project.status]}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {formatBudget(project.budget, project.currency) || '—'}
-                    </TableCell>
                     <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
-                      {project.start_date && format(parseISO(project.start_date), 'd MMM', { locale: dateLocale })}
+                      {formatDate(project.start_date)}
                       {project.start_date && project.end_date && ' – '}
-                      {project.end_date && format(parseISO(project.end_date), 'd MMM yyyy', { locale: dateLocale })}
+                      {formatDate(project.end_date)}
                       {!project.start_date && !project.end_date && '—'}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -275,76 +338,6 @@ const Projects = () => {
             </Table>
           </div>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredAndSortedProjects.map((project, index) => (
-            <Card
-              key={project.id}
-              className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden animate-slide-up group"
-              style={{ animationDelay: `${index * 0.03}s` }}
-              onClick={() => navigate(`/projects/${project.id}`)}
-            >
-              <ProjectCoverImage
-                url={project.cover_image_url}
-                fallbackColor={project.accent_color}
-                className="h-28 w-full"
-                alt={project.title}
-              />
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-foreground flex-1 flex items-center gap-1.5 min-w-0">
-                      {project.icon && <span className="text-base leading-none">{project.icon}</span>}
-                      <span className="truncate">{project.title}</span>
-                    </h3>
-                    <Badge className={PROJECT_STATUS_COLORS[project.status]}>
-                      {statusLabels[project.status]}
-                    </Badge>
-                  </div>
-                  {project.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.description}
-                    </p>
-                  )}
-                  <div className="space-y-1 pt-1">
-                    {project.manager_id && managers[project.manager_id] && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <User className="h-3.5 w-3.5" />
-                        <span>{managers[project.manager_id].name}</span>
-                      </div>
-                    )}
-                    {project.budget && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <DollarSign className="h-3.5 w-3.5" />
-                        <span>{formatBudget(project.budget, project.currency)}</span>
-                      </div>
-                    )}
-                    {(project.start_date || project.end_date) && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>
-                          {project.start_date && format(parseISO(project.start_date), 'd MMM', { locale: dateLocale })}
-                          {project.start_date && project.end_date && ' – '}
-                          {project.end_date && format(parseISO(project.end_date), 'd MMM yyyy', { locale: dateLocale })}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end pt-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                    <ShareButton
-                      type="project"
-                      id={project.id}
-                      title={project.title}
-                      variant="ghost"
-                      size="icon"
-                      compact
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       )}
     </div>
   );
