@@ -117,29 +117,51 @@ Deno.serve(async (req) => {
       }
       redirectTo = `${APP_ORIGIN}/projects/${id}`;
     } else {
-      const { data } = await supabase
-        .from('tasks')
-        .select('title, description, bg_image_url')
-        .eq('id', id)
-        .maybeSingle();
-      if (data) {
-        title = data.title || title;
-        description = (data.description || '').replace(/<[^>]+>/g, '').slice(0, 200) || 'Задача в CraftCRM';
-        image = await resolveImage(supabase, data.bg_image_url);
-      }
+      // Tasks may contain sensitive content — require auth and honor RLS.
+      const authHeader = req.headers.get('Authorization');
       redirectTo = `${APP_ORIGIN}/tasks/${id}`;
+      if (authHeader?.startsWith('Bearer ')) {
+        const userClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_ANON_KEY')!,
+          { global: { headers: { Authorization: authHeader } } },
+        );
+        const token = authHeader.replace('Bearer ', '');
+        const { data: claims } = await userClient.auth.getClaims(token);
+        if (claims?.claims) {
+          const { data } = await userClient
+            .from('tasks')
+            .select('title, description, bg_image_url')
+            .eq('id', id)
+            .maybeSingle();
+          if (data) {
+            title = data.title || title;
+            description = (data.description || '').replace(/<[^>]+>/g, '').slice(0, 200) || 'Задача в CraftCRM';
+            image = await resolveImage(supabase, data.bg_image_url);
+          }
+        }
+      } else {
+        title = 'Задача в CraftCRM';
+        description = 'Увійдіть, щоб переглянути деталі задачі.';
+      }
     }
 
     const canonical = `${url.origin}${url.pathname}?type=${type}&id=${id}`;
     const html = buildHtml({ title, description, image, redirectTo, canonical });
 
+    const cacheControl = type === 'project'
+      ? 'public, max-age=300'
+      : 'private, no-store';
+
     return new Response(html, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': cacheControl,
+        'X-Robots-Tag': 'noindex, nofollow',
       },
     });
+
   } catch (e) {
     console.error('share-preview error', e);
     return new Response('Server error', { status: 500 });
