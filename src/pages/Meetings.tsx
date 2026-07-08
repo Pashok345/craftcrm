@@ -428,7 +428,20 @@ const Meetings = () => {
         </TabsContent>
 
         <TabsContent value="day" className="mt-4">
-          <Card>
+          <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+            <Card className="h-fit">
+              <CardContent className="p-3">
+                <MiniCalendar
+                  mode="single"
+                  selected={selectedDay}
+                  onSelect={(d) => d && setSelectedDay(d)}
+                  weekStartsOn={1}
+                  locale={dateLocale}
+                  className="p-0"
+                />
+              </CardContent>
+            </Card>
+            <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <Button
