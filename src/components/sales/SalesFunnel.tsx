@@ -286,20 +286,6 @@ export const SalesFunnel = () => {
         </Droppable>
       </DragDropContext>
 
-      <DealDialog
-        open={dealDialogOpen}
-        onOpenChange={setDealDialogOpen}
-        stages={stages}
-      />
-
-      {selectedDeal && (
-        <DealDetailDialog
-          open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-          deal={selectedDeal}
-          stages={stages}
-        />
-      )}
 
       <StageDialog
         open={stageDialogOpen}
