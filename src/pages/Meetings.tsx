@@ -526,6 +526,7 @@ const Meetings = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
