@@ -318,26 +318,29 @@ const ProjectDetail = () => {
       </div>
 
       <Card className="overflow-hidden">
-        {(project.cover_image_url || project.accent_color) && (
+        <div className="relative">
           <ProjectCoverImage
             url={project.cover_image_url}
             fallbackColor={project.accent_color}
-            className="h-32 md:h-40 w-full"
+            className="h-40 md:h-56 w-full"
             alt={project.title}
           />
-        )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 p-4 md:p-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow flex items-center gap-2">
+              {project.icon && <span className="text-2xl md:text-3xl leading-none">{project.icon}</span>}
+              <span>{project.title}</span>
+              {project.accent_color && (
+                <span className="h-3 w-3 rounded-full border border-white/50" style={{ backgroundColor: project.accent_color }} title={project.accent_color} />
+              )}
+            </h1>
+          </div>
+        </div>
         <CardContent className="p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                {project.icon && <span className="text-2xl leading-none">{project.icon}</span>}
-                <span>{project.title}</span>
-                {project.accent_color && (
-                  <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: project.accent_color }} title={project.accent_color} />
-                )}
-              </h1>
               {project.description && (
-                <p className="mt-2 text-muted-foreground whitespace-pre-wrap">
+                <p className="text-muted-foreground whitespace-pre-wrap">
                   {linkifyText(project.description)}
                 </p>
               )}
