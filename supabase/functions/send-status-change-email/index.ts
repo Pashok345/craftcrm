@@ -57,13 +57,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: userError } = await supabase.auth.getClaims(token);
+    if (userError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const user = { id: claimsData.claims.sub as string };
 
     const { entity_type, entity_id, old_status, new_status, recipient_user_ids: requestedRecipients }: StatusChangeRequest = await req.json();
 
