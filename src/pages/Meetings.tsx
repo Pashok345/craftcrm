@@ -436,7 +436,6 @@ const Meetings = () => {
                   selected={selectedDay}
                   onSelect={(d) => d && setSelectedDay(d)}
                   weekStartsOn={1}
-                  locale={dateLocale}
                   className="p-0"
                 />
               </CardContent>
