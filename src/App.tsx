@@ -26,6 +26,8 @@ import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 import Analytics from "./pages/Analytics";
 import Sales from "./pages/Sales";
+import CreateDeal from "./pages/CreateDeal";
+import DealDetail from "./pages/DealDetail";
 import Whiteboards from "./pages/Whiteboards";
 import WhiteboardDetail from "./pages/WhiteboardDetail";
 
@@ -57,6 +59,9 @@ const App = () => (
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/sales" element={<Sales />} />
+            <Route path="/sales/deals/new" element={<CreateDeal />} />
+            <Route path="/sales/deals/:id" element={<DealDetail />} />
+            <Route path="/sales/deals/:id/edit" element={<CreateDeal />} />
             <Route path="/whiteboards" element={<Whiteboards />} />
             <Route path="/whiteboards/:id" element={<WhiteboardDetail />} />
             <Route path="/settings" element={<Settings />} />

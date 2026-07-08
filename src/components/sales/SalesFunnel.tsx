@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +13,6 @@ import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical } from '
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { DealDialog } from './DealDialog';
-import { DealDetailDialog } from './DealDetailDialog';
 import { StageDialog } from './StageDialog';
 import type { Deal, DealStage, Client } from '@/types/sales';
 
@@ -22,9 +21,7 @@ export const SalesFunnel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [dealDialogOpen, setDealDialogOpen] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<DealStage | undefined>(undefined);
 
@@ -145,7 +142,7 @@ export const SalesFunnel = () => {
             <Settings2 className="h-4 w-4 mr-2" />
             {t('addStage')}
           </Button>
-          <Button onClick={() => setDealDialogOpen(true)}>
+          <Button onClick={() => navigate('/sales/deals/new')}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addDeal')}
           </Button>
@@ -228,10 +225,7 @@ export const SalesFunnel = () => {
                                           'p-3 bg-card border rounded-lg cursor-pointer hover:shadow-md transition-shadow',
                                           dealSnapshot.isDragging && 'shadow-lg'
                                         )}
-                                        onClick={() => {
-                                          setSelectedDeal(deal);
-                                          setDetailDialogOpen(true);
-                                        }}
+                                        onClick={() => navigate(`/sales/deals/${deal.id}`)}
                                       >
                                         <h4 className="font-medium text-sm mb-2 line-clamp-2">
                                           {deal.title}
@@ -292,20 +286,6 @@ export const SalesFunnel = () => {
         </Droppable>
       </DragDropContext>
 
-      <DealDialog
-        open={dealDialogOpen}
-        onOpenChange={setDealDialogOpen}
-        stages={stages}
-      />
-
-      {selectedDeal && (
-        <DealDetailDialog
-          open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-          deal={selectedDeal}
-          stages={stages}
-        />
-      )}
 
       <StageDialog
         open={stageDialogOpen}

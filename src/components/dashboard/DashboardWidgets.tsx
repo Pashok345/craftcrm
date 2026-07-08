@@ -524,41 +524,65 @@ export const DashboardWidgets = () => {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="dashboard-widgets">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-6">
-              {visibleWidgets.map((widget, index) => (
+          {(provided) => {
+            // Group task_chart + project_chart side-by-side when both visible & adjacent
+            const rendered: React.ReactNode[] = [];
+            for (let i = 0; i < visibleWidgets.length; i++) {
+              const w = visibleWidgets[i];
+              const next = visibleWidgets[i + 1];
+              const isChartPair =
+                !editing &&
+                ((w.widget_type === 'task_chart' && next?.widget_type === 'project_chart') ||
+                  (w.widget_type === 'project_chart' && next?.widget_type === 'task_chart'));
+
+              if (isChartPair) {
+                rendered.push(
+                  <div key={`${w.id}-${next.id}`} className="grid gap-6 md:grid-cols-2">
+                    <div>{renderWidget(w)}</div>
+                    <div>{renderWidget(next)}</div>
+                  </div>
+                );
+                i++;
+                continue;
+              }
+
+              const index = i;
+              rendered.push(
                 <Draggable
-                  key={widget.id}
-                  draggableId={widget.id}
+                  key={w.id}
+                  draggableId={w.id}
                   index={index}
                   isDragDisabled={!editing}
                 >
-                  {(provided, snapshot) => (
+                  {(prov, snapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
+                      ref={prov.innerRef}
+                      {...prov.draggableProps}
                       className={snapshot.isDragging ? 'opacity-80' : ''}
                     >
                       <div className="relative">
                         {editing && (
                           <div
-                            {...provided.dragHandleProps}
+                            {...prov.dragHandleProps}
                             className="absolute -left-2 top-4 z-10 cursor-grab active:cursor-grabbing p-1 rounded bg-muted"
                           >
                             <GripVertical className="h-4 w-4 text-muted-foreground" />
                           </div>
                         )}
-                        <div className={editing ? 'ml-6' : ''}>
-                          {renderWidget(widget)}
-                        </div>
+                        <div className={editing ? 'ml-6' : ''}>{renderWidget(w)}</div>
                       </div>
                     </div>
                   )}
                 </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
+              );
+            }
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-6">
+                {rendered}
+                {provided.placeholder}
+              </div>
+            );
+          }}
         </Droppable>
       </DragDropContext>
     </div>

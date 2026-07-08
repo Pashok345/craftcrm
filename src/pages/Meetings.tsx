@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Calendar as MiniCalendar } from '@/components/ui/calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, List } from 'lucide-react';
 import { Meeting, Profile } from '@/types/database';
@@ -427,7 +428,19 @@ const Meetings = () => {
         </TabsContent>
 
         <TabsContent value="day" className="mt-4">
-          <Card>
+          <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+            <Card className="h-fit">
+              <CardContent className="p-3">
+                <MiniCalendar
+                  mode="single"
+                  selected={selectedDay}
+                  onSelect={(d) => d && setSelectedDay(d)}
+                  weekStartsOn={1}
+                  className="p-0"
+                />
+              </CardContent>
+            </Card>
+            <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <Button
@@ -512,6 +525,7 @@ const Meetings = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
