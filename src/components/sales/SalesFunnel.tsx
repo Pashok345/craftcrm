@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +13,6 @@ import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical } from '
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { DealDialog } from './DealDialog';
-import { DealDetailDialog } from './DealDetailDialog';
 import { StageDialog } from './StageDialog';
 import type { Deal, DealStage, Client } from '@/types/sales';
 
