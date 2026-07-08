@@ -21,9 +21,7 @@ export const SalesFunnel = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [dealDialogOpen, setDealDialogOpen] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<DealStage | undefined>(undefined);
 
@@ -144,7 +142,7 @@ export const SalesFunnel = () => {
             <Settings2 className="h-4 w-4 mr-2" />
             {t('addStage')}
           </Button>
-          <Button onClick={() => setDealDialogOpen(true)}>
+          <Button onClick={() => navigate('/sales/deals/new')}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addDeal')}
           </Button>
@@ -227,10 +225,7 @@ export const SalesFunnel = () => {
                                           'p-3 bg-card border rounded-lg cursor-pointer hover:shadow-md transition-shadow',
                                           dealSnapshot.isDragging && 'shadow-lg'
                                         )}
-                                        onClick={() => {
-                                          setSelectedDeal(deal);
-                                          setDetailDialogOpen(true);
-                                        }}
+                                        onClick={() => navigate(`/sales/deals/${deal.id}`)}
                                       >
                                         <h4 className="font-medium text-sm mb-2 line-clamp-2">
                                           {deal.title}
