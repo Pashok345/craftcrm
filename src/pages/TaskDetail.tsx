@@ -1552,7 +1552,7 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
 
   if (!task.bg_image_url) {
     return (
-      <div className="flex">
+      <div className="px-6 mt-3 flex">
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
         <Button
           variant="outline"
@@ -1568,15 +1568,16 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
     );
   }
 
+  const headerTitle = (task as any).header_title?.trim();
+
   return (
-    <div
-      className="relative group rounded-xl overflow-hidden border shadow-md h-48 md:h-64 flex items-end"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.65)), url(${task.bg_image_url})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
+    <div className="relative group w-full">
+      <img
+        src={task.bg_image_url}
+        alt={task.title}
+        className="w-full h-48 md:h-72 object-cover block"
+        onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.2'; }}
+      />
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
       <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button size="sm" variant="secondary" className="gap-1" disabled={uploading} onClick={() => inputRef.current?.click()}>
@@ -1587,17 +1588,20 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <div className="p-5 md:p-8 w-full">
-        <h2
-          className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
-          style={task.title_font ? { fontFamily: task.title_font } : undefined}
-        >
-          {(task as any).header_title?.trim() || task.title}
-        </h2>
-      </div>
+      {headerTitle && (
+        <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 bg-gradient-to-t from-black/70 to-transparent">
+          <h2
+            className="text-white font-bold text-2xl md:text-4xl drop-shadow-lg"
+            style={task.title_font ? { fontFamily: task.title_font } : undefined}
+          >
+            {headerTitle}
+          </h2>
+        </div>
+      )}
     </div>
   );
 };
+
 
 
 
