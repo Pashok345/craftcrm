@@ -931,8 +931,10 @@ const TaskDetail = () => {
               <TagsManager taskId={task.id} userId={user.id} />
             </div>
           )}
+          </div>
         </CardContent>
       </Card>
+
               ),
               subtasks: user ? <SubtasksList taskId={task.id} /> : null,
               dependencies: (
