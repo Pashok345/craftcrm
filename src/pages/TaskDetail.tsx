@@ -784,8 +784,10 @@ const TaskDetail = () => {
               </Select>
             </div>
           </div>
+          </div>
 
           <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+
 
           <div className="px-6 pb-6 pt-6">
             {task.description && (
