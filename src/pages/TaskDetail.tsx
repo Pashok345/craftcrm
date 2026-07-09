@@ -785,7 +785,14 @@ const TaskDetail = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-sm mb-6">
+          <TaskHeaderCover task={task} onChanged={(url) => setTask(prev => prev ? { ...prev, bg_image_url: url } as Task : prev)} />
+
+          <div className="px-6 pb-6 pt-6">
+            {task.description && (
+              <p className="text-muted-foreground mb-6 whitespace-pre-wrap">{linkifyText(task.description)}</p>
+            )}
+            <div className="flex flex-wrap gap-4 text-sm mb-6">
+
             {creator && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <span className="font-medium">{t('createdBy')}:</span>
