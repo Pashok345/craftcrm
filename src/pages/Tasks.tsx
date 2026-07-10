@@ -67,6 +67,7 @@ const Tasks = () => {
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<TaskFiltersState>(emptyFilters);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => localStorage.getItem('tasks-selected-project') || 'all');
   const [showShortcuts, setShowShortcuts] = useState(() => localStorage.getItem('tasks-hotkeys-seen') !== '1');
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
