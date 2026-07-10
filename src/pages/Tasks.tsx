@@ -252,6 +252,14 @@ const Tasks = () => {
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks;
 
+    // Project selector (primary)
+    if (selectedProjectId === 'none') {
+      filtered = filtered.filter(t => !t.project_id);
+    } else if (selectedProjectId !== 'all') {
+      filtered = filtered.filter(t => t.project_id === selectedProjectId);
+    }
+
+
     // Apply filters
     if (filters.statuses.length > 0) {
       filtered = filtered.filter(t => filters.statuses.includes(t.status));
