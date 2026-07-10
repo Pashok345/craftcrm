@@ -2161,6 +2161,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_task_file: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_edit_whiteboard: {
         Args: { _user_id: string; _whiteboard_id: string }
         Returns: boolean
