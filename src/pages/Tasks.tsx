@@ -147,6 +147,18 @@ const Tasks = () => {
       const map: Record<string, Project> = {};
       (data as unknown as Project[]).forEach((p) => { map[p.id] = p; });
       setProjects(map);
+      // Default to last worked project on first load
+      const stored = localStorage.getItem('tasks-selected-project');
+      if (!stored) {
+        const lastProject = localStorage.getItem('lastProjectId');
+        if (lastProject && map[lastProject]) {
+          setSelectedProjectId(lastProject);
+          localStorage.setItem('tasks-selected-project', lastProject);
+        }
+      } else if (stored !== 'all' && stored !== 'none' && !map[stored]) {
+        setSelectedProjectId('all');
+        localStorage.setItem('tasks-selected-project', 'all');
+      }
     }
   };
 
