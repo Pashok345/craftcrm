@@ -494,13 +494,35 @@ const Tasks = () => {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Select
+            value={selectedProjectId}
+            onValueChange={(v) => {
+              setSelectedProjectId(v);
+              localStorage.setItem('tasks-selected-project', v);
+              if (v !== 'all' && v !== 'none') localStorage.setItem('lastProjectId', v);
+            }}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder={t('project') || 'Проект'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allProjects') || 'Все проекты'}</SelectItem>
+              <SelectItem value="none">{t('noProject') || 'Без проекта'}</SelectItem>
+              {Object.values(projects)
+                .sort((a, b) => a.title.localeCompare(b.title))
+                .map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
           <TaskFilters
             filters={filters}
             onFiltersChange={setFilters}
             projects={projects}
             allTags={allTags}
           />
+
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t('sortBy')} />
