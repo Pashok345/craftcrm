@@ -172,6 +172,10 @@ export const translations: Translations = {
   commentUpdated: { ru: 'Комментарий обновлен', en: 'Comment updated', uk: 'Коментар оновлено' },
   deleteComment: { ru: 'Удалить комментарий', en: 'Delete comment', uk: 'Видалити коментар' },
   deleteCommentConfirm: { ru: 'Вы уверены, что хотите удалить этот комментарий?', en: 'Are you sure you want to delete this comment?', uk: 'Ви впевнені, що хочете видалити цей коментар?' },
+  addCoverPhoto: { ru: 'Добавить главное фото', en: 'Add main photo', uk: 'Додати головне фото' },
+  replaceCover: { ru: 'Заменить главное фото', en: 'Replace main photo', uk: 'Замінити головне фото' },
+  coverUpdated: { ru: 'Главное фото обновлено', en: 'Main photo updated', uk: 'Головне фото оновлено' },
+  coverRemoved: { ru: 'Главное фото удалено', en: 'Main photo removed', uk: 'Головне фото видалено' },
   
   // Task statuses
   statusTodo: { ru: 'К выполнению', en: 'To Do', uk: 'До виконання' },
