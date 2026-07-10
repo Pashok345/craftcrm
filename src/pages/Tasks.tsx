@@ -320,7 +320,7 @@ const Tasks = () => {
         default: return 0;
       }
     });
-  }, [tasks, searchQuery, sortBy, statusLabels, projects, creators, taskAssignees, taskTags, filters, manualOrder]);
+  }, [tasks, searchQuery, sortBy, statusLabels, projects, creators, taskAssignees, taskTags, filters, manualOrder, selectedProjectId]);
 
   const allAssignees = useMemo(() => {
     const seen = new Map<string, Profile>();
