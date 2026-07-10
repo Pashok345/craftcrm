@@ -225,7 +225,7 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
 
         <TabsContent value="main" className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label>Главное фото (обложка задачи)</Label>
+            <Label>Додати головне фото</Label>
             {headerPhotoPreview ? (
               <div className="relative rounded-lg overflow-hidden border h-40 bg-muted">
                 <img src={headerPhotoPreview} alt="header" className="w-full h-full object-cover" />
@@ -240,7 +240,7 @@ export const TaskCreateForm = ({ defaultProjectId, onSuccess, onCancel, submitLa
             ) : (
               <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 text-sm text-muted-foreground">
                 <Paperclip className="h-4 w-4" />
-                Загрузить фото или вставьте Ctrl+V в описание
+                Додати головне фото
                 <input type="file" accept="image/*" className="hidden"
                   onChange={(e) => e.target.files?.[0] && setHeaderPhotoFromFile(e.target.files[0])} />
               </label>
