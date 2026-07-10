@@ -67,6 +67,7 @@ const Tasks = () => {
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<TaskFiltersState>(emptyFilters);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => localStorage.getItem('tasks-selected-project') || 'all');
   const [showShortcuts, setShowShortcuts] = useState(() => localStorage.getItem('tasks-hotkeys-seen') !== '1');
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
@@ -146,6 +147,18 @@ const Tasks = () => {
       const map: Record<string, Project> = {};
       (data as unknown as Project[]).forEach((p) => { map[p.id] = p; });
       setProjects(map);
+      // Default to last worked project on first load
+      const stored = localStorage.getItem('tasks-selected-project');
+      if (!stored) {
+        const lastProject = localStorage.getItem('lastProjectId');
+        if (lastProject && map[lastProject]) {
+          setSelectedProjectId(lastProject);
+          localStorage.setItem('tasks-selected-project', lastProject);
+        }
+      } else if (stored !== 'all' && stored !== 'none' && !map[stored]) {
+        setSelectedProjectId('all');
+        localStorage.setItem('tasks-selected-project', 'all');
+      }
     }
   };
 
@@ -239,6 +252,14 @@ const Tasks = () => {
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks;
 
+    // Project selector (primary)
+    if (selectedProjectId === 'none') {
+      filtered = filtered.filter(t => !t.project_id);
+    } else if (selectedProjectId !== 'all') {
+      filtered = filtered.filter(t => t.project_id === selectedProjectId);
+    }
+
+
     // Apply filters
     if (filters.statuses.length > 0) {
       filtered = filtered.filter(t => filters.statuses.includes(t.status));
@@ -299,7 +320,7 @@ const Tasks = () => {
         default: return 0;
       }
     });
-  }, [tasks, searchQuery, sortBy, statusLabels, projects, creators, taskAssignees, taskTags, filters, manualOrder]);
+  }, [tasks, searchQuery, sortBy, statusLabels, projects, creators, taskAssignees, taskTags, filters, manualOrder, selectedProjectId]);
 
   const allAssignees = useMemo(() => {
     const seen = new Map<string, Profile>();
@@ -473,13 +494,35 @@ const Tasks = () => {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Select
+            value={selectedProjectId}
+            onValueChange={(v) => {
+              setSelectedProjectId(v);
+              localStorage.setItem('tasks-selected-project', v);
+              if (v !== 'all' && v !== 'none') localStorage.setItem('lastProjectId', v);
+            }}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder={t('project') || 'Проект'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allProjects') || 'Все проекты'}</SelectItem>
+              <SelectItem value="none">{t('noProject') || 'Без проекта'}</SelectItem>
+              {Object.values(projects)
+                .sort((a, b) => a.title.localeCompare(b.title))
+                .map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
           <TaskFilters
             filters={filters}
             onFiltersChange={setFilters}
             projects={projects}
             allTags={allTags}
           />
+
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t('sortBy')} />
