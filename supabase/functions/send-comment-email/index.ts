@@ -127,10 +127,34 @@ serve(async (req) => {
       );
     }
 
+    // Fetch actual comment text from DB — never trust client-supplied text
+    let dbCommentText = '';
+    if (comment_id) {
+      const { data: c } = await adminClient
+        .from('task_comments')
+        .select('content, user_id, task_id')
+        .eq('id', comment_id)
+        .maybeSingle();
+      if (c && c.task_id === task_id && c.user_id === user.id) {
+        dbCommentText = c.content || '';
+      }
+    }
+    if (!dbCommentText) {
+      const { data: latest } = await adminClient
+        .from('task_comments')
+        .select('content')
+        .eq('task_id', task_id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      dbCommentText = latest?.content || '';
+    }
+
     const emailsSent: string[] = [];
     const safeTaskTitle = escapeHtml(taskData.title || '');
     const safeCommenterName = escapeHtml(callerProfile?.name || 'Колега');
-    const rawComment = comment_text?.length > 200 ? comment_text.slice(0, 200) + '...' : (comment_text || '');
+    const rawComment = dbCommentText.length > 200 ? dbCommentText.slice(0, 200) + '...' : dbCommentText;
     const safeComment = escapeHtml(rawComment);
 
     for (const profile of profiles) {
