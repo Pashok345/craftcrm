@@ -1036,7 +1036,7 @@ async function createWhiteboardFn(supabase: any, adminClient: any, args: any, us
     if (proj) projectId = proj.id;
   }
 
-  const { data, error } = await adminClient.from("whiteboards").insert({
+  const { data, error } = await supabase.from("whiteboards").insert({
     title: args.title,
     description: args.description || null,
     project_id: projectId,
@@ -1046,13 +1046,13 @@ async function createWhiteboardFn(supabase: any, adminClient: any, args: any, us
 
   let linkedTask: { id: string; title: string } | null = null;
   if (task) {
-    const { error: linkError } = await adminClient.from("task_whiteboards").insert({
+    const { error: linkError } = await supabase.from("task_whiteboards").insert({
       task_id: task.id,
       whiteboard_id: data.id,
       created_by: userId,
     });
     if (linkError) {
-      await adminClient.from("whiteboards").delete().eq("id", data.id);
+      await supabase.from("whiteboards").delete().eq("id", data.id);
       return { error: `Доска создана, но не удалось привязать к задаче: ${linkError.message}` };
     }
     linkedTask = { id: task.id, title: task.title };
