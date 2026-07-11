@@ -59,7 +59,8 @@ serve(async (req) => {
 
     const user = { id: claimsData.claims.sub as string };
 
-    const { task_id, comment_text, recipient_user_ids: requestedRecipients }: CommentEmailRequest = await req.json();
+    const body = await req.json();
+    const { task_id, recipient_user_ids: requestedRecipients, comment_id } = body as CommentEmailRequest & { comment_id?: string };
 
     if (!task_id || !requestedRecipients || requestedRecipients.length === 0) {
       return new Response(
