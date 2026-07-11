@@ -59,7 +59,8 @@ serve(async (req) => {
 
     const user = { id: claimsData.claims.sub as string };
 
-    const { task_id, comment_text, recipient_user_ids: requestedRecipients }: CommentEmailRequest = await req.json();
+    const body = await req.json();
+    const { task_id, recipient_user_ids: requestedRecipients, comment_id } = body as CommentEmailRequest & { comment_id?: string };
 
     if (!task_id || !requestedRecipients || requestedRecipients.length === 0) {
       return new Response(
@@ -126,10 +127,34 @@ serve(async (req) => {
       );
     }
 
+    // Fetch actual comment text from DB — never trust client-supplied text
+    let dbCommentText = '';
+    if (comment_id) {
+      const { data: c } = await adminClient
+        .from('task_comments')
+        .select('content, user_id, task_id')
+        .eq('id', comment_id)
+        .maybeSingle();
+      if (c && c.task_id === task_id && c.user_id === user.id) {
+        dbCommentText = c.content || '';
+      }
+    }
+    if (!dbCommentText) {
+      const { data: latest } = await adminClient
+        .from('task_comments')
+        .select('content')
+        .eq('task_id', task_id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      dbCommentText = latest?.content || '';
+    }
+
     const emailsSent: string[] = [];
     const safeTaskTitle = escapeHtml(taskData.title || '');
     const safeCommenterName = escapeHtml(callerProfile?.name || 'Колега');
-    const rawComment = comment_text?.length > 200 ? comment_text.slice(0, 200) + '...' : (comment_text || '');
+    const rawComment = dbCommentText.length > 200 ? dbCommentText.slice(0, 200) + '...' : dbCommentText;
     const safeComment = escapeHtml(rawComment);
 
     for (const profile of profiles) {
