@@ -55,7 +55,7 @@ import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
 import { ProjectAttachments } from '@/components/projects/ProjectAttachments';
 import { ProjectComments } from '@/components/projects/ProjectComments';
-import { ProjectTaskActivity } from '@/components/projects/ProjectTaskActivity';
+import { ProjectHistoryTimeline } from '@/components/projects/ProjectHistoryTimeline';
 import { ProjectCustomizeDialog } from '@/components/projects/ProjectCustomizeDialog';
 import { ProjectCoverImage } from '@/components/projects/ProjectCoverImage';
 import { ShareButton } from '@/components/share/ShareButton';
@@ -457,6 +457,10 @@ const ProjectDetail = () => {
         </CardContent>
       </Card>
 
+      <ProjectHistoryTimeline projectId={project.id} />
+
+
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
@@ -623,9 +627,6 @@ const ProjectDetail = () => {
         </TabsContent>
       </Tabs>
 
-      <div className="pt-2">
-        <ProjectTaskActivity projectId={project.id} />
-      </div>
 
       <TaskDialog
         open={taskDialogOpen}
