@@ -340,7 +340,7 @@ const EventRow = ({
 }: {
   ev: Event;
   profile?: ProfileMini;
-  dateLocale: Locale;
+  dateLocale: any;
   onOpenTask: (id: string) => void;
 }) => {
   const time = format(new Date(ev.at), 'HH:mm', { locale: dateLocale });
