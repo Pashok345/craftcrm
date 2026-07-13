@@ -420,8 +420,19 @@ const EventRow = ({
               </button>
             </div>
             {ev.content && (
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3 bg-muted/40 rounded p-2 border">
-                {ev.content}
+              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                {linkifyText(ev.content)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {ev.type === 'project_comment' && (
+          <div className="space-y-1">
+            <div className="text-sm">Додав(ла) коментар до проекту</div>
+            {ev.content && (
+              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                {linkifyText(ev.content)}
               </p>
             )}
           </div>
