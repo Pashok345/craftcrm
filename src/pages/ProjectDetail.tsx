@@ -627,9 +627,6 @@ const ProjectDetail = () => {
         </TabsContent>
       </Tabs>
 
-      <div className="pt-2">
-        <ProjectTaskActivity projectId={project.id} />
-      </div>
 
       <TaskDialog
         open={taskDialogOpen}
