@@ -18,6 +18,7 @@ import { ru, uk, enUS } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AttachmentImage } from '@/components/ui/attachment-image';
 import { isImageFile } from '@/components/ui/image-lightbox';
+import { linkifyText } from '@/utils/linkifyText';
 
 type EventType =
   | 'task_created'
