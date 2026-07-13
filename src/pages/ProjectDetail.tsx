@@ -457,6 +457,10 @@ const ProjectDetail = () => {
         </CardContent>
       </Card>
 
+      <ProjectHistoryTimeline projectId={project.id} />
+
+
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
