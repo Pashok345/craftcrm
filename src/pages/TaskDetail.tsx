@@ -746,7 +746,7 @@ const TaskDetail = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="main" className="mt-4 md:pl-8 md:pr-20">
+        <TabsContent value="main" className="mt-4 md:pl-8 md:pr-[67px]">
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
           {(() => {
