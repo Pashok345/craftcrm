@@ -794,13 +794,6 @@ const TaskDetail = () => {
               <p className="text-muted-foreground mb-6 whitespace-pre-wrap">{linkifyText(task.description)}</p>
             )}
             <div className="flex flex-wrap gap-4 text-sm mb-6">
-
-            {creator && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="font-medium">{t('createdBy')}:</span>
-                <span>{creator.name}</span>
-              </div>
-            )}
             {task.deadline && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
@@ -832,101 +825,58 @@ const TaskDetail = () => {
             </div>
           )}
 
-          <div className="flex flex-wrap gap-6 mb-6">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">{t('participants')}:</h4>
-              <div className="flex items-center gap-1">
-                <div className="flex -space-x-2">
-                  {assignees.filter(a => a.role === 'observer').slice(0, 5).map((a, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
-                          <AvatarImage src={a.user.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                            {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{a.user.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                  {assignees.filter(a => a.role === 'observer').length > 5 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
-                          +{assignees.filter(a => a.role === 'observer').length - 5}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {assignees.filter(a => a.role === 'observer').slice(5).map((a, i) => (
-                          <p key={i}>{a.user.name}</p>
-                        ))}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+          {(() => {
+            const executors = assignees.filter(a => a.role === 'executor');
+            const observers = assignees.filter(a => a.role === 'observer');
+            const PersonChip = ({
+              profile, label, color,
+            }: { profile: { name?: string | null; avatar_url?: string | null }; label: string; color: string }) => (
+              <div className="inline-flex items-center gap-2 bg-muted/60 rounded-full pl-1 pr-3 py-1">
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarFallback className={`text-[10px] text-white ${color}`}>
+                    {profile.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+                  <span className="text-sm font-medium">{profile.name}</span>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">{t('executors')}:</h4>
-              <div className="flex items-center gap-1">
-                <div className="flex -space-x-2">
-                  {assignees.filter(a => a.role === 'executor').slice(0, 5).map((a, i) => (
-                    <Tooltip key={i}>
-                      <TooltipTrigger asChild>
-                        <Avatar className="h-8 w-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
-                          <AvatarImage src={a.user.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs bg-crm-warning text-white">
-                            {a.user.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{a.user.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                  {assignees.filter(a => a.role === 'executor').length > 5 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium cursor-pointer">
-                          +{assignees.filter(a => a.role === 'executor').length - 5}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {assignees.filter(a => a.role === 'executor').slice(5).map((a, i) => (
-                          <p key={i}>{a.user.name}</p>
-                        ))}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
+            );
+            return (
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                {creator && <PersonChip profile={creator} label={t('createdBy')} color="bg-primary" />}
+                {executors.map((a, i) => (
+                  <PersonChip key={`e-${i}`} profile={a.user} label={t('executors')} color="bg-crm-warning" />
+                ))}
+                {observers.map((a, i) => (
+                  <PersonChip key={`o-${i}`} profile={a.user} label={t('participants')} color="bg-slate-500" />
+                ))}
+                {user?.id === task.created_by && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => setAddAssigneeOpen(true)}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('addParticipant')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
-          {user?.id === task.created_by && (
-            <div className="mb-6">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => setAddAssigneeOpen(true)}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('addParticipant')}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+
+
+
 
           {user && (
             <div className="mb-6">
@@ -951,7 +901,7 @@ const TaskDetail = () => {
       <Card>
         <CardContent className="p-6">
           <h4 className="text-lg font-medium mb-4">{t('comments')}</h4>
-          <ScrollArea className="h-96 pr-4">
+          <ScrollArea className={`${comments.length === 0 ? '' : 'max-h-96'} pr-4`}>
             <div className="space-y-4">
               {comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
