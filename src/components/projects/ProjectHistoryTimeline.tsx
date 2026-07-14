@@ -488,3 +488,27 @@ const AttachmentEvent = ({
     </div>
   );
 };
+
+const CommentBody = ({ text }: { text: string }) => {
+  const [expanded, setExpanded] = useState(false);
+  // Normalize excessive whitespace so pasted code/JSON doesn't dominate the timeline
+  const normalized = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const long = normalized.length > 240 || normalized.split('\n').length > 4;
+  const shown = expanded || !long ? normalized : normalized.slice(0, 240) + '…';
+  return (
+    <div className="text-sm text-foreground">
+      <p className="whitespace-pre-wrap break-words leading-relaxed">
+        {linkifyText(shown)}
+      </p>
+      {long && (
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="mt-1 text-xs text-primary hover:underline"
+        >
+          {expanded ? 'Згорнути' : 'Показати більше'}
+        </button>
+      )}
+    </div>
+  );
+};
+
