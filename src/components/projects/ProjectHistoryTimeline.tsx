@@ -419,24 +419,17 @@ const EventRow = ({
                 {ev.taskTitle}
               </button>
             </div>
-            {ev.content && (
-              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                {linkifyText(ev.content)}
-              </p>
-            )}
+            {ev.content && <CommentBody text={ev.content} />}
           </div>
         )}
 
         {ev.type === 'project_comment' && (
           <div className="space-y-1">
             <div className="text-sm">Додав(ла) коментар до проекту</div>
-            {ev.content && (
-              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                {linkifyText(ev.content)}
-              </p>
-            )}
+            {ev.content && <CommentBody text={ev.content} />}
           </div>
         )}
+
 
         {(ev.type === 'task_attachment' || ev.type === 'project_attachment') && (
           <AttachmentEvent ev={ev} onOpenTask={onOpenTask} />
