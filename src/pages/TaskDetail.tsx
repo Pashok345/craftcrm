@@ -875,25 +875,8 @@ const TaskDetail = () => {
           })()}
 
 
-          {user?.id === task.created_by && (
-            <div className="mb-6">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => setAddAssigneeOpen(true)}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('addParticipant')}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
+
+
 
           {user && (
             <div className="mb-6">
