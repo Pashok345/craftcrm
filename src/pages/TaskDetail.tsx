@@ -951,7 +951,7 @@ const TaskDetail = () => {
       <Card>
         <CardContent className="p-6">
           <h4 className="text-lg font-medium mb-4">{t('comments')}</h4>
-          <ScrollArea className="h-96 pr-4">
+          <ScrollArea className={`${comments.length === 0 ? '' : 'max-h-96'} pr-4`}>
             <div className="space-y-4">
               {comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
