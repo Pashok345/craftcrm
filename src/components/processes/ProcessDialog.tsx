@@ -239,6 +239,7 @@ export const ProcessDialog = ({
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
+            steps: flow as any,
           })
           .eq('id', process.id);
         if (error) throw error;
