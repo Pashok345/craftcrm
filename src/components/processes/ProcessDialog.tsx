@@ -58,7 +58,14 @@ interface Process {
   description: string | null;
   type_id: string | null;
   department_id: string | null;
+  category_id?: string | null;
   process_fields?: ProcessField[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface ProcessDialogProps {
@@ -67,6 +74,7 @@ interface ProcessDialogProps {
   process: Process | null;
   processTypes: ProcessType[];
   departments: Department[];
+  categories?: Category[];
   onSaved: () => void;
   onTypesChange: () => void;
   onDepartmentsChange: () => void;
@@ -85,6 +93,7 @@ export const ProcessDialog = ({
   process,
   processTypes,
   departments,
+  categories = [],
   onSaved,
   onTypesChange,
   onDepartmentsChange,
@@ -97,6 +106,7 @@ export const ProcessDialog = ({
   const [description, setDescription] = useState('');
   const [typeId, setTypeId] = useState<string>('');
   const [departmentId, setDepartmentId] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
   const [fields, setFields] = useState<ProcessField[]>([]);
   const [newTypeName, setNewTypeName] = useState('');
   const [newDeptName, setNewDeptName] = useState('');
@@ -140,15 +150,18 @@ export const ProcessDialog = ({
       setDescription(process.description || '');
       setTypeId(process.type_id || '');
       setDepartmentId(process.department_id || '');
+      setCategoryId(process.category_id || '');
       setFields(process.process_fields || []);
     } else {
       setTitle('');
       setDescription('');
       setTypeId('');
       setDepartmentId('');
+      setCategoryId('');
       setFields([]);
     }
   }, [process, open]);
+
 
   const addField = () => {
     setFields([
@@ -212,6 +225,7 @@ export const ProcessDialog = ({
             description: description.trim() || null,
             type_id: typeId || null,
             department_id: departmentId || null,
+            category_id: categoryId || null,
           })
           .eq('id', process.id);
         if (error) throw error;
@@ -224,6 +238,7 @@ export const ProcessDialog = ({
             description: description.trim() || null,
             type_id: typeId || null,
             department_id: departmentId || null,
+            category_id: categoryId || null,
             created_by: user.id,
           })
           .select()
@@ -304,6 +319,30 @@ export const ProcessDialog = ({
               placeholder={t('enterProcessName')}
             />
           </div>
+
+          {/* Category */}
+          {categories.length > 0 && (
+            <div className="space-y-2">
+              <Label>{t('category') || 'Категорія'}</Label>
+              <Select value={categoryId || '__none__'} onValueChange={(v) => setCategoryId(v === '__none__' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('selectCategory') || 'Оберіть категорію'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('uncategorized') || 'Без категорії'}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
 
           {/* Type */}
           <div className="space-y-2">
