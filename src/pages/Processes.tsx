@@ -253,17 +253,9 @@ const Processes = () => {
         </TabsContent>
 
         <TabsContent value="active" className="mt-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <PlayCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="font-medium mb-1">{t('activeRunsComingSoon') || 'Розділ активних запусків'}</p>
-              <p className="text-sm text-muted-foreground max-w-md">
-                {t('activeRunsComingSoonDesc') ||
-                  'Незабаром тут з\'являться усі запущені процеси з фільтрами за виконавцями, постановниками та SLA-індикаторами.'}
-              </p>
-            </CardContent>
-          </Card>
+          <ActiveRunsList />
         </TabsContent>
+
 
         <TabsContent value="templates" className="mt-4">
           <Card>
