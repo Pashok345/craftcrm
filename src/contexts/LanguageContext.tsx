@@ -423,7 +423,6 @@ export const translations: Translations = {
   systemTemplate: { ru: 'Системный', en: 'System', uk: 'Системний' },
   processCreatedFromTemplate: { ru: 'Процесс создан из шаблона', en: 'Process created from template', uk: 'Процес створено з шаблону' },
   nothingFound: { ru: 'Ничего не найдено', en: 'Nothing found', uk: 'Нічого не знайдено' },
-  add: { ru: 'Добавить', en: 'Add', uk: 'Додати' },
   
   // Avatar color
   avatarColor: { ru: 'Цвет аватарки', en: 'Avatar color', uk: 'Колір аватарки' },
