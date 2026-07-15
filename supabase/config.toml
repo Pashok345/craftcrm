@@ -26,3 +26,7 @@ verify_jwt = false
 
 [functions.resend-invitation]
 verify_jwt = false
+
+[functions.send-process-sla-reminders]
+verify_jwt = false
+
