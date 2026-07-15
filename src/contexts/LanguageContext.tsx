@@ -537,7 +537,6 @@ export const translations: Translations = {
   startTrackingTime: { ru: 'Начните отслеживать время в задачах', en: 'Start tracking time in tasks', uk: 'Почніть відстежувати час у задачах' },
   noTags: { ru: 'Нет тегов', en: 'No tags', uk: 'Немає тегів' },
   createTagsHint: { ru: 'Создайте теги для организации задач', en: 'Create tags to organize tasks', uk: 'Створіть теги для організації задач' },
-  hours: { ru: 'ч', en: 'h', uk: 'г' },
   minutes: { ru: 'м', en: 'm', uk: 'хв' },
   hoursShort: { ru: 'ч', en: 'h', uk: 'г' },
   minutesShort: { ru: 'м', en: 'm', uk: 'хв' },
