@@ -487,6 +487,17 @@ export const ProcessDialog = ({
             ))}
           </div>
 
+          {/* Visual step builder */}
+          <div className="space-y-2 pt-2">
+            <Label>{t('processSteps') || 'Кроки процесу (візуальний конструктор)'}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t('processStepsHint') || 'Створіть послідовність кроків: задачі, погодження, умови та автодії. Зʼєднайте блоки лініями.'}
+            </p>
+            <ProcessStepBuilder value={flow} onChange={setFlow} />
+          </div>
+
+
+
           {/* Actions */}
           <div className="flex justify-between pt-4">
             {process && isAdmin ? (
