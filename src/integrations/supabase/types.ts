@@ -738,6 +738,39 @@ export type Database = {
           },
         ]
       }
+      process_categories: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       process_fields: {
         Row: {
           created_at: string
@@ -897,6 +930,53 @@ export type Database = {
           },
         ]
       }
+      process_templates: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_system: boolean
+          name: string
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          template_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "process_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_types: {
         Row: {
           created_at: string
@@ -923,6 +1003,7 @@ export type Database = {
       }
       processes: {
         Row: {
+          category_id: string | null
           created_at: string
           created_by: string
           department_id: string | null
@@ -934,6 +1015,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           created_by: string
           department_id?: string | null
@@ -945,6 +1027,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           created_by?: string
           department_id?: string | null
@@ -956,6 +1039,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "processes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "process_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "processes_department_id_fkey"
             columns: ["department_id"]
