@@ -93,6 +93,7 @@ export const ProcessDialog = ({
   process,
   processTypes,
   departments,
+  categories = [],
   onSaved,
   onTypesChange,
   onDepartmentsChange,
@@ -105,6 +106,7 @@ export const ProcessDialog = ({
   const [description, setDescription] = useState('');
   const [typeId, setTypeId] = useState<string>('');
   const [departmentId, setDepartmentId] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
   const [fields, setFields] = useState<ProcessField[]>([]);
   const [newTypeName, setNewTypeName] = useState('');
   const [newDeptName, setNewDeptName] = useState('');
@@ -148,15 +150,18 @@ export const ProcessDialog = ({
       setDescription(process.description || '');
       setTypeId(process.type_id || '');
       setDepartmentId(process.department_id || '');
+      setCategoryId(process.category_id || '');
       setFields(process.process_fields || []);
     } else {
       setTitle('');
       setDescription('');
       setTypeId('');
       setDepartmentId('');
+      setCategoryId('');
       setFields([]);
     }
   }, [process, open]);
+
 
   const addField = () => {
     setFields([
