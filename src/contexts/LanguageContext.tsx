@@ -612,7 +612,6 @@ export const translations: Translations = {
   // User invitations
   sendInvitation: { ru: 'Отправить приглашение', en: 'Send invitation', uk: 'Надіслати запрошення' },
   sendInvite: { ru: 'Отправить', en: 'Send', uk: 'Надіслати' },
-  name: { ru: 'Имя', en: 'Name', uk: 'Імʼя' },
   invitationSent: { ru: 'Приглашение отправлено', en: 'Invitation sent', uk: 'Запрошення надіслано' },
   invitationSentDescription: { ru: 'Письмо с ссылкой для входа отправлено на {email}', en: 'An email with login link has been sent to {email}', uk: 'Лист із посиланням для входу надіслано на {email}' },
   invitationError: { ru: 'Не удалось отправить приглашение', en: 'Failed to send invitation', uk: 'Не вдалося надіслати запрошення' },
