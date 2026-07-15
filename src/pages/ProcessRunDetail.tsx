@@ -32,6 +32,7 @@ import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
+import { RunStepsPanel } from '@/components/processes/RunStepsPanel';
 
 interface ProcessRun {
   id: string;
@@ -736,7 +737,10 @@ const ProcessRunDetail = () => {
             </CardContent>
           </Card>
 
+          {run && <RunStepsPanel runId={run.id} initiatorId={run.started_by} />}
+
           {/* Comments section */}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">{t('comments')}</CardTitle>

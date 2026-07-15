@@ -119,16 +119,67 @@ export const RunProcessDialog = ({
     if (!user || !runName.trim() || !selectedDepartment) return;
     setSubmitting(true);
 
-    const { error } = await supabase.from('process_runs').insert({
+    // Load process steps definition
+    const { data: procData } = await supabase
+      .from('processes')
+      .select('steps')
+      .eq('id', process.id)
+      .maybeSingle();
+    const flow: any = (procData as any)?.steps || { nodes: [], edges: [] };
+    const nodes: any[] = Array.isArray(flow.nodes) ? flow.nodes : [];
+
+    const { data: runRow, error } = await supabase.from('process_runs').insert({
       process_id: process.id,
+      title: runName.trim(),
       field_values: {
         _run_name: runName.trim(),
         _initiator_department: selectedDepartment,
         ...fieldValues,
       },
       started_by: user.id,
-      status: 'pending',
-    });
+      status: nodes.length > 0 ? 'in_progress' : 'pending',
+    }).select().single();
+
+    if (!error && runRow && nodes.length > 0) {
+      // Order nodes by edges: BFS from 'start'
+      const edges: any[] = Array.isArray(flow.edges) ? flow.edges : [];
+      const order: any[] = [];
+      const visited = new Set<string>();
+      const startNode = nodes.find(n => n.data?.stepType === 'start') || nodes[0];
+      const queue = [startNode];
+      while (queue.length) {
+        const cur = queue.shift();
+        if (!cur || visited.has(cur.id)) continue;
+        visited.add(cur.id);
+        order.push(cur);
+        const next = edges.filter(e => e.source === cur.id).map(e => nodes.find(n => n.id === e.target)).filter(Boolean);
+        queue.push(...next);
+      }
+      // Include any orphan nodes at the end
+      nodes.forEach(n => { if (!visited.has(n.id)) order.push(n); });
+
+      const stepsRows = order
+        .filter(n => n.data?.stepType !== 'start' && n.data?.stepType !== 'end')
+        .map((n, idx) => {
+          const slaHours = n.data?.slaHours as number | null | undefined;
+          return {
+            run_id: runRow.id,
+            step_id: n.id,
+            step_type: n.data?.stepType || 'task',
+            step_label: n.data?.label || null,
+            assignee_id: n.data?.assigneeUserId || user.id,
+            status: idx === 0 ? 'in_progress' : 'pending',
+            started_at: idx === 0 ? new Date().toISOString() : null,
+            sla_deadline: slaHours ? new Date(Date.now() + slaHours * 3600_000).toISOString() : null,
+            sort_order: idx,
+          };
+        });
+
+      if (stepsRows.length > 0) {
+        await supabase.from('process_run_steps').insert(stepsRows);
+        await supabase.from('process_runs').update({ current_step_id: stepsRows[0].step_id }).eq('id', runRow.id);
+      }
+    }
 
     setSubmitting(false);
 

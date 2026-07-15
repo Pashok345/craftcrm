@@ -892,33 +892,104 @@ export type Database = {
           },
         ]
       }
+      process_run_steps: {
+        Row: {
+          assignee_id: string | null
+          comment: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          run_id: string
+          sla_deadline: string | null
+          sort_order: number
+          started_at: string | null
+          status: string
+          step_id: string
+          step_label: string | null
+          step_type: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          comment?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          run_id: string
+          sla_deadline?: string | null
+          sort_order?: number
+          started_at?: string | null
+          status?: string
+          step_id: string
+          step_label?: string | null
+          step_type?: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          comment?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          run_id?: string
+          sla_deadline?: string | null
+          sort_order?: number
+          started_at?: string | null
+          status?: string
+          step_id?: string
+          step_label?: string | null
+          step_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_run_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "process_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_runs: {
         Row: {
           completed_at: string | null
+          current_step_id: string | null
           field_values: Json
           id: string
+          priority: string
           process_id: string
+          sla_deadline: string | null
           started_at: string
           started_by: string
           status: string
+          title: string | null
         }
         Insert: {
           completed_at?: string | null
+          current_step_id?: string | null
           field_values?: Json
           id?: string
+          priority?: string
           process_id: string
+          sla_deadline?: string | null
           started_at?: string
           started_by: string
           status?: string
+          title?: string | null
         }
         Update: {
           completed_at?: string | null
+          current_step_id?: string | null
           field_values?: Json
           id?: string
+          priority?: string
           process_id?: string
+          sla_deadline?: string | null
           started_at?: string
           started_by?: string
           status?: string
+          title?: string | null
         }
         Relationships: [
           {
@@ -1009,7 +1080,10 @@ export type Database = {
           department_id: string | null
           description: string | null
           id: string
+          priority: string
+          sla_hours: number | null
           status: string
+          steps: Json
           title: string
           type_id: string | null
           updated_at: string
@@ -1021,7 +1095,10 @@ export type Database = {
           department_id?: string | null
           description?: string | null
           id?: string
+          priority?: string
+          sla_hours?: number | null
           status?: string
+          steps?: Json
           title: string
           type_id?: string | null
           updated_at?: string
@@ -1033,7 +1110,10 @@ export type Database = {
           department_id?: string | null
           description?: string | null
           id?: string
+          priority?: string
+          sla_hours?: number | null
           status?: string
+          steps?: Json
           title?: string
           type_id?: string | null
           updated_at?: string

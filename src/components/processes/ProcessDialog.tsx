@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ProcessStepBuilder, ProcessFlow } from './ProcessStepBuilder';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -108,6 +110,7 @@ export const ProcessDialog = ({
   const [departmentId, setDepartmentId] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [fields, setFields] = useState<ProcessField[]>([]);
+  const [flow, setFlow] = useState<ProcessFlow>({ nodes: [], edges: [] });
   const [newTypeName, setNewTypeName] = useState('');
   const [newDeptName, setNewDeptName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -145,6 +148,15 @@ export const ProcessDialog = ({
   };
 
   useEffect(() => {
+    const loadFlow = async () => {
+      if (process?.id) {
+        const { data } = await supabase.from('processes').select('steps').eq('id', process.id).maybeSingle();
+        const s = (data as any)?.steps;
+        setFlow(s && s.nodes ? s : { nodes: [], edges: [] });
+      } else {
+        setFlow({ nodes: [], edges: [] });
+      }
+    };
     if (process) {
       setTitle(process.title);
       setDescription(process.description || '');
@@ -160,6 +172,7 @@ export const ProcessDialog = ({
       setCategoryId('');
       setFields([]);
     }
+    if (open) loadFlow();
   }, [process, open]);
 
 
@@ -226,6 +239,7 @@ export const ProcessDialog = ({
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
+            steps: flow as any,
           })
           .eq('id', process.id);
         if (error) throw error;
@@ -239,6 +253,7 @@ export const ProcessDialog = ({
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
+            steps: flow as any,
             created_by: user.id,
           })
           .select()
@@ -302,7 +317,7 @@ export const ProcessDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {process ? t('editProcess') : t('createProcess')}
@@ -471,6 +486,17 @@ export const ProcessDialog = ({
               </div>
             ))}
           </div>
+
+          {/* Visual step builder */}
+          <div className="space-y-2 pt-2">
+            <Label>{t('processSteps') || 'Кроки процесу (візуальний конструктор)'}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t('processStepsHint') || 'Створіть послідовність кроків: задачі, погодження, умови та автодії. Зʼєднайте блоки лініями.'}
+            </p>
+            <ProcessStepBuilder value={flow} onChange={setFlow} />
+          </div>
+
+
 
           {/* Actions */}
           <div className="flex justify-between pt-4">
