@@ -320,6 +320,30 @@ export const ProcessDialog = ({
             />
           </div>
 
+          {/* Category */}
+          {categories.length > 0 && (
+            <div className="space-y-2">
+              <Label>{t('category') || 'Категорія'}</Label>
+              <Select value={categoryId || '__none__'} onValueChange={(v) => setCategoryId(v === '__none__' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('selectCategory') || 'Оберіть категорію'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('uncategorized') || 'Без категорії'}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+
           {/* Type */}
           <div className="space-y-2">
             <Label>{t('processType')}</Label>
