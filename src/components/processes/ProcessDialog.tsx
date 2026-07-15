@@ -225,6 +225,7 @@ export const ProcessDialog = ({
             description: description.trim() || null,
             type_id: typeId || null,
             department_id: departmentId || null,
+            category_id: categoryId || null,
           })
           .eq('id', process.id);
         if (error) throw error;
@@ -237,6 +238,7 @@ export const ProcessDialog = ({
             description: description.trim() || null,
             type_id: typeId || null,
             department_id: departmentId || null,
+            category_id: categoryId || null,
             created_by: user.id,
           })
           .select()
