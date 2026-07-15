@@ -253,6 +253,7 @@ export const ProcessDialog = ({
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
+            steps: flow as any,
             created_by: user.id,
           })
           .select()
