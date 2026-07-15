@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ProcessStepBuilder, ProcessFlow } from './ProcessStepBuilder';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
