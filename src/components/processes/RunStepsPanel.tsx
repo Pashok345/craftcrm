@@ -96,6 +96,40 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     }
   };
 
+  const activateNext = async (afterSortOrder: number, currentSteps: Step[]) => {
+    // Find & activate next pending step; if it's condition/action, auto-execute and continue.
+    let cursor = afterSortOrder;
+    // work on a mutable copy so subsequent iterations see updates
+    const work = [...currentSteps];
+    while (true) {
+      const next = work.find(s => s.sort_order > cursor && s.status === 'pending');
+      if (!next) return;
+      await supabase.from('process_run_steps').update({
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+      }).eq('id', next.id);
+      await supabase.from('process_runs').update({ current_step_id: next.step_id }).eq('id', runId);
+
+      if (next.step_type === 'condition' || next.step_type === 'action') {
+        // Auto-execute: mark completed with a system note
+        const note =
+          next.step_type === 'condition'
+            ? 'Автовиконання: умова прийнята за замовчуванням'
+            : 'Автовиконання: дію виконано';
+        await supabase.from('process_run_steps').update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          comment: note,
+        }).eq('id', next.id);
+        const idx = work.findIndex(s => s.id === next.id);
+        if (idx >= 0) work[idx] = { ...work[idx], status: 'completed' };
+        cursor = next.sort_order;
+        continue;
+      }
+      return;
+    }
+  };
+
   const act = async (step: Step, newStatus: 'approved' | 'rejected' | 'returned' | 'completed') => {
     if (!user) return;
     setBusy(step.id);
@@ -109,16 +143,8 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     if (error) {
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      // Activate next steps (pending -> in_progress) — simple sequential
       if (newStatus === 'approved' || newStatus === 'completed') {
-        const next = steps.find(s => s.sort_order > step.sort_order && s.status === 'pending');
-        if (next) {
-          await supabase.from('process_run_steps').update({
-            status: 'in_progress',
-            started_at: new Date().toISOString(),
-          }).eq('id', next.id);
-          await supabase.from('process_runs').update({ current_step_id: next.step_id }).eq('id', runId);
-        }
+        await activateNext(step.sort_order, steps);
       }
       await advanceRun();
       await load();
@@ -126,6 +152,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     }
     setBusy(null);
   };
+
 
   const initials = (n?: string) => (n || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 
