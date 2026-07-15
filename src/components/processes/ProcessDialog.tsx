@@ -148,6 +148,15 @@ export const ProcessDialog = ({
   };
 
   useEffect(() => {
+    const loadFlow = async () => {
+      if (process?.id) {
+        const { data } = await supabase.from('processes').select('steps').eq('id', process.id).maybeSingle();
+        const s = (data as any)?.steps;
+        setFlow(s && s.nodes ? s : { nodes: [], edges: [] });
+      } else {
+        setFlow({ nodes: [], edges: [] });
+      }
+    };
     if (process) {
       setTitle(process.title);
       setDescription(process.description || '');
@@ -163,6 +172,7 @@ export const ProcessDialog = ({
       setCategoryId('');
       setFields([]);
     }
+    if (open) loadFlow();
   }, [process, open]);
 
 
