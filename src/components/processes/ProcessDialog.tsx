@@ -110,6 +110,7 @@ export const ProcessDialog = ({
   const [departmentId, setDepartmentId] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [fields, setFields] = useState<ProcessField[]>([]);
+  const [flow, setFlow] = useState<ProcessFlow>({ nodes: [], edges: [] });
   const [newTypeName, setNewTypeName] = useState('');
   const [newDeptName, setNewDeptName] = useState('');
   const [saving, setSaving] = useState(false);
