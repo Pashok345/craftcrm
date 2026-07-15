@@ -58,7 +58,14 @@ interface Process {
   description: string | null;
   type_id: string | null;
   department_id: string | null;
+  category_id?: string | null;
   process_fields?: ProcessField[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface ProcessDialogProps {
@@ -67,6 +74,7 @@ interface ProcessDialogProps {
   process: Process | null;
   processTypes: ProcessType[];
   departments: Department[];
+  categories?: Category[];
   onSaved: () => void;
   onTypesChange: () => void;
   onDepartmentsChange: () => void;
