@@ -254,16 +254,55 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
             </Button>
           </div>
 
+          <p className="text-[11px] text-muted-foreground -mt-1 leading-snug">
+            {STEP_META[selectedNode.data.stepType].hint}
+          </p>
+
           <div className="space-y-1.5">
-            <Label className="text-xs">{t('name') || 'Назва'}</Label>
+            <Label className="text-xs">{t('name') || 'Назва кроку'}</Label>
             <Input
               value={selectedNode.data.label}
               onChange={(e) => updateSelected({ label: e.target.value })}
+              placeholder="Напр. Перевірити рахунок"
             />
           </div>
 
+          {selectedNode.data.stepType !== 'start' && selectedNode.data.stepType !== 'end' && (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepDescription') || 'Опис кроку'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.description || ''}
+                  onChange={(e) => updateSelected({ description: e.target.value })}
+                  placeholder="Що саме потрібно зробити на цьому кроці"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepRequirements') || 'Вимоги / вхідні дані'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.requirements || ''}
+                  onChange={(e) => updateSelected({ requirements: e.target.value })}
+                  placeholder="Що має бути в наявності до старту кроку (файли, згоди, дані)"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepResult') || 'Очікуваний результат'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.resultDescription || ''}
+                  onChange={(e) => updateSelected({ resultDescription: e.target.value })}
+                  placeholder="Який результат вважається успішним завершенням кроку"
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-1.5">
-            <Label className="text-xs">{t('color') || 'Колір'}</Label>
+            <Label className="text-xs">{t('color') || 'Колір блока'}</Label>
             <input
               type="color"
               value={selectedNode.data.color || STEP_META[selectedNode.data.stepType].color}
@@ -290,44 +329,66 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">SLA ({t('hours') || 'годин'})</Label>
+                <Label className="text-xs">
+                  {t('deadlineHours') || 'Термін виконання (годин)'}
+                </Label>
                 <Input
                   type="number"
                   min={0}
                   value={selectedNode.data.slaHours ?? ''}
                   onChange={(e) => updateSelected({ slaHours: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="Напр. 24"
                 />
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  За скільки годин крок має бути завершений після старту. Якщо час вичерпано — виконавець отримає нагадування.
+                </p>
               </div>
             </>
           )}
 
           {selectedNode.data.stepType === 'condition' && (
             <div className="space-y-1.5">
-              <Label className="text-xs">{t('conditionExpression') || 'Умова (напр. amount > 50000)'}</Label>
+              <Label className="text-xs">{t('conditionExpression') || 'Умова розгалуження'}</Label>
               <Input
                 value={selectedNode.data.conditionExpression || ''}
                 onChange={(e) => updateSelected({ conditionExpression: e.target.value })}
                 placeholder="amount > 50000"
               />
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                Формула на основі полів запуску. Якщо true — процес піде далі за схемою.
+              </p>
             </div>
           )}
 
           {selectedNode.data.stepType === 'action' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t('actionType') || 'Тип дії'}</Label>
-              <Select
-                value={selectedNode.data.actionType || 'notify'}
-                onValueChange={(v) => updateSelected({ actionType: v as StepNodeData['actionType'] })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="notify">{t('sendNotification') || 'Надіслати сповіщення'}</SelectItem>
-                  <SelectItem value="create_task">{t('createTaskAction') || 'Створити задачу'}</SelectItem>
-                  <SelectItem value="send_email">{t('sendEmail') || 'Надіслати email'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('actionType') || 'Тип автоматичної дії'}</Label>
+                <Select
+                  value={selectedNode.data.actionType || 'notify'}
+                  onValueChange={(v) => updateSelected({ actionType: v as StepNodeData['actionType'] })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="notify">{t('sendNotification') || 'Надіслати сповіщення'}</SelectItem>
+                    <SelectItem value="create_task">{t('createTaskAction') || 'Створити задачу'}</SelectItem>
+                    <SelectItem value="send_email">{t('sendEmail') || 'Надіслати email'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('actionConfig') || 'Параметри дії'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.actionConfig || ''}
+                  onChange={(e) => updateSelected({ actionConfig: e.target.value })}
+                  placeholder="Текст листа / повідомлення або назва задачі"
+                />
+              </div>
+            </>
           )}
+
+
 
           {selectedNode.id !== 'start' && (
             <Button
