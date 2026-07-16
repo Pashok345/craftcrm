@@ -42,9 +42,13 @@ export interface StepNodeData extends Record<string, unknown> {
   slaHours?: number | null;
   color?: string;
   description?: string;
+  requirements?: string;
+  resultDescription?: string;
   conditionExpression?: string;
   actionType?: 'create_task' | 'send_email' | 'notify';
+  actionConfig?: string;
 }
+
 
 export interface ProcessFlow {
   nodes: Node<StepNodeData>[];
