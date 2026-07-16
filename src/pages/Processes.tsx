@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -6,15 +7,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack } from 'lucide-react';
-import { ProcessDialog } from '@/components/processes/ProcessDialog';
 import { ProcessCard } from '@/components/processes/ProcessCard';
+
 import {
   ProcessCategoriesSidebar,
   ProcessCategory,
 } from '@/components/processes/ProcessCategoriesSidebar';
 import { ProcessTemplatesDialog } from '@/components/processes/ProcessTemplatesDialog';
 import { ActiveRunsList } from '@/components/processes/ActiveRunsList';
-import { toast } from '@/hooks/use-toast';
+
 
 interface ProcessType {
   id: string;
@@ -53,12 +54,12 @@ const Processes = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [categories, setCategories] = useState<ProcessCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [editingProcess, setEditingProcess] = useState<Process | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [tab, setTab] = useState<string>('my');
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     fetchData();
@@ -111,20 +112,9 @@ const Processes = () => {
   };
 
   const handleEdit = (process: Process) => {
-    setEditingProcess(process);
-    setDialogOpen(true);
+    navigate(`/processes/${process.id}/edit`);
   };
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingProcess(null);
-  };
-
-  const handleSaved = () => {
-    handleDialogClose();
-    fetchData();
-    toast({ title: editingProcess ? t('processUpdated') : t('processCreated') });
-  };
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -169,7 +159,8 @@ const Processes = () => {
             <Sparkles className="h-4 w-4 mr-2" />
             {t('createFromTemplate') || 'З шаблону'}
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => navigate('/processes/new')}>
+
             <Plus className="h-4 w-4 mr-2" />
             {t('createProcess')}
           </Button>
@@ -232,10 +223,11 @@ const Processes = () => {
                             <Sparkles className="h-4 w-4 mr-2" />
                             {t('createFromTemplate') || 'З шаблону'}
                           </Button>
-                          <Button onClick={() => setDialogOpen(true)}>
+                          <Button onClick={() => navigate('/processes/new')}>
                             <Plus className="h-4 w-4 mr-2" />
                             {t('createProcess')}
                           </Button>
+
                         </div>
                       )}
                     </CardContent>
@@ -273,21 +265,8 @@ const Processes = () => {
         </TabsContent>
       </Tabs>
 
-      <ProcessDialog
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        process={editingProcess}
-        processTypes={processTypes}
-        departments={departments}
-        categories={categories}
-        onSaved={handleSaved}
-        onTypesChange={fetchData}
-        onDepartmentsChange={fetchData}
-        onDeleted={() => {
-          handleDialogClose();
-          fetchData();
-        }}
-      />
+
+
 
       <ProcessTemplatesDialog
         open={templatesOpen}

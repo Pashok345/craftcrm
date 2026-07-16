@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -42,9 +44,13 @@ export interface StepNodeData extends Record<string, unknown> {
   slaHours?: number | null;
   color?: string;
   description?: string;
+  requirements?: string;
+  resultDescription?: string;
   conditionExpression?: string;
   actionType?: 'create_task' | 'send_email' | 'notify';
+  actionConfig?: string;
 }
+
 
 export interface ProcessFlow {
   nodes: Node<StepNodeData>[];
@@ -53,15 +59,16 @@ export interface ProcessFlow {
 
 const STEP_META: Record<
   StepNodeData['stepType'],
-  { label: string; color: string; icon: typeof Play }
+  { label: string; color: string; icon: typeof Play; hint: string }
 > = {
-  start: { label: 'Початок', color: '#22c55e', icon: Play },
-  task: { label: 'Задача', color: '#3b82f6', icon: FileText },
-  approval: { label: 'Погодження', color: '#a855f7', icon: UserCheck },
-  condition: { label: 'Умова', color: '#f59e0b', icon: GitBranch },
-  action: { label: 'Дія', color: '#06b6d4', icon: Zap },
-  end: { label: 'Кінець', color: '#ef4444', icon: Flag },
+  start: { label: 'Початок', color: '#22c55e', icon: Play, hint: 'Точка входу — з неї стартує процес.' },
+  task: { label: 'Задача', color: '#3b82f6', icon: FileText, hint: 'Ручний крок: виконавець робить роботу і позначає крок завершеним.' },
+  approval: { label: 'Погодження', color: '#a855f7', icon: UserCheck, hint: 'Виконавець приймає рішення: погодити / відхилити / повернути на доопрацювання.' },
+  condition: { label: 'Умова', color: '#f59e0b', icon: GitBranch, hint: 'Автоматична розгалузка за формулою (напр. amount > 50000).' },
+  action: { label: 'Дія', color: '#06b6d4', icon: Zap, hint: 'Автоматична дія: сповіщення, лист, створення задачі.' },
+  end: { label: 'Кінець', color: '#ef4444', icon: Flag, hint: 'Завершення процесу.' },
 };
+
 
 function StepNode({ data, selected }: { data: StepNodeData; selected: boolean }) {
   const meta = STEP_META[data.stepType] || STEP_META.task;
@@ -192,19 +199,26 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              title={meta.hint}
+              className="w-full justify-start h-auto py-2"
               onClick={() => addNode(k)}
             >
               <span
-                className="h-2.5 w-2.5 rounded-full mr-2"
+                className="h-2.5 w-2.5 rounded-full mr-2 shrink-0"
                 style={{ backgroundColor: meta.color }}
               />
-              <Icon className="h-3.5 w-3.5 mr-1.5" />
-              {meta.label}
+              <Icon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+              <span className="text-left">
+                <span className="block leading-tight">{meta.label}</span>
+                <span className="block text-[10px] font-normal text-muted-foreground leading-tight mt-0.5 whitespace-normal">
+                  {meta.hint}
+                </span>
+              </span>
             </Button>
           );
         })}
       </div>
+
 
       {/* Canvas */}
       <div className="flex-1 min-w-0 relative">
@@ -240,16 +254,55 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
             </Button>
           </div>
 
+          <p className="text-[11px] text-muted-foreground -mt-1 leading-snug">
+            {STEP_META[selectedNode.data.stepType].hint}
+          </p>
+
           <div className="space-y-1.5">
-            <Label className="text-xs">{t('name') || 'Назва'}</Label>
+            <Label className="text-xs">{t('name') || 'Назва кроку'}</Label>
             <Input
               value={selectedNode.data.label}
               onChange={(e) => updateSelected({ label: e.target.value })}
+              placeholder="Напр. Перевірити рахунок"
             />
           </div>
 
+          {selectedNode.data.stepType !== 'start' && selectedNode.data.stepType !== 'end' && (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepDescription') || 'Опис кроку'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.description || ''}
+                  onChange={(e) => updateSelected({ description: e.target.value })}
+                  placeholder="Що саме потрібно зробити на цьому кроці"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepRequirements') || 'Вимоги / вхідні дані'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.requirements || ''}
+                  onChange={(e) => updateSelected({ requirements: e.target.value })}
+                  placeholder="Що має бути в наявності до старту кроку (файли, згоди, дані)"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('stepResult') || 'Очікуваний результат'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.resultDescription || ''}
+                  onChange={(e) => updateSelected({ resultDescription: e.target.value })}
+                  placeholder="Який результат вважається успішним завершенням кроку"
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-1.5">
-            <Label className="text-xs">{t('color') || 'Колір'}</Label>
+            <Label className="text-xs">{t('color') || 'Колір блока'}</Label>
             <input
               type="color"
               value={selectedNode.data.color || STEP_META[selectedNode.data.stepType].color}
@@ -276,44 +329,66 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">SLA ({t('hours') || 'годин'})</Label>
+                <Label className="text-xs">
+                  {t('deadlineHours') || 'Термін виконання (годин)'}
+                </Label>
                 <Input
                   type="number"
                   min={0}
                   value={selectedNode.data.slaHours ?? ''}
                   onChange={(e) => updateSelected({ slaHours: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="Напр. 24"
                 />
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  За скільки годин крок має бути завершений після старту. Якщо час вичерпано — виконавець отримає нагадування.
+                </p>
               </div>
             </>
           )}
 
           {selectedNode.data.stepType === 'condition' && (
             <div className="space-y-1.5">
-              <Label className="text-xs">{t('conditionExpression') || 'Умова (напр. amount > 50000)'}</Label>
+              <Label className="text-xs">{t('conditionExpression') || 'Умова розгалуження'}</Label>
               <Input
                 value={selectedNode.data.conditionExpression || ''}
                 onChange={(e) => updateSelected({ conditionExpression: e.target.value })}
                 placeholder="amount > 50000"
               />
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                Формула на основі полів запуску. Якщо true — процес піде далі за схемою.
+              </p>
             </div>
           )}
 
           {selectedNode.data.stepType === 'action' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t('actionType') || 'Тип дії'}</Label>
-              <Select
-                value={selectedNode.data.actionType || 'notify'}
-                onValueChange={(v) => updateSelected({ actionType: v as StepNodeData['actionType'] })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="notify">{t('sendNotification') || 'Надіслати сповіщення'}</SelectItem>
-                  <SelectItem value="create_task">{t('createTaskAction') || 'Створити задачу'}</SelectItem>
-                  <SelectItem value="send_email">{t('sendEmail') || 'Надіслати email'}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('actionType') || 'Тип автоматичної дії'}</Label>
+                <Select
+                  value={selectedNode.data.actionType || 'notify'}
+                  onValueChange={(v) => updateSelected({ actionType: v as StepNodeData['actionType'] })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="notify">{t('sendNotification') || 'Надіслати сповіщення'}</SelectItem>
+                    <SelectItem value="create_task">{t('createTaskAction') || 'Створити задачу'}</SelectItem>
+                    <SelectItem value="send_email">{t('sendEmail') || 'Надіслати email'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('actionConfig') || 'Параметри дії'}</Label>
+                <Textarea
+                  rows={2}
+                  value={selectedNode.data.actionConfig || ''}
+                  onChange={(e) => updateSelected({ actionConfig: e.target.value })}
+                  placeholder="Текст листа / повідомлення або назва задачі"
+                />
+              </div>
+            </>
           )}
+
+
 
           {selectedNode.id !== 'start' && (
             <Button
