@@ -54,12 +54,12 @@ const Processes = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [categories, setCategories] = useState<ProcessCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [editingProcess, setEditingProcess] = useState<Process | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [tab, setTab] = useState<string>('my');
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     fetchData();
