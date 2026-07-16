@@ -159,7 +159,8 @@ const Processes = () => {
             <Sparkles className="h-4 w-4 mr-2" />
             {t('createFromTemplate') || 'З шаблону'}
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => navigate('/processes/new')}>
+
             <Plus className="h-4 w-4 mr-2" />
             {t('createProcess')}
           </Button>
