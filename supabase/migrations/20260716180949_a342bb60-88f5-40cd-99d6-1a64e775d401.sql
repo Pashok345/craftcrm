@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Users can update their own membership" ON public.chat_members;
