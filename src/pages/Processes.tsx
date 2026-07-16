@@ -265,21 +265,8 @@ const Processes = () => {
         </TabsContent>
       </Tabs>
 
-      <ProcessDialog
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        process={editingProcess}
-        processTypes={processTypes}
-        departments={departments}
-        categories={categories}
-        onSaved={handleSaved}
-        onTypesChange={fetchData}
-        onDepartmentsChange={fetchData}
-        onDeleted={() => {
-          handleDialogClose();
-          fetchData();
-        }}
-      />
+
+
 
       <ProcessTemplatesDialog
         open={templatesOpen}
