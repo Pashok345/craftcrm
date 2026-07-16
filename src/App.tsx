@@ -22,6 +22,8 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import Processes from "./pages/Processes";
+import ProcessEditor from "./pages/ProcessEditor";
+
 import RunProcess from "./pages/RunProcess";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 import Analytics from "./pages/Analytics";
