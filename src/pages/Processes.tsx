@@ -112,20 +112,9 @@ const Processes = () => {
   };
 
   const handleEdit = (process: Process) => {
-    setEditingProcess(process);
-    setDialogOpen(true);
+    navigate(`/processes/${process.id}/edit`);
   };
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingProcess(null);
-  };
-
-  const handleSaved = () => {
-    handleDialogClose();
-    fetchData();
-    toast({ title: editingProcess ? t('processUpdated') : t('processCreated') });
-  };
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
