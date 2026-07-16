@@ -57,6 +57,9 @@ const App = () => (
             <Route path="/projects/new" element={<CreateProject />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/processes" element={<Processes />} />
+            <Route path="/processes/new" element={<ProcessEditor />} />
+            <Route path="/processes/:id/edit" element={<ProcessEditor />} />
+
             <Route path="/processes/run/:id" element={<RunProcess />} />
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
             <Route path="/analytics" element={<Analytics />} />
