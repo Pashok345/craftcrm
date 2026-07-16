@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack } from 'lucide-react';
-import { ProcessDialog } from '@/components/processes/ProcessDialog';
 import { ProcessCard } from '@/components/processes/ProcessCard';
+
 import {
   ProcessCategoriesSidebar,
   ProcessCategory,
