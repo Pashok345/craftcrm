@@ -197,19 +197,26 @@ export function ProcessStepBuilder({ value, onChange }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="w-full justify-start"
+              title={meta.hint}
+              className="w-full justify-start h-auto py-2"
               onClick={() => addNode(k)}
             >
               <span
-                className="h-2.5 w-2.5 rounded-full mr-2"
+                className="h-2.5 w-2.5 rounded-full mr-2 shrink-0"
                 style={{ backgroundColor: meta.color }}
               />
-              <Icon className="h-3.5 w-3.5 mr-1.5" />
-              {meta.label}
+              <Icon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+              <span className="text-left">
+                <span className="block leading-tight">{meta.label}</span>
+                <span className="block text-[10px] font-normal text-muted-foreground leading-tight mt-0.5 whitespace-normal">
+                  {meta.hint}
+                </span>
+              </span>
             </Button>
           );
         })}
       </div>
+
 
       {/* Canvas */}
       <div className="flex-1 min-w-0 relative">
