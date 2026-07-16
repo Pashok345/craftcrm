@@ -57,15 +57,16 @@ export interface ProcessFlow {
 
 const STEP_META: Record<
   StepNodeData['stepType'],
-  { label: string; color: string; icon: typeof Play }
+  { label: string; color: string; icon: typeof Play; hint: string }
 > = {
-  start: { label: 'Початок', color: '#22c55e', icon: Play },
-  task: { label: 'Задача', color: '#3b82f6', icon: FileText },
-  approval: { label: 'Погодження', color: '#a855f7', icon: UserCheck },
-  condition: { label: 'Умова', color: '#f59e0b', icon: GitBranch },
-  action: { label: 'Дія', color: '#06b6d4', icon: Zap },
-  end: { label: 'Кінець', color: '#ef4444', icon: Flag },
+  start: { label: 'Початок', color: '#22c55e', icon: Play, hint: 'Точка входу — з неї стартує процес.' },
+  task: { label: 'Задача', color: '#3b82f6', icon: FileText, hint: 'Ручний крок: виконавець робить роботу і позначає крок завершеним.' },
+  approval: { label: 'Погодження', color: '#a855f7', icon: UserCheck, hint: 'Виконавець приймає рішення: погодити / відхилити / повернути на доопрацювання.' },
+  condition: { label: 'Умова', color: '#f59e0b', icon: GitBranch, hint: 'Автоматична розгалузка за формулою (напр. amount > 50000).' },
+  action: { label: 'Дія', color: '#06b6d4', icon: Zap, hint: 'Автоматична дія: сповіщення, лист, створення задачі.' },
+  end: { label: 'Кінець', color: '#ef4444', icon: Flag, hint: 'Завершення процесу.' },
 };
+
 
 function StepNode({ data, selected }: { data: StepNodeData; selected: boolean }) {
   const meta = STEP_META[data.stepType] || STEP_META.task;
