@@ -31,6 +31,7 @@ const FIELD_TYPES = [
   { value: 'text', label: 'fieldTypeText' },
   { value: 'textarea', label: 'fieldTypeTextarea' },
   { value: 'select', label: 'fieldTypeSelect' },
+  { value: 'file', label: 'fieldTypeFile' },
 ];
 
 const ProcessEditor = () => {
