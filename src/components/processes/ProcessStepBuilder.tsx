@@ -57,16 +57,19 @@ export interface ProcessFlow {
   edges: Edge[];
 }
 
-const STEP_META: Record<
-  StepNodeData['stepType'],
-  { label: string; color: string; icon: typeof Play; hint: string }
-> = {
-  start: { label: 'Початок', color: '#22c55e', icon: Play, hint: 'Точка входу — з неї стартує процес.' },
-  task: { label: 'Задача', color: '#3b82f6', icon: FileText, hint: 'Ручний крок: виконавець робить роботу і позначає крок завершеним.' },
-  approval: { label: 'Погодження', color: '#a855f7', icon: UserCheck, hint: 'Виконавець приймає рішення: погодити / відхилити / повернути на доопрацювання.' },
-  condition: { label: 'Умова', color: '#f59e0b', icon: GitBranch, hint: 'Автоматична розгалузка за формулою (напр. amount > 50000).' },
-  action: { label: 'Дія', color: '#06b6d4', icon: Zap, hint: 'Автоматична дія: сповіщення, лист, створення задачі.' },
-  end: { label: 'Кінець', color: '#ef4444', icon: Flag, hint: 'Завершення процесу.' },
+const useStepMeta = () => {
+  const { t } = useLanguage();
+  return {
+    start:     { label: t('stepTypeStart'),     color: '#22c55e', icon: Play,       hint: t('stepHintStart') },
+    task:      { label: t('stepTypeTask'),      color: '#3b82f6', icon: FileText,   hint: t('stepHintTask') },
+    approval:  { label: t('stepTypeApproval'),  color: '#a855f7', icon: UserCheck,  hint: t('stepHintApproval') },
+    condition: { label: t('stepTypeCondition'), color: '#f59e0b', icon: GitBranch,  hint: t('stepHintCondition') },
+    action:    { label: t('stepTypeAction'),    color: '#06b6d4', icon: Zap,        hint: t('stepHintAction') },
+    end:       { label: t('stepTypeEnd'),       color: '#ef4444', icon: Flag,       hint: t('stepHintEnd') },
+  } as Record<StepNodeData['stepType'], { label: string; color: string; icon: typeof Play; hint: string }>;
+};
+const STATIC_COLORS: Record<StepNodeData['stepType'], string> = {
+  start: '#22c55e', task: '#3b82f6', approval: '#a855f7', condition: '#f59e0b', action: '#06b6d4', end: '#ef4444',
 };
 
 
