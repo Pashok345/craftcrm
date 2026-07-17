@@ -401,7 +401,6 @@ export const translations: Translations = {
   fieldTypeSelect: { ru: 'Список выбора', en: 'Select list', uk: 'Список вибору' },
   selectOptionsPlaceholder: { ru: 'Опции через запятую', en: 'Options comma-separated', uk: 'Опції через кому' },
   fieldTypeFile: { ru: 'Файл', en: 'File', uk: 'Файл' },
-  uploadFile: { ru: 'Загрузить файл', en: 'Upload file', uk: 'Завантажити файл' },
   replaceFile: { ru: 'Заменить файл', en: 'Replace file', uk: 'Замінити файл' },
   stepDescription: { ru: 'Описание шага', en: 'Step description', uk: 'Опис кроку' },
   stepDescriptionPlaceholder: { ru: 'Что именно нужно сделать на этом шаге', en: 'What exactly needs to be done at this step', uk: 'Що саме потрібно зробити на цьому кроці' },
