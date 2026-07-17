@@ -192,6 +192,15 @@ export const RunProcessDialog = ({
     setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
   };
 
+  const uploadFileField = async (field: ProcessField, file: File) => {
+    if (!user) return;
+    const path = `${user.id}/${process.id}/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('process-attachments').upload(path, file);
+    if (!error) {
+      updateFieldValue(field.name, path);
+    }
+  };
+
   const renderField = (field: ProcessField) => {
     switch (field.field_type) {
       case 'textarea':
@@ -220,6 +229,23 @@ export const RunProcessDialog = ({
               ))}
             </SelectContent>
           </Select>
+        );
+      case 'file':
+        return (
+          <div className="space-y-1">
+            <Input
+              type="file"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadFileField(field, f);
+              }}
+            />
+            {fieldValues[field.name] && (
+              <p className="text-xs text-muted-foreground truncate">
+                {fieldValues[field.name].split('/').pop()}
+              </p>
+            )}
+          </div>
         );
       default:
         return (
