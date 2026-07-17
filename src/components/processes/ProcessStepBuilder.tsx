@@ -57,19 +57,16 @@ export interface ProcessFlow {
   edges: Edge[];
 }
 
-const useStepMeta = () => {
-  const { t } = useLanguage();
-  return {
-    start:     { label: t('stepTypeStart'),     color: '#22c55e', icon: Play,       hint: t('stepHintStart') },
-    task:      { label: t('stepTypeTask'),      color: '#3b82f6', icon: FileText,   hint: t('stepHintTask') },
-    approval:  { label: t('stepTypeApproval'),  color: '#a855f7', icon: UserCheck,  hint: t('stepHintApproval') },
-    condition: { label: t('stepTypeCondition'), color: '#f59e0b', icon: GitBranch,  hint: t('stepHintCondition') },
-    action:    { label: t('stepTypeAction'),    color: '#06b6d4', icon: Zap,        hint: t('stepHintAction') },
-    end:       { label: t('stepTypeEnd'),       color: '#ef4444', icon: Flag,       hint: t('stepHintEnd') },
-  } as Record<StepNodeData['stepType'], { label: string; color: string; icon: typeof Play; hint: string }>;
-};
-const STATIC_COLORS: Record<StepNodeData['stepType'], string> = {
-  start: '#22c55e', task: '#3b82f6', approval: '#a855f7', condition: '#f59e0b', action: '#06b6d4', end: '#ef4444',
+const STEP_META: Record<
+  StepNodeData['stepType'],
+  { labelKey: string; hintKey: string; color: string; icon: typeof Play }
+> = {
+  start:     { labelKey: 'stepTypeStart',     hintKey: 'stepHintStart',     color: '#22c55e', icon: Play },
+  task:      { labelKey: 'stepTypeTask',      hintKey: 'stepHintTask',      color: '#3b82f6', icon: FileText },
+  approval:  { labelKey: 'stepTypeApproval',  hintKey: 'stepHintApproval',  color: '#a855f7', icon: UserCheck },
+  condition: { labelKey: 'stepTypeCondition', hintKey: 'stepHintCondition', color: '#f59e0b', icon: GitBranch },
+  action:    { labelKey: 'stepTypeAction',    hintKey: 'stepHintAction',    color: '#06b6d4', icon: Zap },
+  end:       { labelKey: 'stepTypeEnd',       hintKey: 'stepHintEnd',       color: '#ef4444', icon: Flag },
 };
 
 
