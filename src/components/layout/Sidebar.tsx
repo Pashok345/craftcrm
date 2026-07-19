@@ -10,8 +10,10 @@ import {
   GitBranch,
   BarChart3,
   TrendingUp,
-  PenSquare
+  PenSquare,
+  Settings as SettingsIcon
 } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -30,6 +32,8 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   
+  const { isAdmin } = useUserRole();
+
   const menuItems = [
     { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
     { icon: Folder, label: t('projects'), path: '/projects' },
@@ -40,6 +44,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
     { icon: PenSquare, label: t('whiteboards'), path: '/whiteboards' },
     { icon: BarChart3, label: t('analytics'), path: '/analytics' },
     { icon: Users, label: t('users'), path: '/users' },
+    ...(isAdmin ? [{ icon: SettingsIcon, label: t('settings'), path: '/settings' }] : []),
   ];
 
   const renderNav = (onClickItem?: () => void) => (

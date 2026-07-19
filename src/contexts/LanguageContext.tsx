@@ -929,6 +929,50 @@ export const translations: Translations = {
     uk: 'Підказка: оберіть інструмент Стрілка (клавіша 5) та наведіть на блок — з’являться точки прив’язки. Стрілка прикріпиться до фігури та слідуватиме за нею.',
   },
   whiteboardHintHide: { ru: 'Скрыть', en: 'Hide', uk: 'Приховати' },
+
+  // Extended settings
+  settingsTabGeneral: { ru: 'Общие', en: 'General', uk: 'Загальні' },
+  settingsTabNotifications: { ru: 'Уведомления', en: 'Notifications', uk: 'Сповіщення' },
+  settingsTabIntegrations: { ru: 'Интеграции и API-ключи', en: 'Integrations & API keys', uk: 'Інтеграції та API-ключі' },
+  settingsTabCompany: { ru: 'Компания', en: 'Company', uk: 'Компанія' },
+  settingsTabRegional: { ru: 'Регион', en: 'Regional', uk: 'Регіон' },
+  settingsTabSecurity: { ru: 'Безопасность', en: 'Security', uk: 'Безпека' },
+
+  integrationsDescription: {
+    ru: 'API-ключи используются серверными функциями CRM (ИИ, письма и т.д.). Значения сохраняются в защищённой таблице и доступны только администраторам.',
+    en: 'API keys are used by CRM server functions (AI, email, etc.). Values are stored in a protected table and available only to administrators.',
+    uk: 'API-ключі використовуються серверними функціями CRM (ШІ, листи тощо). Значення зберігаються у захищеній таблиці та доступні лише адміністраторам.',
+  },
+  aiApiKey: { ru: 'API-ключ ИИ (OpenAI / совместимый)', en: 'AI API key (OpenAI / compatible)', uk: 'API-ключ ШІ (OpenAI / сумісний)' },
+  aiModel: { ru: 'Модель ИИ по умолчанию', en: 'Default AI model', uk: 'Модель ШІ за замовчуванням' },
+  emailApiKey: { ru: 'API-ключ Resend (почта)', en: 'Resend API key (email)', uk: 'API-ключ Resend (пошта)' },
+  emailFromAddress: { ru: 'Email-адрес отправителя', en: 'From email address', uk: 'Email-адреса відправника' },
+  telegramBotToken: { ru: 'Токен Telegram-бота', en: 'Telegram bot token', uk: 'Токен Telegram-бота' },
+  webhookUrl: { ru: 'Webhook URL для событий', en: 'Webhook URL for events', uk: 'Webhook URL для подій' },
+  analyticsKey: { ru: 'Ключ веб-аналитики (GA4/Plausible)', en: 'Web analytics key (GA4/Plausible)', uk: 'Ключ веб-аналітики (GA4/Plausible)' },
+
+  companyDescription: { ru: 'Данные компании используются в подписях, коммерческих предложениях и письмах.', en: 'Company data is used in signatures, proposals and emails.', uk: 'Дані компанії використовуються у підписах, комерційних пропозиціях та листах.' },
+  companyEmail: { ru: 'Email компании', en: 'Company email', uk: 'Email компанії' },
+  companyPhone: { ru: 'Телефон компании', en: 'Company phone', uk: 'Телефон компанії' },
+  companyAddress: { ru: 'Юридический адрес', en: 'Legal address', uk: 'Юридична адреса' },
+  companyWebsite: { ru: 'Сайт', en: 'Website', uk: 'Сайт' },
+  companyTaxId: { ru: 'ЄДРПОУ / ИНН', en: 'Tax ID', uk: 'ЄДРПОУ / ІПН' },
+
+  regionalDescription: { ru: 'Настройки формата отображения по умолчанию.', en: 'Default display format settings.', uk: 'Налаштування формату відображення за замовчуванням.' },
+  defaultCurrency: { ru: 'Валюта по умолчанию', en: 'Default currency', uk: 'Валюта за замовчуванням' },
+  timezone: { ru: 'Часовой пояс', en: 'Timezone', uk: 'Часовий пояс' },
+  weekStart: { ru: 'Начало недели', en: 'Week starts on', uk: 'Початок тижня' },
+  weekMonday: { ru: 'Понедельник', en: 'Monday', uk: 'Понеділок' },
+  weekSunday: { ru: 'Воскресенье', en: 'Sunday', uk: 'Неділя' },
+  dateFormat: { ru: 'Формат даты', en: 'Date format', uk: 'Формат дати' },
+
+  securityDescription: { ru: 'Политики безопасности рабочего пространства.', en: 'Workspace security policies.', uk: 'Політики безпеки робочого простору.' },
+  sessionTimeout: { ru: 'Автовыход (минут неактивности)', en: 'Auto sign-out (minutes idle)', uk: 'Автовихід (хвилин неактивності)' },
+  requireStrongPasswords: { ru: 'Требовать сложные пароли', en: 'Require strong passwords', uk: 'Вимагати складні паролі' },
+  allowSelfRegistration: { ru: 'Разрешить самостоятельную регистрацию', en: 'Allow self sign-up', uk: 'Дозволити самостійну реєстрацію' },
+
+  adminOnly: { ru: 'Доступно только администраторам', en: 'Available to administrators only', uk: 'Доступно лише адміністраторам' },
+  keyHidden: { ru: 'Значение скрыто', en: 'Value hidden', uk: 'Значення приховано' },
 };
 
 interface LanguageContextType {
