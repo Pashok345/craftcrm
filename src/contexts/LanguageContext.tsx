@@ -971,7 +971,6 @@ export const translations: Translations = {
   requireStrongPasswords: { ru: 'Требовать сложные пароли', en: 'Require strong passwords', uk: 'Вимагати складні паролі' },
   allowSelfRegistration: { ru: 'Разрешить самостоятельную регистрацию', en: 'Allow self sign-up', uk: 'Дозволити самостійну реєстрацію' },
 
-  save: { ru: 'Сохранить', en: 'Save', uk: 'Зберегти' },
   adminOnly: { ru: 'Доступно только администраторам', en: 'Available to administrators only', uk: 'Доступно лише адміністраторам' },
   keyHidden: { ru: 'Значение скрыто', en: 'Value hidden', uk: 'Значення приховано' },
 };
