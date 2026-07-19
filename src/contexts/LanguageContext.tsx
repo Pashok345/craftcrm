@@ -952,7 +952,6 @@ export const translations: Translations = {
   analyticsKey: { ru: 'Ключ веб-аналитики (GA4/Plausible)', en: 'Web analytics key (GA4/Plausible)', uk: 'Ключ веб-аналітики (GA4/Plausible)' },
 
   companyDescription: { ru: 'Данные компании используются в подписях, коммерческих предложениях и письмах.', en: 'Company data is used in signatures, proposals and emails.', uk: 'Дані компанії використовуються у підписах, комерційних пропозиціях та листах.' },
-  companyName: { ru: 'Название компании', en: 'Company name', uk: 'Назва компанії' },
   companyEmail: { ru: 'Email компании', en: 'Company email', uk: 'Email компанії' },
   companyPhone: { ru: 'Телефон компании', en: 'Company phone', uk: 'Телефон компанії' },
   companyAddress: { ru: 'Юридический адрес', en: 'Legal address', uk: 'Юридична адреса' },
