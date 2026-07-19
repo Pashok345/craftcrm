@@ -10,8 +10,10 @@ import {
   GitBranch,
   BarChart3,
   TrendingUp,
-  PenSquare
+  PenSquare,
+  Settings as SettingsIcon
 } from 'lucide-react';
+import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
