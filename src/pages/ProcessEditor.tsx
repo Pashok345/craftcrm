@@ -26,6 +26,7 @@ interface ProcessField {
   field_type: string;
   options: string[] | null;
   sort_order: number;
+  required?: boolean;
 }
 
 const FIELD_TYPES = [
