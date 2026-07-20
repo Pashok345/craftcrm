@@ -52,7 +52,7 @@ const ProcessEditor = () => {
   const [departmentId, setDepartmentId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [fields, setFields] = useState<ProcessField[]>([]);
-  const [flow, setFlow] = useState<ProcessFlow>({ nodes: [], edges: [] });
+  const [workflow, setWorkflow] = useState<WorkflowStep[]>([]);
 
   const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
