@@ -186,12 +186,12 @@ const ProcessEditor = () => {
           const f = fields[i];
           if (f.id) {
             await supabase.from('process_fields').update({
-              name: f.name, field_type: f.field_type, options: f.options, sort_order: i,
+              name: f.name, field_type: f.field_type, options: f.options, sort_order: i, required: (f as any).required || false,
             }).eq('id', f.id);
           } else if (f.name.trim()) {
             await supabase.from('process_fields').insert({
               process_id: processId,
-              name: f.name, field_type: f.field_type, options: f.options, sort_order: i,
+              name: f.name, field_type: f.field_type, options: f.options, sort_order: i, required: (f as any).required || false,
             });
           }
         }
