@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, Plus, Trash2, Save, Loader2, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { ProcessStepBuilder, ProcessFlow } from '@/components/processes/ProcessStepBuilder';
+import { WorkflowStepsEditor, WorkflowStep } from '@/components/processes/WorkflowStepsEditor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 
 interface ProcessType { id: string; name: string; }
 interface Department { id: string; name: string; }
