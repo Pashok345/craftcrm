@@ -375,13 +375,13 @@ const ProcessEditor = () => {
         <div className="space-y-4">
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>{t('howBuilderWorks') || 'Як працює конструктор'}</AlertTitle>
+            <AlertTitle>{t('howWorkflowWorks') || 'Як працює робочий процес'}</AlertTitle>
             <AlertDescription className="text-xs leading-relaxed">
-              {t('builderHelp') ||
-                'Додайте кроки з лівої панелі та зʼєднайте їх лініями (перетягніть від правого кружка блоку до лівого кружка наступного). Клікніть по блоку — праворуч зʼявляться його налаштування: опис завдання, вимоги, очікуваний результат, виконавець і термін виконання.'}
+              {t('workflowHelp') ||
+                'Створіть послідовність кроків. На кожному кроці додайте поля (текст, файл, вибір зі списку тощо), позначте обовʼязкові та оберіть виконавця. При запуску процесу користувач заповнить перший крок, після завершення система передасть наступний крок наступному виконавцю.'}
             </AlertDescription>
           </Alert>
-          <ProcessStepBuilder value={flow} onChange={setFlow} />
+          <WorkflowStepsEditor value={workflow} onChange={setWorkflow} />
         </div>
       )}
 
