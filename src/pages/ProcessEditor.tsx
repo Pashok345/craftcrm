@@ -360,6 +360,7 @@ const ProcessEditor = () => {
                                options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
                              })}
                              placeholder={t('selectOptionsPlaceholder') || 'Варіанти через кому'} />
+                    )}
                     <div className="flex items-center gap-2 pt-1">
                       <Switch checked={!!f.required} onCheckedChange={(c) => updateField(i, { required: c })} />
                       <Label className="text-xs">{t('fieldRequired') || 'Обовʼязкове'}</Label>
