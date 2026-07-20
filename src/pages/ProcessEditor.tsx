@@ -80,8 +80,8 @@ const ProcessEditor = () => {
           setTypeId(proc.type_id || '');
           setDepartmentId(proc.department_id || '');
           setCategoryId(proc.category_id || '');
-          const s = (proc as any).steps;
-          setFlow(s && s.nodes ? s : { nodes: [], edges: [] });
+          const s: any = (proc as any).steps;
+          setWorkflow(Array.isArray(s?.workflow) ? s.workflow : []);
         }
         const { data: fData } = await supabase
           .from('process_fields')
