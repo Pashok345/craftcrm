@@ -360,7 +360,10 @@ const ProcessEditor = () => {
                                options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
                              })}
                              placeholder={t('selectOptionsPlaceholder') || 'Варіанти через кому'} />
-                    )}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={!!f.required} onCheckedChange={(c) => updateField(i, { required: c })} />
+                      <Label className="text-xs">{t('fieldRequired') || 'Обовʼязкове'}</Label>
+                    </div>
                   </div>
                   <Button size="icon" variant="ghost" className="text-destructive" onClick={() => removeField(i)}>
                     <Trash2 className="h-4 w-4" />
