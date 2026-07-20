@@ -5,26 +5,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, RotateCcw, Clock, Play, Flag, GitBranch, Zap, UserCheck, FileText, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, GitBranch, AlertTriangle, Loader2, Paperclip } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-
-interface Step {
-  id: string;
-  run_id: string;
-  step_id: string;
-  step_type: string;
-  step_label: string | null;
-  assignee_id: string | null;
-  status: string;
-  comment: string | null;
-  sla_deadline: string | null;
-  started_at: string | null;
-  completed_at: string | null;
-  sort_order: number;
-}
 
 interface Profile {
   user_id: string;
@@ -33,22 +23,45 @@ interface Profile {
   avatar_color: string | null;
 }
 
-const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
-  start: { icon: Play, color: '#22c55e', label: 'Початок' },
-  task: { icon: FileText, color: '#3b82f6', label: 'Задача' },
-  approval: { icon: UserCheck, color: '#a855f7', label: 'Погодження' },
-  condition: { icon: GitBranch, color: '#f59e0b', label: 'Умова' },
-  action: { icon: Zap, color: '#06b6d4', label: 'Дія' },
-  end: { icon: Flag, color: '#ef4444', label: 'Кінець' },
-};
+interface FieldDef {
+  id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user';
+  required?: boolean;
+  options?: string[];
+}
+
+interface StepConfig {
+  id: string;
+  title: string;
+  description?: string;
+  assignee_mode: 'initiator' | 'user' | 'ask';
+  assignee_id?: string | null;
+  sla_hours?: number | null;
+  fields: FieldDef[];
+}
+
+interface Step {
+  id: string;
+  run_id: string;
+  step_id: string;
+  step_label: string | null;
+  assignee_id: string | null;
+  status: string;
+  comment: string | null;
+  sla_deadline: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  sort_order: number;
+  step_config: StepConfig | null;
+  step_values: Record<string, any> | null;
+}
 
 const STATUS_CLS: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
   in_progress: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-  approved: 'bg-green-500/10 text-green-600 border-green-500/30',
-  rejected: 'bg-red-500/10 text-red-600 border-red-500/30',
-  returned: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
   completed: 'bg-green-500/10 text-green-600 border-green-500/30',
+  rejected: 'bg-red-500/10 text-red-600 border-red-500/30',
 };
 
 interface Props {
@@ -62,7 +75,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   const [steps, setSteps] = useState<Step[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
-  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [valuesDrafts, setValuesDrafts] = useState<Record<string, Record<string, any>>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = async () => {
@@ -71,7 +84,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       supabase.from('process_run_steps').select('*').eq('run_id', runId).order('sort_order'),
       supabase.from('profiles').select('user_id, name, avatar_url, avatar_color'),
     ]);
-    if (sRes.data) setSteps(sRes.data as Step[]);
+    if (sRes.data) setSteps(sRes.data as unknown as Step[]);
     if (pRes.data) {
       const m: Record<string, Profile> = {};
       pRes.data.forEach((p: any) => { m[p.user_id] = p; });
@@ -82,79 +95,167 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
 
   useEffect(() => { load(); }, [runId]);
 
-  const advanceRun = async () => {
-    // If all steps completed/approved -> mark run completed
-    const { data: fresh } = await supabase.from('process_run_steps').select('status').eq('run_id', runId);
-    if (fresh && fresh.every((s: any) => s.status === 'approved' || s.status === 'completed' || s.status === 'rejected')) {
-      const anyRejected = fresh.some((s: any) => s.status === 'rejected');
-      await supabase.from('process_runs').update({
-        status: anyRejected ? 'cancelled' : 'completed',
-        completed_at: new Date().toISOString(),
-      }).eq('id', runId);
-    } else {
-      await supabase.from('process_runs').update({ status: 'in_progress' }).eq('id', runId);
-    }
+  const setFieldValue = (stepId: string, fieldId: string, val: any) => {
+    setValuesDrafts(d => ({
+      ...d,
+      [stepId]: { ...(d[stepId] || {}), [fieldId]: val },
+    }));
   };
 
-  const activateNext = async (afterSortOrder: number, currentSteps: Step[]) => {
-    // Find & activate next pending step; if it's condition/action, auto-execute and continue.
-    let cursor = afterSortOrder;
-    // work on a mutable copy so subsequent iterations see updates
-    const work = [...currentSteps];
-    while (true) {
-      const next = work.find(s => s.sort_order > cursor && s.status === 'pending');
-      if (!next) return;
+  const uploadFile = async (stepId: string, fieldId: string, file: File) => {
+    if (!user) return;
+    const path = `${user.id}/${runId}/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('process-attachments').upload(path, file);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    setFieldValue(stepId, fieldId, { path, name: file.name });
+  };
+
+  const completeStep = async (step: Step) => {
+    if (!user) return;
+    const cfg = step.step_config;
+    const draft = valuesDrafts[step.id] || (step.step_values as any) || {};
+
+    // Validate required
+    if (cfg?.fields) {
+      for (const f of cfg.fields) {
+        if (f.required) {
+          const v = draft[f.id];
+          const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
+          if (empty) {
+            toast({
+              title: t('fieldRequired') || 'Обовʼязкове поле',
+              description: f.label,
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
+      }
+    }
+
+    setBusy(step.id);
+    const { error } = await supabase.from('process_run_steps').update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      step_values: draft,
+      started_at: step.started_at || new Date().toISOString(),
+    }).eq('id', step.id);
+
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      setBusy(null);
+      return;
+    }
+
+    // Activate next
+    const next = steps.find(s => s.sort_order > step.sort_order && s.status === 'pending');
+    if (next) {
       await supabase.from('process_run_steps').update({
         status: 'in_progress',
         started_at: new Date().toISOString(),
       }).eq('id', next.id);
-      await supabase.from('process_runs').update({ current_step_id: next.step_id }).eq('id', runId);
-
-      if (next.step_type === 'condition' || next.step_type === 'action') {
-        // Auto-execute: mark completed with a system note
-        const note =
-          next.step_type === 'condition'
-            ? 'Автовиконання: умова прийнята за замовчуванням'
-            : 'Автовиконання: дію виконано';
-        await supabase.from('process_run_steps').update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          comment: note,
-        }).eq('id', next.id);
-        const idx = work.findIndex(s => s.id === next.id);
-        if (idx >= 0) work[idx] = { ...work[idx], status: 'completed' };
-        cursor = next.sort_order;
-        continue;
-      }
-      return;
-    }
-  };
-
-  const act = async (step: Step, newStatus: 'approved' | 'rejected' | 'returned' | 'completed') => {
-    if (!user) return;
-    setBusy(step.id);
-    const patch: any = {
-      status: newStatus,
-      comment: commentDrafts[step.id] || step.comment || null,
-    };
-    if (!step.started_at) patch.started_at = new Date().toISOString();
-    if (newStatus !== 'returned') patch.completed_at = new Date().toISOString();
-    const { error } = await supabase.from('process_run_steps').update(patch).eq('id', step.id);
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      await supabase.from('process_runs').update({ current_step_id: next.step_id, status: 'in_progress' }).eq('id', runId);
     } else {
-      if (newStatus === 'approved' || newStatus === 'completed') {
-        await activateNext(step.sort_order, steps);
-      }
-      await advanceRun();
-      await load();
-      toast({ title: t('statusUpdated') });
+      await supabase.from('process_runs').update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      }).eq('id', runId);
     }
+
+    await load();
+    toast({ title: t('statusUpdated') || 'Крок завершено' });
     setBusy(null);
   };
 
-
   const initials = (n?: string) => (n || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+
+  const renderField = (step: Step, f: FieldDef) => {
+    const draft = valuesDrafts[step.id] || (step.step_values as any) || {};
+    const v = draft[f.id];
+    const set = (val: any) => setFieldValue(step.id, f.id, val);
+    const readOnly = step.status !== 'in_progress';
+
+    switch (f.type) {
+      case 'textarea':
+        return <Textarea rows={3} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+      case 'number':
+        return <Input type="number" value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+      case 'select':
+        return (
+          <Select value={v || ''} onValueChange={set} disabled={readOnly}>
+            <SelectTrigger><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
+            <SelectContent>
+              {(f.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        );
+      case 'radio':
+        return (
+          <RadioGroup value={v || ''} onValueChange={set} disabled={readOnly}>
+            {(f.options || []).map(o => (
+              <div key={o} className="flex items-center gap-2">
+                <RadioGroupItem id={`${f.id}-${o}`} value={o} />
+                <Label htmlFor={`${f.id}-${o}`} className="font-normal">{o}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        );
+      case 'checkbox': {
+        const arr: string[] = Array.isArray(v) ? v : [];
+        return (
+          <div className="space-y-1.5">
+            {(f.options || []).map(o => (
+              <div key={o} className="flex items-center gap-2">
+                <Checkbox
+                  id={`${f.id}-${o}`}
+                  checked={arr.includes(o)}
+                  disabled={readOnly}
+                  onCheckedChange={(c) => set(c ? [...arr, o] : arr.filter(x => x !== o))}
+                />
+                <Label htmlFor={`${f.id}-${o}`} className="font-normal">{o}</Label>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      case 'file':
+        return (
+          <div className="space-y-1">
+            {!readOnly && (
+              <Input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadFile(step.id, f.id, file);
+                }}
+              />
+            )}
+            {v && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Paperclip className="h-3 w-3" />
+                {typeof v === 'object' ? v.name : String(v).split('/').pop()}
+              </div>
+            )}
+          </div>
+        );
+      case 'user':
+        return (
+          <Select value={v || ''} onValueChange={set} disabled={readOnly}>
+            <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+            <SelectContent>
+              {Object.values(profiles).map(p => (
+                <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      default:
+        return <Input value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>;
   if (steps.length === 0) return null;
@@ -167,24 +268,28 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
           {t('processSteps') || 'Кроки процесу'}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {steps.map((step, idx) => {
-          const meta = TYPE_META[step.step_type] || TYPE_META.task;
-          const Icon = meta.icon;
+          const cfg = step.step_config;
           const assignee = step.assignee_id ? profiles[step.assignee_id] : null;
-          const canAct = user && (user.id === step.assignee_id || (user.id === initiatorId && step.status === 'in_progress'));
-          const active = step.status === 'in_progress' || step.status === 'pending';
+          const active = step.status === 'in_progress';
+          const canAct = user && active && (user.id === step.assignee_id || user.id === initiatorId);
           const overdue = step.sla_deadline && new Date(step.sla_deadline) < new Date() && active;
+
           return (
             <div
               key={step.id}
-              className="border rounded-lg p-3 transition-colors"
-              style={{ borderColor: active ? meta.color : undefined, borderLeftWidth: 4, borderLeftColor: meta.color }}
+              className="border rounded-lg p-4 transition-colors"
+              style={{
+                borderLeftWidth: 4,
+                borderLeftColor: active ? '#3b82f6' : step.status === 'completed' ? '#22c55e' : '#94a3b8',
+              }}
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" style={{ color: meta.color, borderColor: `${meta.color}80` }}>
-                  <Icon className="h-3 w-3 mr-1" />{idx + 1}. {step.step_label || meta.label}
-                </Badge>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {t('step') || 'Крок'} {idx + 1}
+                </span>
+                <span className="font-medium">{step.step_label || cfg?.title}</span>
                 <Badge variant="outline" className={STATUS_CLS[step.status] || ''}>
                   {t(`stepStatus_${step.status}`) || step.status}
                 </Badge>
@@ -206,44 +311,45 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 )}
               </div>
 
+              {cfg?.description && (
+                <p className="text-sm text-muted-foreground mt-2">{cfg.description}</p>
+              )}
+
               {step.sla_deadline && (
                 <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  SLA: {format(new Date(step.sla_deadline), 'dd.MM.yyyy HH:mm')}
+                  {format(new Date(step.sla_deadline), 'dd.MM.yyyy HH:mm')}
                 </div>
               )}
 
-              {step.comment && (
-                <div className="text-sm mt-2 p-2 rounded bg-muted/40">{step.comment}</div>
+              {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed') && (
+                <div className="mt-3 space-y-3">
+                  {cfg.fields.map((f) => (
+                    <div key={f.id} className="space-y-1.5">
+                      <Label className="text-xs">
+                        {f.label}
+                        {f.required && <span className="text-destructive ml-0.5">*</span>}
+                      </Label>
+                      {renderField(step, f)}
+                    </div>
+                  ))}
+                </div>
               )}
 
-              {canAct && active && (
-                <div className="mt-3 space-y-2">
-                  <Textarea
-                    rows={2}
-                    placeholder={t('commentOptional') || 'Коментар (необовʼязково)'}
-                    value={commentDrafts[step.id] ?? ''}
-                    onChange={(e) => setCommentDrafts(d => ({ ...d, [step.id]: e.target.value }))}
-                  />
-                  <div className="flex gap-2 flex-wrap">
-                    {step.step_type === 'approval' ? (
-                      <>
-                        <Button size="sm" disabled={busy === step.id} onClick={() => act(step, 'approved')} className="bg-green-600 hover:bg-green-700">
-                          <CheckCircle className="h-4 w-4 mr-1" />{t('approve') || 'Погодити'}
-                        </Button>
-                        <Button size="sm" variant="destructive" disabled={busy === step.id} onClick={() => act(step, 'rejected')}>
-                          <XCircle className="h-4 w-4 mr-1" />{t('reject') || 'Відхилити'}
-                        </Button>
-                        <Button size="sm" variant="outline" disabled={busy === step.id} onClick={() => act(step, 'returned')}>
-                          <RotateCcw className="h-4 w-4 mr-1" />{t('returnStep') || 'На доопрацювання'}
-                        </Button>
-                      </>
+              {canAct && (
+                <div className="mt-4">
+                  <Button
+                    size="sm"
+                    disabled={busy === step.id}
+                    onClick={() => completeStep(step)}
+                  >
+                    {busy === step.id ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                     ) : (
-                      <Button size="sm" disabled={busy === step.id} onClick={() => act(step, 'completed')}>
-                        <CheckCircle className="h-4 w-4 mr-1" />{t('completeStep') || 'Завершити крок'}
-                      </Button>
+                      <CheckCircle className="h-4 w-4 mr-1" />
                     )}
-                  </div>
+                    {t('completeStep') || 'Завершити крок'}
+                  </Button>
                 </div>
               )}
             </div>

@@ -779,6 +779,7 @@ export type Database = {
           name: string
           options: Json | null
           process_id: string
+          required: boolean
           sort_order: number
         }
         Insert: {
@@ -788,6 +789,7 @@ export type Database = {
           name: string
           options?: Json | null
           process_id: string
+          required?: boolean
           sort_order?: number
         }
         Update: {
@@ -797,6 +799,7 @@ export type Database = {
           name?: string
           options?: Json | null
           process_id?: string
+          required?: boolean
           sort_order?: number
         }
         Relationships: [
@@ -904,9 +907,11 @@ export type Database = {
           sort_order: number
           started_at: string | null
           status: string
+          step_config: Json | null
           step_id: string
           step_label: string | null
           step_type: string
+          step_values: Json | null
           updated_at: string
         }
         Insert: {
@@ -920,9 +925,11 @@ export type Database = {
           sort_order?: number
           started_at?: string | null
           status?: string
+          step_config?: Json | null
           step_id: string
           step_label?: string | null
           step_type?: string
+          step_values?: Json | null
           updated_at?: string
         }
         Update: {
@@ -936,9 +943,11 @@ export type Database = {
           sort_order?: number
           started_at?: string | null
           status?: string
+          step_config?: Json | null
           step_id?: string
           step_label?: string | null
           step_type?: string
+          step_values?: Json | null
           updated_at?: string
         }
         Relationships: [

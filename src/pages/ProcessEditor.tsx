@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, Plus, Trash2, Save, Loader2, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { ProcessStepBuilder, ProcessFlow } from '@/components/processes/ProcessStepBuilder';
+import { WorkflowStepsEditor, WorkflowStep } from '@/components/processes/WorkflowStepsEditor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 
 interface ProcessType { id: string; name: string; }
 interface Department { id: string; name: string; }
@@ -25,6 +26,7 @@ interface ProcessField {
   field_type: string;
   options: string[] | null;
   sort_order: number;
+  required?: boolean;
 }
 
 const FIELD_TYPES = [
@@ -51,7 +53,7 @@ const ProcessEditor = () => {
   const [departmentId, setDepartmentId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [fields, setFields] = useState<ProcessField[]>([]);
-  const [flow, setFlow] = useState<ProcessFlow>({ nodes: [], edges: [] });
+  const [workflow, setWorkflow] = useState<WorkflowStep[]>([]);
 
   const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -79,8 +81,8 @@ const ProcessEditor = () => {
           setTypeId(proc.type_id || '');
           setDepartmentId(proc.department_id || '');
           setCategoryId(proc.category_id || '');
-          const s = (proc as any).steps;
-          setFlow(s && s.nodes ? s : { nodes: [], edges: [] });
+          const s: any = (proc as any).steps;
+          setWorkflow(Array.isArray(s?.workflow) ? s.workflow : []);
         }
         const { data: fData } = await supabase
           .from('process_fields')
@@ -153,7 +155,7 @@ const ProcessEditor = () => {
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
-            steps: flow as any,
+            steps: { workflow } as any,
           })
           .eq('id', id);
         if (error) throw error;
@@ -166,7 +168,7 @@ const ProcessEditor = () => {
             type_id: typeId || null,
             department_id: departmentId || null,
             category_id: categoryId || null,
-            steps: flow as any,
+            steps: { workflow } as any,
             created_by: user.id,
           })
           .select()
@@ -185,12 +187,12 @@ const ProcessEditor = () => {
           const f = fields[i];
           if (f.id) {
             await supabase.from('process_fields').update({
-              name: f.name, field_type: f.field_type, options: f.options, sort_order: i,
+              name: f.name, field_type: f.field_type, options: f.options, sort_order: i, required: (f as any).required || false,
             }).eq('id', f.id);
           } else if (f.name.trim()) {
             await supabase.from('process_fields').insert({
               process_id: processId,
-              name: f.name, field_type: f.field_type, options: f.options, sort_order: i,
+              name: f.name, field_type: f.field_type, options: f.options, sort_order: i, required: (f as any).required || false,
             });
           }
         }
@@ -359,6 +361,10 @@ const ProcessEditor = () => {
                              })}
                              placeholder={t('selectOptionsPlaceholder') || 'Варіанти через кому'} />
                     )}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Switch checked={!!f.required} onCheckedChange={(c) => updateField(i, { required: c })} />
+                      <Label className="text-xs">{t('fieldRequired') || 'Обовʼязкове'}</Label>
+                    </div>
                   </div>
                   <Button size="icon" variant="ghost" className="text-destructive" onClick={() => removeField(i)}>
                     <Trash2 className="h-4 w-4" />
@@ -374,13 +380,13 @@ const ProcessEditor = () => {
         <div className="space-y-4">
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>{t('howBuilderWorks') || 'Як працює конструктор'}</AlertTitle>
+            <AlertTitle>{t('howWorkflowWorks') || 'Як працює робочий процес'}</AlertTitle>
             <AlertDescription className="text-xs leading-relaxed">
-              {t('builderHelp') ||
-                'Додайте кроки з лівої панелі та зʼєднайте їх лініями (перетягніть від правого кружка блоку до лівого кружка наступного). Клікніть по блоку — праворуч зʼявляться його налаштування: опис завдання, вимоги, очікуваний результат, виконавець і термін виконання.'}
+              {t('workflowHelp') ||
+                'Створіть послідовність кроків. На кожному кроці додайте поля (текст, файл, вибір зі списку тощо), позначте обовʼязкові та оберіть виконавця. При запуску процесу користувач заповнить перший крок, після завершення система передасть наступний крок наступному виконавцю.'}
             </AlertDescription>
           </Alert>
-          <ProcessStepBuilder value={flow} onChange={setFlow} />
+          <WorkflowStepsEditor value={workflow} onChange={setWorkflow} />
         </div>
       )}
 
