@@ -2,10 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from '@/hooks/use-toast';
+import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, MoreVertical, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 
@@ -63,9 +71,29 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
+  const { user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const canManage = isAdmin || user?.id === process.created_by;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     fetchRuns();
   }, [process.id]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await supabase.from('processes').delete().eq('id', process.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('deleteProcess'), description: process.title });
+    setConfirmOpen(false);
+    // Refresh list
+    window.dispatchEvent(new CustomEvent('processes:refresh'));
+  };
 
   const fetchRuns = async () => {
     setLoadingRuns(true);
@@ -119,16 +147,40 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
               <Play className="h-4 w-4 mr-1" />
               {t('runProcess')}
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => onEdit(process)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            {canManage && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(process)}>
+                    <Edit className="h-4 w-4 mr-2" />{t('edit')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setConfirmOpen(true)}>
+                    <Trash2 className="h-4 w-4 mr-2" />{t('deleteProcess')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </CardHeader>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProcess')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteProcessConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction disabled={deleting} onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CardContent className="space-y-4">
         {process.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">

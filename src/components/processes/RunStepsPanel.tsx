@@ -26,7 +26,7 @@ interface Profile {
 interface FieldDef {
   id: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user';
+  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
   required?: boolean;
   options?: string[];
 }
@@ -113,15 +113,26 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     setFieldValue(stepId, fieldId, { path, name: file.name });
   };
 
-  const completeStep = async (step: Step) => {
+  const notifyAssignee = async (userId: string | null, stepLabel: string | null) => {
+    if (!userId || !user || userId === user.id) return;
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      type: 'process_step',
+      title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+      message: stepLabel || '',
+    });
+  };
+
+  const completeStep = async (step: Step, action: 'approve' | 'reject' | 'revise' = 'approve', buttonLabel?: string) => {
     if (!user) return;
     const cfg = step.step_config;
-    const draft = valuesDrafts[step.id] || (step.step_values as any) || {};
+    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}) };
+    if (buttonLabel) draft._action = buttonLabel;
 
-    // Validate required
-    if (cfg?.fields) {
+    // Validate required (skip on reject/revise)
+    if (action === 'approve' && cfg?.fields) {
       for (const f of cfg.fields) {
-        if (f.required) {
+        if (f.required && f.type !== 'button') {
           const v = draft[f.id];
           const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
           if (empty) {
@@ -137,6 +148,44 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     }
 
     setBusy(step.id);
+
+    if (action === 'reject') {
+      await supabase.from('process_run_steps').update({
+        status: 'rejected',
+        completed_at: new Date().toISOString(),
+        step_values: draft,
+      }).eq('id', step.id);
+      await supabase.from('process_runs').update({
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+      }).eq('id', runId);
+      await load();
+      toast({ title: t('status_cancelled') || 'Скасовано' });
+      setBusy(null);
+      return;
+    }
+
+    if (action === 'revise') {
+      const prev = [...steps].reverse().find(s => s.sort_order < step.sort_order);
+      await supabase.from('process_run_steps').update({
+        status: 'pending',
+        step_values: draft,
+      }).eq('id', step.id);
+      if (prev) {
+        await supabase.from('process_run_steps').update({
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
+          completed_at: null,
+        }).eq('id', prev.id);
+        await supabase.from('process_runs').update({ current_step_id: prev.step_id, status: 'in_progress' }).eq('id', runId);
+        await notifyAssignee(prev.assignee_id, prev.step_label);
+      }
+      await load();
+      toast({ title: t('buttonActionRevise') || 'На доопрацювання' });
+      setBusy(null);
+      return;
+    }
+
     const { error } = await supabase.from('process_run_steps').update({
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -158,6 +207,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         started_at: new Date().toISOString(),
       }).eq('id', next.id);
       await supabase.from('process_runs').update({ current_step_id: next.step_id, status: 'in_progress' }).eq('id', runId);
+      await notifyAssignee(next.assignee_id, next.step_label);
     } else {
       await supabase.from('process_runs').update({
         status: 'completed',
@@ -252,10 +302,21 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             </SelectContent>
           </Select>
         );
+      case 'button':
+        return null;
       default:
         return <Input value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
     }
   };
+
+  const actionForOption = (label: string): 'approve' | 'reject' | 'revise' => {
+    const l = label.toLowerCase();
+    if (l.includes(String(t('buttonActionRevise') || '').toLowerCase()) || l.includes('доопрац') || l.includes('revis')) return 'revise';
+    if (l.includes(String(t('buttonActionReject') || '').toLowerCase()) || l.includes('скасув') || l.includes('cancel') || l.includes('отмен') || l.includes('reject')) return 'reject';
+    return 'approve';
+  };
+
+
 
   if (loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>;
   if (steps.length === 0) return null;
@@ -324,7 +385,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
 
               {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed') && (
                 <div className="mt-3 space-y-3">
-                  {cfg.fields.map((f) => (
+                  {cfg.fields.filter(f => f.type !== 'button').map((f) => (
                     <div key={f.id} className="space-y-1.5">
                       <Label className="text-xs">
                         {f.label}
@@ -336,22 +397,46 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 </div>
               )}
 
-              {canAct && (
-                <div className="mt-4">
-                  <Button
-                    size="sm"
-                    disabled={busy === step.id}
-                    onClick={() => completeStep(step)}
-                  >
-                    {busy === step.id ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                    )}
-                    {t('completeStep') || 'Завершити крок'}
-                  </Button>
-                </div>
-              )}
+              {canAct && (() => {
+                const buttonField = (cfg?.fields || []).find(f => f.type === 'button');
+                if (buttonField) {
+                  return (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(buttonField.options || []).map(opt => {
+                        const action = actionForOption(opt);
+                        const variant = action === 'reject' ? 'destructive' : action === 'revise' ? 'outline' : 'default';
+                        return (
+                          <Button
+                            key={opt}
+                            size="sm"
+                            variant={variant as any}
+                            disabled={busy === step.id}
+                            onClick={() => completeStep(step, action, opt)}
+                          >
+                            {opt}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="mt-4">
+                    <Button
+                      size="sm"
+                      disabled={busy === step.id}
+                      onClick={() => completeStep(step)}
+                    >
+                      {busy === step.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      )}
+                      {t('completeStep') || 'Завершити крок'}
+                    </Button>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}

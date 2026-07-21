@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowDown, ArrowUp, Copy, Plus, Trash2, GripVertical,
-  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon,
+  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon, MousePointerClick,
 } from 'lucide-react';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user';
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
 
 export interface WorkflowField {
   id: string;
@@ -47,6 +47,7 @@ const FIELD_TYPE_META: Record<FieldType, { icon: any; labelKey: string; withOpti
   checkbox: { icon: CheckSquare, labelKey: 'fieldTypeCheckbox', withOptions: true },
   file: { icon: Paperclip, labelKey: 'fieldTypeFile' },
   user: { icon: UserIcon, labelKey: 'fieldTypeUser' },
+  button: { icon: MousePointerClick, labelKey: 'fieldTypeButton', withOptions: true },
 };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -81,7 +82,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
         id: uid(),
         title: `${t('step') || 'Крок'} ${steps.length + 1}`,
         description: '',
-        assignee_mode: 'initiator',
+        assignee_mode: 'user',
         assignee_id: null,
         sla_hours: null,
         fields: [],
@@ -113,6 +114,15 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
 
   const addField = (stepIdx: number, type: FieldType) => {
     const copy = [...steps];
+    const defaultOptions = type === 'button'
+      ? [
+          t('buttonActionApprove') || 'Підтвердити',
+          t('buttonActionReject') || 'Скасувати',
+          t('buttonActionRevise') || 'На доопрацювання',
+        ]
+      : FIELD_TYPE_META[type].withOptions
+        ? ['Варіант 1', 'Варіант 2']
+        : undefined;
     copy[stepIdx] = {
       ...copy[stepIdx],
       fields: [
@@ -122,7 +132,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           label: t(FIELD_TYPE_META[type].labelKey) || 'Поле',
           type,
           required: false,
-          options: FIELD_TYPE_META[type].withOptions ? ['Варіант 1', 'Варіант 2'] : undefined,
+          options: defaultOptions,
         },
       ],
     };
