@@ -82,7 +82,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
         id: uid(),
         title: `${t('step') || 'Крок'} ${steps.length + 1}`,
         description: '',
-        assignee_mode: 'initiator',
+        assignee_mode: 'user',
         assignee_id: null,
         sla_hours: null,
         fields: [],
