@@ -397,22 +397,46 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 </div>
               )}
 
-              {canAct && (
-                <div className="mt-4">
-                  <Button
-                    size="sm"
-                    disabled={busy === step.id}
-                    onClick={() => completeStep(step)}
-                  >
-                    {busy === step.id ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                    )}
-                    {t('completeStep') || 'Завершити крок'}
-                  </Button>
-                </div>
-              )}
+              {canAct && (() => {
+                const buttonField = (cfg?.fields || []).find(f => f.type === 'button');
+                if (buttonField) {
+                  return (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(buttonField.options || []).map(opt => {
+                        const action = actionForOption(opt);
+                        const variant = action === 'reject' ? 'destructive' : action === 'revise' ? 'outline' : 'default';
+                        return (
+                          <Button
+                            key={opt}
+                            size="sm"
+                            variant={variant as any}
+                            disabled={busy === step.id}
+                            onClick={() => completeStep(step, action, opt)}
+                          >
+                            {opt}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="mt-4">
+                    <Button
+                      size="sm"
+                      disabled={busy === step.id}
+                      onClick={() => completeStep(step)}
+                    >
+                      {busy === step.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                      )}
+                      {t('completeStep') || 'Завершити крок'}
+                    </Button>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
