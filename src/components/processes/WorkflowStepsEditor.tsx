@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowDown, ArrowUp, Copy, Plus, Trash2, GripVertical,
-  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon,
+  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon, MousePointerClick,
 } from 'lucide-react';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user';
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
 
 export interface WorkflowField {
   id: string;
@@ -47,6 +47,7 @@ const FIELD_TYPE_META: Record<FieldType, { icon: any; labelKey: string; withOpti
   checkbox: { icon: CheckSquare, labelKey: 'fieldTypeCheckbox', withOptions: true },
   file: { icon: Paperclip, labelKey: 'fieldTypeFile' },
   user: { icon: UserIcon, labelKey: 'fieldTypeUser' },
+  button: { icon: MousePointerClick, labelKey: 'fieldTypeButton', withOptions: true },
 };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
