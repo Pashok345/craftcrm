@@ -71,9 +71,29 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
+  const { user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const canManage = isAdmin || user?.id === process.created_by;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     fetchRuns();
   }, [process.id]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await supabase.from('processes').delete().eq('id', process.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('deleteProcess'), description: process.title });
+    setConfirmOpen(false);
+    // Refresh list
+    window.dispatchEvent(new CustomEvent('processes:refresh'));
+  };
 
   const fetchRuns = async () => {
     setLoadingRuns(true);
