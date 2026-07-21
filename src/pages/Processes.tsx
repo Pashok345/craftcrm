@@ -64,6 +64,9 @@ const Processes = () => {
   useEffect(() => {
     fetchData();
     fetchCategories();
+    const handler = () => fetchData();
+    window.addEventListener('processes:refresh', handler);
+    return () => window.removeEventListener('processes:refresh', handler);
   }, []);
 
   const fetchCategories = async () => {
