@@ -171,8 +171,17 @@ export const RunProcessDialog = ({
       if (stepsRows.length > 0) {
         await supabase.from('process_run_steps').insert(stepsRows);
         await supabase.from('process_runs').update({ current_step_id: stepsRows[0].step_id }).eq('id', runRow.id);
+        // Notify first-step assignee
+        const first = stepsRows[0];
+        if (first.assignee_id && first.assignee_id !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: first.assignee_id,
+            type: 'process_step',
+            title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+            message: `${process.title}: ${first.step_label || ''}`,
+          });
+        }
       }
-    }
 
     setSubmitting(false);
 
