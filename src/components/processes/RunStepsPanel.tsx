@@ -385,7 +385,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
 
               {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed') && (
                 <div className="mt-3 space-y-3">
-                  {cfg.fields.map((f) => (
+                  {cfg.fields.filter(f => f.type !== 'button').map((f) => (
                     <div key={f.id} className="space-y-1.5">
                       <Label className="text-xs">
                         {f.label}
