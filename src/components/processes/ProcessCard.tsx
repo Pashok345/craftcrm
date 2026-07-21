@@ -147,14 +147,40 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
               <Play className="h-4 w-4 mr-1" />
               {t('runProcess')}
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => onEdit(process)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            {canManage && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(process)}>
+                    <Edit className="h-4 w-4 mr-2" />{t('edit')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setConfirmOpen(true)}>
+                    <Trash2 className="h-4 w-4 mr-2" />{t('deleteProcess')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
+        </div>
+      </CardHeader>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteProcess')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteProcessConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction disabled={deleting} onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
