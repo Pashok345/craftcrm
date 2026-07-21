@@ -113,15 +113,26 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     setFieldValue(stepId, fieldId, { path, name: file.name });
   };
 
-  const completeStep = async (step: Step) => {
+  const notifyAssignee = async (userId: string | null, stepLabel: string | null) => {
+    if (!userId || !user || userId === user.id) return;
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      type: 'process_step',
+      title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+      message: stepLabel || '',
+    });
+  };
+
+  const completeStep = async (step: Step, action: 'approve' | 'reject' | 'revise' = 'approve', buttonLabel?: string) => {
     if (!user) return;
     const cfg = step.step_config;
-    const draft = valuesDrafts[step.id] || (step.step_values as any) || {};
+    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}) };
+    if (buttonLabel) draft._action = buttonLabel;
 
-    // Validate required
-    if (cfg?.fields) {
+    // Validate required (skip on reject/revise)
+    if (action === 'approve' && cfg?.fields) {
       for (const f of cfg.fields) {
-        if (f.required) {
+        if (f.required && f.type !== 'button') {
           const v = draft[f.id];
           const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
           if (empty) {
@@ -137,6 +148,44 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     }
 
     setBusy(step.id);
+
+    if (action === 'reject') {
+      await supabase.from('process_run_steps').update({
+        status: 'rejected',
+        completed_at: new Date().toISOString(),
+        step_values: draft,
+      }).eq('id', step.id);
+      await supabase.from('process_runs').update({
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+      }).eq('id', runId);
+      await load();
+      toast({ title: t('status_cancelled') || 'Скасовано' });
+      setBusy(null);
+      return;
+    }
+
+    if (action === 'revise') {
+      const prev = [...steps].reverse().find(s => s.sort_order < step.sort_order);
+      await supabase.from('process_run_steps').update({
+        status: 'pending',
+        step_values: draft,
+      }).eq('id', step.id);
+      if (prev) {
+        await supabase.from('process_run_steps').update({
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
+          completed_at: null,
+        }).eq('id', prev.id);
+        await supabase.from('process_runs').update({ current_step_id: prev.step_id, status: 'in_progress' }).eq('id', runId);
+        await notifyAssignee(prev.assignee_id, prev.step_label);
+      }
+      await load();
+      toast({ title: t('buttonActionRevise') || 'На доопрацювання' });
+      setBusy(null);
+      return;
+    }
+
     const { error } = await supabase.from('process_run_steps').update({
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -158,6 +207,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         started_at: new Date().toISOString(),
       }).eq('id', next.id);
       await supabase.from('process_runs').update({ current_step_id: next.step_id, status: 'in_progress' }).eq('id', runId);
+      await notifyAssignee(next.assignee_id, next.step_label);
     } else {
       await supabase.from('process_runs').update({
         status: 'completed',
