@@ -114,6 +114,15 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
 
   const addField = (stepIdx: number, type: FieldType) => {
     const copy = [...steps];
+    const defaultOptions = type === 'button'
+      ? [
+          t('buttonActionApprove') || 'Підтвердити',
+          t('buttonActionReject') || 'Скасувати',
+          t('buttonActionRevise') || 'На доопрацювання',
+        ]
+      : FIELD_TYPE_META[type].withOptions
+        ? ['Варіант 1', 'Варіант 2']
+        : undefined;
     copy[stepIdx] = {
       ...copy[stepIdx],
       fields: [
@@ -123,7 +132,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           label: t(FIELD_TYPE_META[type].labelKey) || 'Поле',
           type,
           required: false,
-          options: FIELD_TYPE_META[type].withOptions ? ['Варіант 1', 'Варіант 2'] : undefined,
+          options: defaultOptions,
         },
       ],
     };
