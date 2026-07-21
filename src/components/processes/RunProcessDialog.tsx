@@ -182,6 +182,9 @@ export const RunProcessDialog = ({
           });
         }
       }
+    }
+
+
 
     setSubmitting(false);
 
