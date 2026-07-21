@@ -314,6 +314,9 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     if (l.includes(String(t('buttonActionRevise') || '').toLowerCase()) || l.includes('доопрац') || l.includes('revis')) return 'revise';
     if (l.includes(String(t('buttonActionReject') || '').toLowerCase()) || l.includes('скасув') || l.includes('cancel') || l.includes('отмен') || l.includes('reject')) return 'reject';
     return 'approve';
+  };
+
+
 
   if (loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>;
   if (steps.length === 0) return null;
