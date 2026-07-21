@@ -181,8 +181,6 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-        </div>
-      </CardHeader>
       <CardContent className="space-y-4">
         {process.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
