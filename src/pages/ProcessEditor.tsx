@@ -402,27 +402,72 @@ const ProcessEditor = () => {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2">
+      {step === 3 && (
+        <div className="space-y-4">
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-700 dark:text-amber-400">
+              {t('testMode') || 'ТЕСТОВИЙ РЕЖИМ'}
+            </AlertTitle>
+            <AlertDescription className="text-xs">
+              {t('processPreviewHint') || 'Тестовий перегляд процесу — дані не зберігаються'}
+            </AlertDescription>
+          </Alert>
+          <Card><CardContent className="pt-6 space-y-4">
+            <h3 className="text-lg font-semibold">{title || '—'}</h3>
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+            {workflow.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('noSteps') || 'Немає кроків'}</p>
+            ) : workflow.map((w, i) => (
+              <div key={w.id} className="border rounded-md p-3 space-y-2 bg-muted/30">
+                <div className="text-sm font-medium">{i + 1}. {w.title}</div>
+                {w.description && <p className="text-xs text-muted-foreground">{w.description}</p>}
+                {(w.fields || []).map((f: any) => (
+                  <div key={f.id} className="text-xs pl-3 border-l-2 border-primary/30">
+                    <span className="font-medium">{f.label}</span>
+                    <span className="text-muted-foreground ml-2">({t(`fieldType${f.type.charAt(0).toUpperCase()}${f.type.slice(1)}`) || f.type})</span>
+                    {f.required && <span className="text-destructive ml-1">*</span>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </CardContent></Card>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-2 gap-3">
         <Button variant="outline" onClick={() => navigate('/processes')}>
           {t('cancel') || 'Скасувати'}
         </Button>
-        <div className="flex gap-2">
-          {step === 2 && (
-            <Button variant="outline" onClick={() => setStep(1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+        <div className="flex-1 flex justify-center">
+          {step === 1 && (
+            <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(2)} disabled={!canGoNext}>
+              {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           )}
-          {step === 1 ? (
-            <Button onClick={() => setStep(2)} disabled={!canGoNext}>
-              {t('next') || 'Далі'}<ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button onClick={handleSave} disabled={saving || !title.trim()}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              {t('save') || 'Зберегти'}
-            </Button>
+          {step === 2 && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+              </Button>
+              <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(3)}>
+                {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          )}
+          {step === 3 && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(2)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+              </Button>
+              <Button size="lg" className="px-10 h-12 text-base" onClick={handleSave} disabled={saving || !title.trim()}>
+                {saving ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Save className="h-5 w-5 mr-2" />}
+                {t('save') || 'Зберегти'}
+              </Button>
+            </div>
           )}
         </div>
+        <div className="w-[100px]" />
       </div>
     </div>
   );
