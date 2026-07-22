@@ -7,13 +7,13 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, MoreVertical, Trash2 } from 'lucide-react';
+import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, MoreVertical, Trash2, FolderInput, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 
@@ -49,6 +49,7 @@ interface Process {
   description: string | null;
   type_id: string | null;
   department_id: string | null;
+  category_id?: string | null;
   status: string;
   created_by: string;
   created_at: string;
@@ -57,12 +58,20 @@ interface Process {
   process_fields?: ProcessField[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  color?: string | null;
+}
+
 interface ProcessCardProps {
   process: Process;
   onEdit: (process: Process) => void;
+  categories?: Category[];
+  onCategoryChanged?: () => void;
 }
 
-export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
+export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChanged }: ProcessCardProps) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [runs, setRuns] = useState<ProcessRun[]>([]);
@@ -158,6 +167,42 @@ export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
                   <DropdownMenuItem onClick={() => onEdit(process)}>
                     <Edit className="h-4 w-4 mr-2" />{t('edit')}
                   </DropdownMenuItem>
+                  {categories.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput className="h-4 w-4 mr-2" />{t('moveToCategory') || 'Перемістити в категорію'}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            await supabase.from('processes').update({ category_id: null }).eq('id', process.id);
+                            onCategoryChanged?.();
+                            window.dispatchEvent(new CustomEvent('processes:refresh'));
+                          }}
+                        >
+                          {!process.category_id && <Check className="h-4 w-4 mr-2" />}
+                          {t('uncategorized') || 'Без категорії'}
+                        </DropdownMenuItem>
+                        {categories.map((c) => (
+                          <DropdownMenuItem
+                            key={c.id}
+                            onClick={async () => {
+                              await supabase.from('processes').update({ category_id: c.id }).eq('id', process.id);
+                              onCategoryChanged?.();
+                              window.dispatchEvent(new CustomEvent('processes:refresh'));
+                            }}
+                          >
+                            {process.category_id === c.id && <Check className="h-4 w-4 mr-2" />}
+                            <span className="inline-flex items-center gap-2">
+                              {c.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />}
+                              {c.name}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setConfirmOpen(true)}>
                     <Trash2 className="h-4 w-4 mr-2" />{t('deleteProcess')}
                   </DropdownMenuItem>

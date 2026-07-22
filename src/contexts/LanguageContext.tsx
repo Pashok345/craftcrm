@@ -404,7 +404,7 @@ export const translations: Translations = {
   fieldTypeNumber: { ru: 'Число', en: 'Number', uk: 'Число' },
   fieldTypeRadio: { ru: 'Радио', en: 'Radio', uk: 'Радіо' },
   fieldTypeCheckbox: { ru: 'Чекбокс', en: 'Checkbox', uk: 'Чекбокс' },
-  fieldTypeUser: { ru: 'Пользователь', en: 'User', uk: 'Користувач' },
+  fieldTypeUser: { ru: 'Ответственный', en: 'Responsible', uk: 'Відповідальний' },
   fieldTypeButton: { ru: 'Кнопки действий', en: 'Action buttons', uk: 'Кнопки дій' },
   buttonActionApprove: { ru: 'Подтвердить', en: 'Approve', uk: 'Підтвердити' },
   buttonActionReject: { ru: 'Отменить', en: 'Cancel', uk: 'Скасувати' },
@@ -417,10 +417,15 @@ export const translations: Translations = {
   step: { ru: 'Шаг', en: 'Step', uk: 'Крок' },
   copy: { ru: 'копия', en: 'copy', uk: 'копія' },
   stepFields: { ru: 'Поля шага', en: 'Step fields', uk: 'Поля кроку' },
-  stepAssigneeMode: { ru: 'Кто выполняет шаг', en: 'Who performs the step', uk: 'Хто виконує крок' },
-  assigneeInitiator: { ru: 'Инициатор процесса', en: 'Process initiator', uk: 'Ініціатор процесу' },
-  assigneeSpecificUser: { ru: 'Конкретный пользователь', en: 'Specific user', uk: 'Конкретний користувач' },
-  assigneeAskOnRun: { ru: 'Выбрать при запуске', en: 'Ask on run', uk: 'Обрати при запуску' },
+  responsibleUser: { ru: 'Ответственный за шаг', en: 'Step responsible', uk: 'Відповідальний за крок' },
+  continueBtn: { ru: 'Продолжить', en: 'Continue', uk: 'Продовжити' },
+  processPreview: { ru: 'Проверка', en: 'Preview', uk: 'Перевірка' },
+  processPreviewHint: { ru: 'Тестовый предпросмотр процесса — данные не сохраняются', en: 'Test preview — data is not saved', uk: 'Тестовий перегляд процесу — дані не зберігаються' },
+  testMode: { ru: 'ТЕСТОВЫЙ РЕЖИМ', en: 'TEST MODE', uk: 'ТЕСТОВИЙ РЕЖИМ' },
+  processStep3Hint: { ru: 'Шаг 3 из 3 — проверка процесса', en: 'Step 3 of 3 — preview', uk: 'Крок 3 з 3 — перевірка процесу' },
+  moveToCategory: { ru: 'Переместить в категорию', en: 'Move to category', uk: 'Перемістити в категорію' },
+
+
   noWorkflowSteps: { ru: 'Ещё нет ни одного шага. Добавьте первый шаг рабочего процесса.', en: 'No steps yet. Add the first workflow step.', uk: 'Ще немає жодного кроку. Додайте перший крок робочого процесу.' },
   howWorkflowWorks: { ru: 'Как работает процесс', en: 'How the workflow works', uk: 'Як працює робочий процес' },
   workflowHelp: {

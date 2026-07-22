@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -62,6 +63,7 @@ interface Props {
 
 export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const [templates, setTemplates] = useState<ProcessTemplate[]>([]);
@@ -95,39 +97,29 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
     if (!user) return;
     setCreatingId(tpl.id);
     try {
-      const { data: proc, error } = await supabase
-        .from('processes')
-        .insert({
-          title: tpl.name,
-          description: tpl.description || null,
-          created_by: user.id,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
       const fields = tpl.template_data?.fields || [];
-      if (fields.length > 0 && proc) {
-        await supabase.from('process_fields').insert(
-          fields.map((f, i) => ({
-            process_id: proc.id,
-            name: f.name,
-            field_type: f.field_type,
-            options: f.options || null,
-            sort_order: i,
-          }))
-        );
-      }
-
-      toast({ title: t('processCreatedFromTemplate') || 'Процес створено з шаблону' });
+      // Navigate to editor with prefilled data — user saves manually
+      navigate('/processes/new', {
+        state: {
+          template: {
+            title: tpl.name,
+            description: tpl.description || '',
+            fields: fields.map((f, i) => ({
+              name: f.name,
+              field_type: f.field_type,
+              options: f.options || null,
+              sort_order: i,
+              required: false,
+            })),
+          },
+        },
+      });
       onOpenChange(false);
-      onCreated();
-    } catch (e: any) {
-      toast({ title: t('error'), description: e.message, variant: 'destructive' });
     } finally {
       setCreatingId(null);
     }
   };
+
 
   const deleteTemplate = async (id: string) => {
     const { error } = await supabase.from('process_templates').delete().eq('id', id);

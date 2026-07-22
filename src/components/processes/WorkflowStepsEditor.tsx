@@ -24,13 +24,14 @@ export interface WorkflowField {
   required: boolean;
   options?: string[];
   help?: string;
+  assignee_user_id?: string | null;
 }
 
 export interface WorkflowStep {
   id: string;
   title: string;
   description?: string;
-  assignee_mode: 'initiator' | 'user' | 'ask';
+  assignee_mode?: 'initiator' | 'user' | 'ask';
   assignee_id?: string | null;
   sla_hours?: number | null;
   fields: WorkflowField[];
@@ -82,13 +83,12 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
         id: uid(),
         title: `${t('step') || 'Крок'} ${steps.length + 1}`,
         description: '',
-        assignee_mode: 'user',
-        assignee_id: null,
         sla_hours: null,
         fields: [],
       },
     ]);
   };
+
 
   const removeStep = (idx: number) => onChange(steps.filter((_, i) => i !== idx));
 
@@ -131,13 +131,15 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           id: uid(),
           label: t(FIELD_TYPE_META[type].labelKey) || 'Поле',
           type,
-          required: false,
+          required: type === 'user' ? true : false,
           options: defaultOptions,
+          assignee_user_id: type === 'user' ? null : undefined,
         },
       ],
     };
     onChange(copy);
   };
+
 
   const updateField = (stepIdx: number, fieldIdx: number, patch: Partial<WorkflowField>) => {
     const copy = [...steps];
@@ -233,40 +235,8 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t('stepAssigneeMode') || 'Хто виконує крок'}</Label>
-                <Select
-                  value={step.assignee_mode}
-                  onValueChange={(v: any) =>
-                    updateStep(sIdx, { assignee_mode: v, assignee_id: v === 'user' ? step.assignee_id : null })
-                  }
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="initiator">{t('assigneeInitiator') || 'Ініціатор процесу'}</SelectItem>
-                    <SelectItem value="user">{t('assigneeSpecificUser') || 'Конкретний користувач'}</SelectItem>
-                    <SelectItem value="ask">{t('assigneeAskOnRun') || 'Обрати при запуску'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {step.assignee_mode === 'user' && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t('assignee') || 'Виконавець'}</Label>
-                  <Select
-                    value={step.assignee_id || ''}
-                    onValueChange={(v) => updateStep(sIdx, { assignee_id: v })}
-                  >
-                    <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
-                    <SelectContent>
-                      {profiles.map((p) => (
-                        <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+            {/* Note: step responsible is now defined via a "Відповідальний" field */}
+
 
             {/* Fields */}
             <div className="space-y-2 pt-2 border-t">
@@ -329,6 +299,25 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                             })
                           }
                         />
+                      </div>
+                    )}
+
+                    {field.type === 'user' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground">
+                          {t('responsibleUser') || 'Відповідальний за крок'}
+                        </Label>
+                        <Select
+                          value={field.assignee_user_id || ''}
+                          onValueChange={(v) => updateField(sIdx, fIdx, { assignee_user_id: v })}
+                        >
+                          <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+                          <SelectContent>
+                            {profiles.map((p) => (
+                              <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 

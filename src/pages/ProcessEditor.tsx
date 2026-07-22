@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -40,10 +40,12 @@ const ProcessEditor = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const location = useLocation();
+  const templateData = (location.state as any)?.template;
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
 
@@ -96,9 +98,14 @@ const ProcessEditor = () => {
         setFields(mapped);
         setInitialFieldIds(mapped.map((f) => f.id).filter(Boolean));
         setLoading(false);
+      } else if (templateData) {
+        setTitle(templateData.title || '');
+        setDescription(templateData.description || '');
+        setFields(templateData.fields || []);
       }
     })();
   }, [id, isEdit]);
+
 
   const addField = () =>
     setFields([...fields, { name: '', field_type: 'text', options: null, sort_order: fields.length }]);
@@ -228,19 +235,21 @@ const ProcessEditor = () => {
           </h1>
           <p className="text-sm text-muted-foreground">
             {step === 1
-              ? (t('processStep1Hint') || 'Крок 1 з 2 — основні дані процесу')
-              : (t('processStep2Hint') || 'Крок 2 з 2 — схема виконання')}
+              ? (t('processStep1Hint') || 'Крок 1 з 3 — основні дані процесу')
+              : step === 2
+                ? (t('processStep2Hint') || 'Крок 2 з 3 — схема виконання')
+                : (t('processStep3Hint') || 'Крок 3 з 3 — перевірка процесу')}
           </p>
         </div>
       </div>
 
       {/* Stepper */}
       <div className="flex items-center gap-2">
-        {[1, 2].map((n) => (
+        {[1, 2, 3].map((n) => (
           <div key={n} className="flex-1 flex items-center gap-2">
             <button
               type="button"
-              onClick={() => (n === 1 || canGoNext) && setStep(n as 1 | 2)}
+              onClick={() => (n === 1 || canGoNext) && setStep(n as 1 | 2 | 3)}
               className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${
                 step === n ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'
               }`}
@@ -250,12 +259,15 @@ const ProcessEditor = () => {
               }`}>{n}</span>
               {n === 1
                 ? (t('basicData') || 'Основні дані')
-                : (t('processScheme') || 'Схема процесу')}
+                : n === 2
+                  ? (t('processScheme') || 'Схема процесу')
+                  : (t('processPreview') || 'Перевірка')}
             </button>
-            {n === 1 && <div className="flex-1 h-px bg-border" />}
+            {n < 3 && <div className="flex-1 h-px bg-border" />}
           </div>
         ))}
       </div>
+
 
       {step === 1 && (
         <Card>
@@ -390,27 +402,72 @@ const ProcessEditor = () => {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2">
+      {step === 3 && (
+        <div className="space-y-4">
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <Info className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-700 dark:text-amber-400">
+              {t('testMode') || 'ТЕСТОВИЙ РЕЖИМ'}
+            </AlertTitle>
+            <AlertDescription className="text-xs">
+              {t('processPreviewHint') || 'Тестовий перегляд процесу — дані не зберігаються'}
+            </AlertDescription>
+          </Alert>
+          <Card><CardContent className="pt-6 space-y-4">
+            <h3 className="text-lg font-semibold">{title || '—'}</h3>
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+            {workflow.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('noSteps') || 'Немає кроків'}</p>
+            ) : workflow.map((w, i) => (
+              <div key={w.id} className="border rounded-md p-3 space-y-2 bg-muted/30">
+                <div className="text-sm font-medium">{i + 1}. {w.title}</div>
+                {w.description && <p className="text-xs text-muted-foreground">{w.description}</p>}
+                {(w.fields || []).map((f: any) => (
+                  <div key={f.id} className="text-xs pl-3 border-l-2 border-primary/30">
+                    <span className="font-medium">{f.label}</span>
+                    <span className="text-muted-foreground ml-2">({t(`fieldType${f.type.charAt(0).toUpperCase()}${f.type.slice(1)}`) || f.type})</span>
+                    {f.required && <span className="text-destructive ml-1">*</span>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </CardContent></Card>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-2 gap-3">
         <Button variant="outline" onClick={() => navigate('/processes')}>
           {t('cancel') || 'Скасувати'}
         </Button>
-        <div className="flex gap-2">
-          {step === 2 && (
-            <Button variant="outline" onClick={() => setStep(1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+        <div className="flex-1 flex justify-center">
+          {step === 1 && (
+            <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(2)} disabled={!canGoNext}>
+              {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           )}
-          {step === 1 ? (
-            <Button onClick={() => setStep(2)} disabled={!canGoNext}>
-              {t('next') || 'Далі'}<ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button onClick={handleSave} disabled={saving || !title.trim()}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              {t('save') || 'Зберегти'}
-            </Button>
+          {step === 2 && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+              </Button>
+              <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(3)}>
+                {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          )}
+          {step === 3 && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(2)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+              </Button>
+              <Button size="lg" className="px-10 h-12 text-base" onClick={handleSave} disabled={saving || !title.trim()}>
+                {saving ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Save className="h-5 w-5 mr-2" />}
+                {t('save') || 'Зберегти'}
+              </Button>
+            </div>
           )}
         </div>
+        <div className="w-[100px]" />
       </div>
     </div>
   );
