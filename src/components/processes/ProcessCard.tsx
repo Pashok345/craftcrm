@@ -167,6 +167,42 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
                   <DropdownMenuItem onClick={() => onEdit(process)}>
                     <Edit className="h-4 w-4 mr-2" />{t('edit')}
                   </DropdownMenuItem>
+                  {categories.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput className="h-4 w-4 mr-2" />{t('moveToCategory') || 'Перемістити в категорію'}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            await supabase.from('processes').update({ category_id: null }).eq('id', process.id);
+                            onCategoryChanged?.();
+                            window.dispatchEvent(new CustomEvent('processes:refresh'));
+                          }}
+                        >
+                          {!process.category_id && <Check className="h-4 w-4 mr-2" />}
+                          {t('uncategorized') || 'Без категорії'}
+                        </DropdownMenuItem>
+                        {categories.map((c) => (
+                          <DropdownMenuItem
+                            key={c.id}
+                            onClick={async () => {
+                              await supabase.from('processes').update({ category_id: c.id }).eq('id', process.id);
+                              onCategoryChanged?.();
+                              window.dispatchEvent(new CustomEvent('processes:refresh'));
+                            }}
+                          >
+                            {process.category_id === c.id && <Check className="h-4 w-4 mr-2" />}
+                            <span className="inline-flex items-center gap-2">
+                              {c.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />}
+                              {c.name}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setConfirmOpen(true)}>
                     <Trash2 className="h-4 w-4 mr-2" />{t('deleteProcess')}
                   </DropdownMenuItem>
