@@ -243,11 +243,11 @@ const ProcessEditor = () => {
 
       {/* Stepper */}
       <div className="flex items-center gap-2">
-        {[1, 2].map((n) => (
+        {[1, 2, 3].map((n) => (
           <div key={n} className="flex-1 flex items-center gap-2">
             <button
               type="button"
-              onClick={() => (n === 1 || canGoNext) && setStep(n as 1 | 2)}
+              onClick={() => (n === 1 || canGoNext) && setStep(n as 1 | 2 | 3)}
               className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${
                 step === n ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'
               }`}
@@ -257,12 +257,15 @@ const ProcessEditor = () => {
               }`}>{n}</span>
               {n === 1
                 ? (t('basicData') || 'Основні дані')
-                : (t('processScheme') || 'Схема процесу')}
+                : n === 2
+                  ? (t('processScheme') || 'Схема процесу')
+                  : (t('processPreview') || 'Перевірка')}
             </button>
-            {n === 1 && <div className="flex-1 h-px bg-border" />}
+            {n < 3 && <div className="flex-1 h-px bg-border" />}
           </div>
         ))}
       </div>
+
 
       {step === 1 && (
         <Card>
