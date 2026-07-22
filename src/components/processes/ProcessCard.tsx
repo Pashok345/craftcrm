@@ -71,7 +71,7 @@ interface ProcessCardProps {
   onCategoryChanged?: () => void;
 }
 
-export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
+export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChanged }: ProcessCardProps) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [runs, setRuns] = useState<ProcessRun[]>([]);
