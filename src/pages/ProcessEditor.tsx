@@ -98,9 +98,14 @@ const ProcessEditor = () => {
         setFields(mapped);
         setInitialFieldIds(mapped.map((f) => f.id).filter(Boolean));
         setLoading(false);
+      } else if (templateData) {
+        setTitle(templateData.title || '');
+        setDescription(templateData.description || '');
+        setFields(templateData.fields || []);
       }
     })();
   }, [id, isEdit]);
+
 
   const addField = () =>
     setFields([...fields, { name: '', field_type: 'text', options: null, sort_order: fields.length }]);
