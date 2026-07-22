@@ -40,10 +40,12 @@ const ProcessEditor = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const location = useLocation();
+  const templateData = (location.state as any)?.template;
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
 
