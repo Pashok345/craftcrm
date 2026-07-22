@@ -235,40 +235,8 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t('stepAssigneeMode') || 'Хто виконує крок'}</Label>
-                <Select
-                  value={step.assignee_mode}
-                  onValueChange={(v: any) =>
-                    updateStep(sIdx, { assignee_mode: v, assignee_id: v === 'user' ? step.assignee_id : null })
-                  }
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="initiator">{t('assigneeInitiator') || 'Ініціатор процесу'}</SelectItem>
-                    <SelectItem value="user">{t('assigneeSpecificUser') || 'Конкретний користувач'}</SelectItem>
-                    <SelectItem value="ask">{t('assigneeAskOnRun') || 'Обрати при запуску'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {step.assignee_mode === 'user' && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t('assignee') || 'Виконавець'}</Label>
-                  <Select
-                    value={step.assignee_id || ''}
-                    onValueChange={(v) => updateStep(sIdx, { assignee_id: v })}
-                  >
-                    <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
-                    <SelectContent>
-                      {profiles.map((p) => (
-                        <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+            {/* Note: step responsible is now defined via a "Відповідальний" field */}
+
 
             {/* Fields */}
             <div className="space-y-2 pt-2 border-t">
