@@ -83,13 +83,12 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
         id: uid(),
         title: `${t('step') || 'Крок'} ${steps.length + 1}`,
         description: '',
-        assignee_mode: 'user',
-        assignee_id: null,
         sla_hours: null,
         fields: [],
       },
     ]);
   };
+
 
   const removeStep = (idx: number) => onChange(steps.filter((_, i) => i !== idx));
 
