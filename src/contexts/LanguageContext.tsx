@@ -424,7 +424,7 @@ export const translations: Translations = {
   testMode: { ru: 'ТЕСТОВЫЙ РЕЖИМ', en: 'TEST MODE', uk: 'ТЕСТОВИЙ РЕЖИМ' },
   processStep3Hint: { ru: 'Шаг 3 из 3 — проверка процесса', en: 'Step 3 of 3 — preview', uk: 'Крок 3 з 3 — перевірка процесу' },
   moveToCategory: { ru: 'Переместить в категорию', en: 'Move to category', uk: 'Перемістити в категорію' },
-  uncategorized: { ru: 'Без категории', en: 'Uncategorized', uk: 'Без категорії' },
+
 
   noWorkflowSteps: { ru: 'Ещё нет ни одного шага. Добавьте первый шаг рабочего процесса.', en: 'No steps yet. Add the first workflow step.', uk: 'Ще немає жодного кроку. Додайте перший крок робочого процесу.' },
   howWorkflowWorks: { ru: 'Как работает процесс', en: 'How the workflow works', uk: 'Як працює робочий процес' },
