@@ -49,6 +49,7 @@ interface Process {
   description: string | null;
   type_id: string | null;
   department_id: string | null;
+  category_id?: string | null;
   status: string;
   created_by: string;
   created_at: string;
@@ -57,9 +58,17 @@ interface Process {
   process_fields?: ProcessField[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  color?: string | null;
+}
+
 interface ProcessCardProps {
   process: Process;
   onEdit: (process: Process) => void;
+  categories?: Category[];
+  onCategoryChanged?: () => void;
 }
 
 export const ProcessCard = ({ process, onEdit }: ProcessCardProps) => {
