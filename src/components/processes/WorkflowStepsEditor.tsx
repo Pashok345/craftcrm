@@ -24,13 +24,14 @@ export interface WorkflowField {
   required: boolean;
   options?: string[];
   help?: string;
+  assignee_user_id?: string | null;
 }
 
 export interface WorkflowStep {
   id: string;
   title: string;
   description?: string;
-  assignee_mode: 'initiator' | 'user' | 'ask';
+  assignee_mode?: 'initiator' | 'user' | 'ask';
   assignee_id?: string | null;
   sla_hours?: number | null;
   fields: WorkflowField[];
