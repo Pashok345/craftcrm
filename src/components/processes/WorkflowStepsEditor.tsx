@@ -302,6 +302,25 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                       </div>
                     )}
 
+                    {field.type === 'user' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground">
+                          {t('responsibleUser') || 'Відповідальний за крок'}
+                        </Label>
+                        <Select
+                          value={field.assignee_user_id || ''}
+                          onValueChange={(v) => updateField(sIdx, fIdx, { assignee_user_id: v })}
+                        >
+                          <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+                          <SelectContent>
+                            {profiles.map((p) => (
+                              <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-2">
                         <Switch
