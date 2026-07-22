@@ -235,8 +235,10 @@ const ProcessEditor = () => {
           </h1>
           <p className="text-sm text-muted-foreground">
             {step === 1
-              ? (t('processStep1Hint') || 'Крок 1 з 2 — основні дані процесу')
-              : (t('processStep2Hint') || 'Крок 2 з 2 — схема виконання')}
+              ? (t('processStep1Hint') || 'Крок 1 з 3 — основні дані процесу')
+              : step === 2
+                ? (t('processStep2Hint') || 'Крок 2 з 3 — схема виконання')
+                : (t('processStep3Hint') || 'Крок 3 з 3 — перевірка процесу')}
           </p>
         </div>
       </div>
