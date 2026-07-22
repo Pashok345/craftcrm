@@ -131,13 +131,15 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           id: uid(),
           label: t(FIELD_TYPE_META[type].labelKey) || 'Поле',
           type,
-          required: false,
+          required: type === 'user' ? true : false,
           options: defaultOptions,
+          assignee_user_id: type === 'user' ? null : undefined,
         },
       ],
     };
     onChange(copy);
   };
+
 
   const updateField = (stepIdx: number, fieldIdx: number, patch: Partial<WorkflowField>) => {
     const copy = [...steps];
