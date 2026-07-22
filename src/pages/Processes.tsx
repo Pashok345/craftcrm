@@ -238,7 +238,7 @@ const Processes = () => {
                 ) : (
                   <div className="space-y-4">
                     {filteredProcesses.map((process) => (
-                      <ProcessCard key={process.id} process={process} onEdit={handleEdit} />
+                      <ProcessCard key={process.id} process={process} onEdit={handleEdit} categories={categories} onCategoryChanged={fetchProcesses} />
                     ))}
                   </div>
                 )}
