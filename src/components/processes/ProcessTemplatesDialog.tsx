@@ -63,6 +63,7 @@ interface Props {
 
 export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const [templates, setTemplates] = useState<ProcessTemplate[]>([]);
