@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, MoreVertical, Trash2 } from 'lucide-react';
+import { Play, Edit, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, MoreVertical, Trash2, FolderInput, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 
