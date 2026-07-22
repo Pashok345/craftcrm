@@ -151,8 +151,9 @@ export const RunProcessDialog = ({
 
     if (!error && runRow && workflow.length > 0) {
       const stepsRows = workflow.map((w, idx) => {
-        const assignee =
-          w.assignee_mode === 'user' && w.assignee_id ? w.assignee_id : user.id;
+        const responsibleField = (w.fields || []).find((f: any) => f.type === 'user' && f.assignee_user_id);
+        const assignee = responsibleField?.assignee_user_id
+          || (w.assignee_mode === 'user' && w.assignee_id ? w.assignee_id : user.id);
         return {
           run_id: runRow.id,
           step_id: w.id,
