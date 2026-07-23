@@ -26,7 +26,9 @@ interface Profile {
 interface FieldDef {
   id: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
+  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
+  sample_url?: string | null;
+  sample_name?: string | null;
   required?: boolean;
   options?: string[];
 }
