@@ -413,25 +413,159 @@ const ProcessEditor = () => {
               {t('processPreviewHint') || 'Тестовий перегляд процесу — дані не зберігаються'}
             </AlertDescription>
           </Alert>
-          <Card><CardContent className="pt-6 space-y-4">
-            <h3 className="text-lg font-semibold">{title || '—'}</h3>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-            {workflow.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('noSteps') || 'Немає кроків'}</p>
-            ) : workflow.map((w, i) => (
-              <div key={w.id} className="border rounded-md p-3 space-y-2 bg-muted/30">
-                <div className="text-sm font-medium">{i + 1}. {w.title}</div>
-                {w.description && <p className="text-xs text-muted-foreground">{w.description}</p>}
-                {(w.fields || []).map((f: any) => (
-                  <div key={f.id} className="text-xs pl-3 border-l-2 border-primary/30">
-                    <span className="font-medium">{f.label}</span>
-                    <span className="text-muted-foreground ml-2">({t(`fieldType${f.type.charAt(0).toUpperCase()}${f.type.slice(1)}`) || f.type})</span>
-                    {f.required && <span className="text-destructive ml-1">*</span>}
-                  </div>
-                ))}
+
+          <Card>
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {categoryId && categories.find((c) => c.id === categoryId) && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full border"
+                    style={{
+                      backgroundColor: `${categories.find((c) => c.id === categoryId)!.color}20`,
+                      color: categories.find((c) => c.id === categoryId)!.color,
+                      borderColor: `${categories.find((c) => c.id === categoryId)!.color}55`,
+                    }}
+                  >
+                    {categories.find((c) => c.id === categoryId)!.name}
+                  </span>
+                )}
+                {typeId && processTypes.find((p) => p.id === typeId) && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                    {processTypes.find((p) => p.id === typeId)!.name}
+                  </span>
+                )}
+                {departmentId && departments.find((d) => d.id === departmentId) && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                    {departments.find((d) => d.id === departmentId)!.name}
+                  </span>
+                )}
               </div>
-            ))}
-          </CardContent></Card>
+              <h3 className="text-xl font-semibold">{title || '—'}</h3>
+              {description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{description}</p>}
+
+              {fields.length > 0 && (
+                <div className="pt-2 space-y-2">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t('customFields') || 'Поля запуску'}
+                  </div>
+                  {fields.map((f, i) => (
+                    <div key={i} className="text-xs pl-3 border-l-2 border-primary/40">
+                      <span className="font-medium">{f.name || `Поле ${i + 1}`}</span>
+                      <span className="text-muted-foreground ml-2">
+                        ({t(`fieldType${f.field_type.charAt(0).toUpperCase()}${f.field_type.slice(1)}`) || f.field_type})
+                      </span>
+                      {(f as any).required && <span className="text-destructive ml-1">*</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {workflow.length === 0 ? (
+            <Card><CardContent className="pt-6">
+              <p className="text-sm text-muted-foreground">{t('noSteps') || 'Немає кроків'}</p>
+            </CardContent></Card>
+          ) : workflow.map((w, i) => (
+            <Card key={w.id}>
+              <CardContent className="pt-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold shrink-0">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">{w.title}</div>
+                    {w.sla_hours != null && (
+                      <div className="text-[11px] text-muted-foreground">
+                        ⏱ {t('deadlineHours') || 'Термін'}: {w.sla_hours} год
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {w.description && (
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap pl-11">{w.description}</p>
+                )}
+
+                {(w.fields || []).length > 0 && (
+                  <div className="pl-11 space-y-3">
+                    {(w.fields || []).map((f: any) => {
+                      const label = (
+                        <Label className="text-xs flex items-center gap-1">
+                          {f.label}
+                          {f.required && <span className="text-destructive">*</span>}
+                        </Label>
+                      );
+                      if (f.type === 'text' || f.type === 'number') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <Input disabled placeholder={f.type === 'number' ? '0' : t('enterValue') || 'Введіть значення'} />
+                          </div>
+                        );
+                      }
+                      if (f.type === 'textarea') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <Textarea disabled rows={2} placeholder={t('enterValue') || 'Введіть значення'} />
+                          </div>
+                        );
+                      }
+                      if (f.type === 'select' || f.type === 'radio' || f.type === 'checkbox') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <div className="flex flex-wrap gap-2">
+                              {(f.options || []).map((o: string) => (
+                                <span key={o} className="text-xs px-2 py-1 rounded-md border bg-muted/40">{o}</span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (f.type === 'file') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <div className="border-2 border-dashed rounded-md px-3 py-3 text-xs text-muted-foreground text-center">
+                              📎 {t('uploadFile') || 'Завантажити файл'}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (f.type === 'file_download') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <div className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md border bg-muted/40">
+                              ⬇ {f.sample_name || t('downloadSample') || 'Завантажити файл'}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (f.type === 'user') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <div className="text-xs px-3 py-2 rounded-md border bg-muted/40">
+                              👤 {t('selectUser') || 'Оберіть користувача'}
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (f.type === 'button') {
+                        return (
+                          <div key={f.id} className="space-y-1">{label}
+                            <div className="flex flex-wrap gap-2">
+                              {(f.options || []).map((o: string) => (
+                                <Button key={o} size="sm" variant="outline" disabled>{o}</Button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 

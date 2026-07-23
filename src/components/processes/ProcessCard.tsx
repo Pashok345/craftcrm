@@ -137,15 +137,34 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
   const displayedRuns = showAllRuns ? runs : runs.slice(0, 3);
   const hasMoreRuns = runs.length > 3;
 
+  const category = categories.find((c) => c.id === process.category_id);
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card
+      className="hover:shadow-md transition-shadow border-l-4"
+      style={category?.color ? { borderLeftColor: category.color } : { borderLeftColor: 'transparent' }}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg">{process.title}</CardTitle>
-            {process.department && (
-              <Badge variant="secondary" className="w-fit mt-2">{process.department.name}</Badge>
-            )}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {category && (
+                <Badge
+                  className="w-fit border"
+                  style={{
+                    backgroundColor: `${category.color}20`,
+                    color: category.color || undefined,
+                    borderColor: `${category.color}55`,
+                  }}
+                >
+                  {category.name}
+                </Badge>
+              )}
+              {process.department && (
+                <Badge variant="secondary" className="w-fit">{process.department.name}</Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button 

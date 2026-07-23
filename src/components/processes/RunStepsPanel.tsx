@@ -26,7 +26,9 @@ interface Profile {
 interface FieldDef {
   id: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
+  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
+  sample_url?: string | null;
+  sample_name?: string | null;
   required?: boolean;
   options?: string[];
 }
@@ -290,6 +292,20 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
               </div>
             )}
           </div>
+        );
+      case 'file_download':
+        return f.sample_url ? (
+          <a
+            href={f.sample_url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border bg-muted/40 hover:bg-muted transition-colors"
+          >
+            <Paperclip className="h-4 w-4" />
+            {f.sample_name || (t('downloadSample') || 'Завантажити файл')}
+          </a>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">{t('noSampleFile') || 'Файл-зразок не додано'}</p>
         );
       case 'user':
         return (
