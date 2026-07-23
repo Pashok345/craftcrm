@@ -26,6 +26,9 @@ export interface WorkflowField {
   options?: string[];
   help?: string;
   assignee_user_id?: string | null;
+  sample_url?: string | null;
+  sample_name?: string | null;
+  sample_path?: string | null;
 }
 
 export interface WorkflowStep {
