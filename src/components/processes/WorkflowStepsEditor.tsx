@@ -50,7 +50,8 @@ const FIELD_TYPE_META: Record<FieldType, { icon: any; labelKey: string; withOpti
   select: { icon: List, labelKey: 'fieldTypeSelect', withOptions: true },
   radio: { icon: CircleDot, labelKey: 'fieldTypeRadio', withOptions: true },
   checkbox: { icon: CheckSquare, labelKey: 'fieldTypeCheckbox', withOptions: true },
-  file: { icon: Paperclip, labelKey: 'fieldTypeFile' },
+  file: { icon: Upload, labelKey: 'fieldTypeFileUpload' },
+  file_download: { icon: Download, labelKey: 'fieldTypeFileDownload' },
   user: { icon: UserIcon, labelKey: 'fieldTypeUser' },
   button: { icon: MousePointerClick, labelKey: 'fieldTypeButton', withOptions: true },
 };
