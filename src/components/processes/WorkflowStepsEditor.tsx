@@ -326,6 +326,64 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                       </div>
                     )}
 
+                    {field.type === 'file_download' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground">
+                          {t('sampleFile') || 'Файл-зразок для завантаження користувачем'}
+                        </Label>
+                        {field.sample_url ? (
+                          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/40">
+                            <Download className="h-4 w-4 text-primary" />
+                            <a href={field.sample_url} target="_blank" rel="noreferrer" className="text-sm flex-1 truncate hover:underline">
+                              {field.sample_name || 'file'}
+                            </a>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={async () => {
+                                if (field.sample_path) {
+                                  await supabase.storage.from('process-attachments').remove([field.sample_path]);
+                                }
+                                updateField(sIdx, fIdx, { sample_url: null, sample_name: null, sample_path: null });
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-3 py-4 cursor-pointer hover:bg-muted/40 text-sm text-muted-foreground">
+                            <Upload className="h-4 w-4" />
+                            {t('uploadSampleFile') || 'Завантажити файл-зразок'}
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const path = `samples/${uid()}-${file.name}`;
+                                const { error } = await supabase.storage
+                                  .from('process-attachments')
+                                  .upload(path, file, { upsert: false });
+                                if (error) {
+                                  toast({ title: error.message, variant: 'destructive' });
+                                  return;
+                                }
+                                const { data: signed } = await supabase.storage
+                                  .from('process-attachments')
+                                  .createSignedUrl(path, 60 * 60 * 24 * 365);
+                                updateField(sIdx, fIdx, {
+                                  sample_url: signed?.signedUrl || null,
+                                  sample_name: file.name,
+                                  sample_path: path,
+                                });
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-2">
                         <Switch
