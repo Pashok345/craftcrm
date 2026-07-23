@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowDown, ArrowUp, Copy, Plus, Trash2, GripVertical,
-  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon, MousePointerClick,
+  Type, AlignLeft, Hash, List, CircleDot, CheckSquare, Paperclip, User as UserIcon, MousePointerClick, Download, Upload, Loader2, X,
 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'user' | 'button';
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
 
 export interface WorkflowField {
   id: string;
