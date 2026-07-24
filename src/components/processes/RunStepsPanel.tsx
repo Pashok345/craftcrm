@@ -437,21 +437,22 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                   );
                 }
                 return (
-                  <div className="mt-4">
+                  <div className="mt-4 flex justify-center">
                     <Button
-                      size="sm"
+                      size="lg"
                       disabled={busy === step.id}
                       onClick={() => completeStep(step)}
                     >
                       {busy === step.id ? (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
-                        <CheckCircle className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-4 w-4 mr-2" />
                       )}
-                      {t('completeStep') || 'Завершити крок'}
+                      {t('nextStep') || 'Наступний крок'}
                     </Button>
                   </div>
                 );
+
               })()}
             </div>
           );
