@@ -390,48 +390,8 @@ const RunProcess = () => {
               </div>
             ))}
 
-            {/* File attachments */}
-            <div className="space-y-2">
-              <Label>{t('attachments') || 'Вложения'}</Label>
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  multiple
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
-                >
-                  <Paperclip className="h-4 w-4 mr-2" />
-                  {t('addFile') || 'Добавить файл'}
-                </Button>
-                
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-2 mt-2">
-                    {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                        <FileIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="flex-1 text-sm truncate">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => removeFile(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+
+
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate('/processes')}>
