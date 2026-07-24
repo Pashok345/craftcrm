@@ -91,6 +91,7 @@ const RunProcess = () => {
 
     if (processRes.data) {
       setProcess(processRes.data);
+      setRunName(processRes.data.title || '');
     }
 
     if (fieldsRes.data) {
