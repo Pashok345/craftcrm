@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +67,8 @@ interface Props {
 
 export function WorkflowStepsEditor({ value, onChange }: Props) {
   const { t } = useLanguage();
+  const { user } = useAuth();
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
@@ -360,8 +364,8 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                               className="hidden"
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
-                                if (!file) return;
-                                const path = `samples/${uid()}-${file.name}`;
+                                if (!file || !user) return;
+                                const path = `${user.id}/samples/${uid()}-${file.name}`;
                                 const { error } = await supabase.storage
                                   .from('process-attachments')
                                   .upload(path, file, { upsert: false });
