@@ -339,6 +339,7 @@ export const translations: Translations = {
   reject: { ru: 'Отклонить', en: 'Reject', uk: 'Відхилити' },
   returnStep: { ru: 'На доработку', en: 'Return', uk: 'На доопрацювання' },
   completeStep: { ru: 'Завершить шаг', en: 'Complete step', uk: 'Завершити крок' },
+  nextStep: { ru: 'Следующий шаг', en: 'Next step', uk: 'Наступний крок' },
   commentOptional: { ru: 'Комментарий (необязательно)', en: 'Comment (optional)', uk: 'Коментар (необовʼязково)' },
   stepStatus_pending: { ru: 'Ожидает', en: 'Pending', uk: 'Очікує' },
   stepStatus_in_progress: { ru: 'В работе', en: 'In progress', uk: 'В роботі' },
