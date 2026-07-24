@@ -67,6 +67,8 @@ interface Props {
 
 export function WorkflowStepsEditor({ value, onChange }: Props) {
   const { t } = useLanguage();
+  const { user } = useAuth();
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
