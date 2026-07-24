@@ -151,6 +151,15 @@ const RunProcess = () => {
     setSubmitting(true);
 
     try {
+      // Load workflow definition
+      const { data: procData } = await supabase
+        .from('processes')
+        .select('steps, title')
+        .eq('id', processId)
+        .maybeSingle();
+      const stepsDef: any = (procData as any)?.steps || {};
+      const workflow: any[] = Array.isArray(stepsDef.workflow) ? stepsDef.workflow : [];
+
       const { data, error } = await supabase.from('process_runs').insert({
         process_id: processId,
         field_values: {
@@ -159,33 +168,43 @@ const RunProcess = () => {
           ...fieldValues,
         },
         started_by: user.id,
-        status: 'pending',
+        status: workflow.length > 0 ? 'in_progress' : 'pending',
       }).select().single();
 
       if (error) throw error;
 
-      // Upload files if any
-      if (uploadedFiles.length > 0 && data) {
-        for (const uploadedFile of uploadedFiles) {
-          const filePath = `${data.id}/${Date.now()}-${uploadedFile.name}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('process-attachments')
-            .upload(filePath, uploadedFile.file);
+      // Materialize workflow steps
+      if (data && workflow.length > 0) {
+        const stepsRows = workflow.map((w, idx) => {
+          const responsibleField = (w.fields || []).find((f: any) => f.type === 'user' && f.assignee_user_id);
+          const assignee = responsibleField?.assignee_user_id
+            || (w.assignee_mode === 'user' && w.assignee_id ? w.assignee_id : user.id);
+          return {
+            run_id: data.id,
+            step_id: w.id,
+            step_type: 'task',
+            step_label: w.title || null,
+            assignee_id: assignee,
+            status: idx === 0 ? 'in_progress' : 'pending',
+            started_at: idx === 0 ? new Date().toISOString() : null,
+            sla_deadline: w.sla_hours ? new Date(Date.now() + w.sla_hours * 3600_000).toISOString() : null,
+            sort_order: idx,
+            step_config: w,
+            step_values: {},
+          };
+        });
 
-          if (!uploadError) {
-            const { data: signedUrlData } = await supabase.storage
-              .from('process-attachments')
-              .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days
+        await supabase.from('process_run_steps').insert(stepsRows);
+        await supabase.from('process_runs').update({ current_step_id: stepsRows[0].step_id }).eq('id', data.id);
 
-            await supabase.from('process_run_attachments').insert({
-              process_run_id: data.id,
-              file_name: uploadedFile.name,
-              file_url: signedUrlData?.signedUrl || filePath,
-              file_type: uploadedFile.file.type,
-              uploaded_by: user.id,
-            });
-          }
+        const first = stepsRows[0];
+        if (first.assignee_id && first.assignee_id !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: first.assignee_id,
+            type: 'process_step',
+            title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+            message: `${procData?.title || ''}: ${first.step_label || ''}`,
+          });
         }
       }
 
@@ -198,6 +217,7 @@ const RunProcess = () => {
       setSubmitting(false);
     }
   };
+
 
   const updateFieldValue = (fieldName: string, value: string) => {
     setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
