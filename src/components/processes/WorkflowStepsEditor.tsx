@@ -364,8 +364,8 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                               className="hidden"
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
-                                if (!file) return;
-                                const path = `samples/${uid()}-${file.name}`;
+                                if (!file || !user) return;
+                                const path = `${user.id}/samples/${uid()}-${file.name}`;
                                 const { error } = await supabase.storage
                                   .from('process-attachments')
                                   .upload(path, file, { upsert: false });
