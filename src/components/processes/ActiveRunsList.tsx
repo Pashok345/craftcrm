@@ -195,68 +195,93 @@ export function ActiveRunsList() {
       {filtered.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">{t('noRunsFound') || 'Запусків не знайдено'}</CardContent></Card>
       ) : (
-        <div className="space-y-2">
-          {filtered.map(r => {
+        (() => {
+          // Group runs by process type
+          const groups: Record<string, { typeName: string; runs: Run[] }> = {};
+          filtered.forEach(r => {
             const proc = processes[r.process_id];
-            const sm = statusMeta(r.status);
-            const StatusIcon = sm.icon;
-            const initiator = profiles[r.started_by];
-            const runAssignees = (assignees[r.id] || []).map(id => profiles[id]).filter(Boolean);
-            const slaOverdue = r.sla_deadline && new Date(r.sla_deadline) < new Date() && r.status !== 'completed' && r.status !== 'cancelled';
-            return (
-              <Card
-                key={r.id}
-                className="hover:border-primary/50 cursor-pointer transition-colors"
-                onClick={() => navigate(`/process-runs/${r.id}`)}
-              >
-                <CardContent className="py-3 px-4 flex items-center gap-3">
-                  <Badge variant="outline" className={sm.cls}>
-                    <StatusIcon className="h-3 w-3 mr-1" />{sm.label}
-                  </Badge>
-                  <Badge variant="outline" className={priorityMeta(r.priority)}>{r.priority}</Badge>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium truncate">
-                      {r.title || (r.field_values?._run_name as string) || t('untitled')}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {proc?.title || '—'} · {formatDistanceToNow(new Date(r.started_at), { addSuffix: true, locale: dateLocale })}
-                    </div>
+            const typeId = proc?.type_id || '__none__';
+            const typeName = types.find(t => t.id === typeId)?.name || (t('withoutType') || 'Без типу');
+            if (!groups[typeId]) groups[typeId] = { typeName, runs: [] };
+            groups[typeId].runs.push(r);
+          });
+          const groupList = Object.entries(groups).sort((a, b) => a[1].typeName.localeCompare(b[1].typeName));
+          return (
+            <div className="space-y-6">
+              {groupList.map(([typeId, group]) => (
+                <div key={typeId} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <h3 className="text-sm font-semibold text-foreground">{group.typeName}</h3>
+                    <Badge variant="secondary" className="text-xs">{group.runs.length}</Badge>
                   </div>
-                  {slaOverdue && (
-                    <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">
-                      <AlertTriangle className="h-3 w-3 mr-1" />SLA
-                    </Badge>
-                  )}
-                  {initiator && (
-                    <div className="hidden md:flex items-center gap-1.5 text-xs">
-                      <span className="text-muted-foreground">{t('by') || 'від'}</span>
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={initiator.avatar_url || undefined} />
-                        <AvatarFallback style={{ backgroundColor: initiator.avatar_color || undefined }} className="text-[10px]">
-                          {initials(initiator.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                  {runAssignees.length > 0 && (
-                    <div className="hidden md:flex -space-x-2">
-                      {runAssignees.slice(0, 3).map(p => (
-                        <Avatar key={p.user_id} className="h-6 w-6 border-2 border-background">
-                          <AvatarImage src={p.avatar_url || undefined} />
-                          <AvatarFallback style={{ backgroundColor: p.avatar_color || undefined }} className="text-[10px]">
-                            {initials(p.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  <div className="space-y-2">
+                    {group.runs.map(r => {
+                      const proc = processes[r.process_id];
+                      const sm = statusMeta(r.status);
+                      const StatusIcon = sm.icon;
+                      const initiator = profiles[r.started_by];
+                      const runAssignees = (assignees[r.id] || []).map(id => profiles[id]).filter(Boolean);
+                      const slaOverdue = r.sla_deadline && new Date(r.sla_deadline) < new Date() && r.status !== 'completed' && r.status !== 'cancelled';
+                      return (
+                        <Card
+                          key={r.id}
+                          className="hover:border-primary/50 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/processes/runs/${r.id}`)}
+                        >
+                          <CardContent className="py-3 px-4 flex items-center gap-3">
+                            <Badge variant="outline" className={sm.cls}>
+                              <StatusIcon className="h-3 w-3 mr-1" />{sm.label}
+                            </Badge>
+                            <Badge variant="outline" className={priorityMeta(r.priority)}>{r.priority}</Badge>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium truncate">
+                                {r.title || (r.field_values?._run_name as string) || t('untitled')}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {proc?.title || '—'} · {formatDistanceToNow(new Date(r.started_at), { addSuffix: true, locale: dateLocale })}
+                              </div>
+                            </div>
+                            {slaOverdue && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30">
+                                <AlertTriangle className="h-3 w-3 mr-1" />SLA
+                              </Badge>
+                            )}
+                            {initiator && (
+                              <div className="hidden md:flex items-center gap-1.5 text-xs">
+                                <span className="text-muted-foreground">{t('by') || 'від'}</span>
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={initiator.avatar_url || undefined} />
+                                  <AvatarFallback style={{ backgroundColor: initiator.avatar_color || undefined }} className="text-[10px]">
+                                    {initials(initiator.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                            )}
+                            {runAssignees.length > 0 && (
+                              <div className="hidden md:flex -space-x-2">
+                                {runAssignees.slice(0, 3).map(p => (
+                                  <Avatar key={p.user_id} className="h-6 w-6 border-2 border-background">
+                                    <AvatarImage src={p.avatar_url || undefined} />
+                                    <AvatarFallback style={{ backgroundColor: p.avatar_color || undefined }} className="text-[10px]">
+                                      {initials(p.name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                ))}
+                              </div>
+                            )}
+                            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()
       )}
     </div>
   );
 }
+
