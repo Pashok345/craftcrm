@@ -647,6 +647,39 @@ const ProcessRunDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Top status/info banner */}
+      <Card>
+        <CardContent className="py-3 px-4 flex flex-wrap items-center gap-4">
+          <Badge className={`${statusConfig.color} border`}>
+            <StatusIcon className="h-3.5 w-3.5 mr-1" />
+            {statusConfig.label}
+          </Badge>
+          {starterProfile && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('startedBy')}:</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={starterProfile.avatar_url || undefined} />
+                <AvatarFallback className="text-[10px]" style={{ backgroundColor: starterProfile.avatar_color || undefined }}>
+                  {getInitials(starterProfile.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{starterProfile.name}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            {format(new Date(run.started_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
+          </div>
+          {run.completed_at && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <CheckCircle className="h-3.5 w-3.5" />
+              {format(new Date(run.completed_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main info */}
         <div className="md:col-span-2 space-y-6">
