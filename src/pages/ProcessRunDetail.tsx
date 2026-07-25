@@ -647,9 +647,44 @@ const ProcessRunDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Top status/info banner */}
+      <Card>
+        <CardContent className="py-3 px-4 flex flex-wrap items-center gap-4">
+          <Badge className={`${statusConfig.color} border`}>
+            <StatusIcon className="h-3.5 w-3.5 mr-1" />
+            {statusConfig.label}
+          </Badge>
+          {starterProfile && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t('startedBy')}:</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={starterProfile.avatar_url || undefined} />
+                <AvatarFallback className="text-[10px]" style={{ backgroundColor: starterProfile.avatar_color || undefined }}>
+                  {getInitials(starterProfile.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm">{starterProfile.name}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            {format(new Date(run.started_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
+          </div>
+          {run.completed_at && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <CheckCircle className="h-3.5 w-3.5" />
+              {format(new Date(run.completed_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main info */}
         <div className="md:col-span-2 space-y-6">
+          {run && <RunStepsPanel runId={run.id} initiatorId={run.started_by} />}
+
           {/* Process info card */}
           <Card>
             <CardHeader>
@@ -686,60 +721,8 @@ const ProcessRunDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Attachments section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('attachments')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <input
-                type="file"
-                ref={directFileInputRef}
-                onChange={handleDirectFileUpload}
-                multiple
-                className="hidden"
-              />
-              
-              {directAttachments.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p className="text-sm">{t('noAttachments')}</p>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-3">
-                  {directAttachments.map((att) => (
-                    <a
-                      key={att.id}
-                      href={att.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg hover:bg-muted/80 transition-colors"
-                    >
-                      <Paperclip className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm max-w-[200px] truncate">{att.file_name}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => directFileInputRef.current?.click()}
-                disabled={uploadingDirect}
-              >
-                {uploadingDirect ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Paperclip className="h-4 w-4 mr-2" />
-                )}
-                {t('addFile')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {run && <RunStepsPanel runId={run.id} initiatorId={run.started_by} />}
-
           {/* Comments section */}
+
 
           <Card>
             <CardHeader>
