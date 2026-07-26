@@ -337,15 +337,43 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   if (loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin" /></div>;
   if (steps.length === 0) return null;
 
+  const doneCount = steps.filter(s => s.status === 'completed').length;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <GitBranch className="h-4 w-4" />
           {t('processSteps') || 'Кроки процесу'}
+          <Badge variant="outline" className="ml-auto font-normal">
+            {doneCount} / {steps.length}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Horizontal overview of all steps */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-2">
+          {steps.map((s, i) => {
+            const color = s.status === 'completed' ? '#22c55e'
+              : s.status === 'in_progress' ? '#3b82f6'
+              : s.status === 'rejected' ? '#ef4444' : '#94a3b8';
+            return (
+              <div key={s.id} className="flex items-center gap-1 shrink-0">
+                <div
+                  className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+                  style={{ borderColor: color, color, backgroundColor: `${color}14` }}
+                  title={s.step_label || ''}
+                >
+                  <span className="font-semibold">{i + 1}</span>
+                  <span className="max-w-[140px] truncate">{s.step_label || cfgTitle(s)}</span>
+                </div>
+                {i < steps.length - 1 && <div className="h-px w-4 bg-border" />}
+              </div>
+            );
+          })}
+        </div>
+
+
         {steps.map((step, idx) => {
           const cfg = step.step_config;
           const assignee = step.assignee_id ? profiles[step.assignee_id] : null;
