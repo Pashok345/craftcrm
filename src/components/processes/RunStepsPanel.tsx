@@ -365,7 +365,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                   title={s.step_label || ''}
                 >
                   <span className="font-semibold">{i + 1}</span>
-                  <span className="max-w-[140px] truncate">{s.step_label || cfgTitle(s)}</span>
+                  <span className="max-w-[140px] truncate">{s.step_label || s.step_config?.title || ''}</span>
                 </div>
                 {i < steps.length - 1 && <div className="h-px w-4 bg-border" />}
               </div>
