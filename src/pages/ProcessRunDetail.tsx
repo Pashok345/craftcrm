@@ -245,15 +245,6 @@ const ProcessRunDetail = () => {
     }
 
     if (deptsRes.data) setDepartments(deptsRes.data);
-    
-    // Fetch direct attachments
-    const { data: directAtts } = await supabase
-      .from('process_run_attachments')
-      .select('id, file_name, file_url, file_type')
-      .eq('process_run_id', id)
-      .is('comment_id', null);
-    if (directAtts) setDirectAttachments(directAtts);
-    
     setLoading(false);
   };
 
