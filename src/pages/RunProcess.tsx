@@ -194,7 +194,8 @@ const RunProcess = () => {
           };
         });
 
-        await supabase.from('process_run_steps').insert(stepsRows);
+        const { error: stepsError } = await supabase.from('process_run_steps').insert(stepsRows);
+        if (stepsError) throw stepsError;
         await supabase.from('process_runs').update({ current_step_id: stepsRows[0].step_id }).eq('id', data.id);
 
         const first = stepsRows[0];

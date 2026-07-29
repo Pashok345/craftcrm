@@ -80,13 +80,68 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   const [valuesDrafts, setValuesDrafts] = useState<Record<string, Record<string, any>>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
+  // Creates run steps from the process workflow if they were never materialized
+  const materializeSteps = async (): Promise<Step[]> => {
+    if (!user) return [];
+    const { data: run } = await supabase
+      .from('process_runs')
+      .select('id, process_id, started_by')
+      .eq('id', runId)
+      .maybeSingle();
+    if (!run) return [];
+    const { data: proc } = await supabase
+      .from('processes')
+      .select('steps, title')
+      .eq('id', run.process_id)
+      .maybeSingle();
+    const workflow: any[] = Array.isArray((proc as any)?.steps?.workflow) ? (proc as any).steps.workflow : [];
+    if (workflow.length === 0) return [];
+
+    const rows = workflow.map((w: any, idx: number) => {
+      const responsibleField = (w.fields || []).find((f: any) => f.type === 'user' && f.assignee_user_id);
+      const assignee = responsibleField?.assignee_user_id
+        || (w.assignee_mode === 'user' && w.assignee_id ? w.assignee_id : run.started_by);
+      return {
+        run_id: runId,
+        step_id: w.id,
+        step_type: 'task',
+        step_label: w.title || null,
+        assignee_id: assignee,
+        status: idx === 0 ? 'in_progress' : 'pending',
+        started_at: idx === 0 ? new Date().toISOString() : null,
+        sla_deadline: w.sla_hours ? new Date(Date.now() + w.sla_hours * 3600_000).toISOString() : null,
+        sort_order: idx,
+        step_config: w,
+        step_values: {},
+      };
+    });
+
+    const { data: inserted, error } = await supabase
+      .from('process_run_steps')
+      .insert(rows)
+      .select();
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      return [];
+    }
+    await supabase
+      .from('process_runs')
+      .update({ current_step_id: rows[0].step_id, status: 'in_progress' })
+      .eq('id', runId);
+    return (inserted || []) as unknown as Step[];
+  };
+
   const load = async () => {
     setLoading(true);
     const [sRes, pRes] = await Promise.all([
       supabase.from('process_run_steps').select('*').eq('run_id', runId).order('sort_order'),
       supabase.from('profiles').select('user_id, name, avatar_url, avatar_color'),
     ]);
-    if (sRes.data) setSteps(sRes.data as unknown as Step[]);
+    let list = (sRes.data || []) as unknown as Step[];
+    if (list.length === 0) {
+      list = (await materializeSteps()).sort((a, b) => a.sort_order - b.sort_order);
+    }
+    setSteps(list);
     if (pRes.data) {
       const m: Record<string, Profile> = {};
       pRes.data.forEach((p: any) => { m[p.user_id] = p; });
