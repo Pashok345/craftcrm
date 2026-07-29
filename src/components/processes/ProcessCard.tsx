@@ -134,8 +134,7 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
     }
   };
 
-  const displayedRuns = showAllRuns ? runs : runs.slice(0, 3);
-  const hasMoreRuns = runs.length > 3;
+  const activeCount = runs.filter(r => r.status === 'pending' || r.status === 'in_progress').length;
 
   const category = categories.find((c) => c.id === process.category_id);
 
@@ -260,71 +259,11 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
           )}
           <Badge variant="outline" className="ml-auto">{process.process_type?.name || t('noType')}</Badge>
         </div>
-
-        {/* Process Runs Section */}
-        {runs.length > 0 && (
-          <div className="border-t pt-4 mt-4 space-y-2">
-            <p className="text-sm font-medium text-muted-foreground mb-3">
-              {t('processRuns') || 'Запущенные процессы'} ({runs.length})
-            </p>
-            <div className="space-y-2">
-                {displayedRuns.map((run) => {
-                const statusConfig = getStatusConfig(run.status);
-                const StatusIcon = statusConfig.icon;
-                const runName = run.field_values._run_name as string || t('untitled');
-                
-                const statusLabel = run.status === 'completed' 
-                  ? (t('completed') || 'Завершен')
-                  : run.status === 'cancelled' 
-                  ? (t('cancelled') || 'Отменен')
-                  : run.status === 'in_progress'
-                  ? (t('inProgress') || 'В работе')
-                  : (t('pending') || 'Ожидает');
-                
-                return (
-                  <div 
-                    key={run.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
-                    onClick={() => navigate(`/processes/runs/${run.id}`)}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <StatusIcon className={`h-4 w-4 flex-shrink-0 ${run.status === 'completed' ? 'text-green-600' : run.status === 'cancelled' ? 'text-red-600' : run.status === 'in_progress' ? 'text-blue-600' : 'text-yellow-600'}`} />
-                      <span className="text-sm font-medium truncate">{runName}</span>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <Badge variant="outline" className={statusConfig.color}>
-                        {statusLabel}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(run.started_at), 'd MMM yyyy', { locale: dateLocale })}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {hasMoreRuns && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => setShowAllRuns(!showAllRuns)}
-              >
-                {showAllRuns ? (
-                  <>
-                    <ChevronUp className="h-4 w-4 mr-1" />
-                    {t('showLess') || 'Свернуть'}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 mr-1" />
-                    {t('showMore') || 'Показать ещё'} ({runs.length - 3})
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+        {activeCount > 0 && (
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
+            <Play className="h-3 w-3 mr-1" />
+            {t('activeRuns') || 'Активні запуски'}: {activeCount}
+          </Badge>
         )}
       </CardContent>
     </Card>
