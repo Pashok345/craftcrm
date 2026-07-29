@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -43,9 +44,15 @@ interface Type {
   name: string;
 }
 
-export function ActiveRunsList() {
+interface ActiveRunsListProps {
+  mineOnly?: boolean;
+  onCounts?: (counts: { active: number; mine: number }) => void;
+}
+
+export function ActiveRunsList({ mineOnly = false, onCounts }: ActiveRunsListProps = {}) {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<Run[]>([]);
   const [processes, setProcesses] = useState<Record<string, Process>>({});
@@ -114,8 +121,19 @@ export function ActiveRunsList() {
     return ids.map(id => profiles[id]).filter(Boolean);
   }, [assignees, profiles]);
 
+  const isMine = (r: Run) =>
+    !!user && (r.started_by === user.id || (assignees[r.id] || []).includes(user.id));
+
+  useEffect(() => {
+    if (!onCounts) return;
+    const active = runs.filter(r => r.status === 'pending' || r.status === 'in_progress').length;
+    const mine = runs.filter(r => isMine(r) && r.status !== 'completed' && r.status !== 'cancelled').length;
+    onCounts({ active, mine });
+  }, [runs, assignees, user]);
+
   const filtered = useMemo(() => {
     return runs.filter(r => {
+      if (mineOnly && !isMine(r)) return false;
       const proc = processes[r.process_id];
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (typeFilter !== 'all' && proc?.type_id !== typeFilter) return false;
@@ -129,7 +147,7 @@ export function ActiveRunsList() {
       }
       return true;
     });
-  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search]);
+  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search, mineOnly, user]);
 
   const statusMeta = (s: string) => {
     switch (s) {

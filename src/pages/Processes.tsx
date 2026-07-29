@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack } from 'lucide-react';
+import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack, UserCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
 import { ProcessCard } from '@/components/processes/ProcessCard';
 
 import {
@@ -49,6 +51,8 @@ interface Process {
 
 const Processes = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [runCounts, setRunCounts] = useState({ active: 0, mine: 0 });
   const [processes, setProcesses] = useState<Process[]>([]);
   const [processTypes, setProcessTypes] = useState<ProcessType[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -64,10 +68,33 @@ const Processes = () => {
   useEffect(() => {
     fetchData();
     fetchCategories();
-    const handler = () => fetchData();
+    fetchRunCounts();
+    const handler = () => { fetchData(); fetchRunCounts(); };
     window.addEventListener('processes:refresh', handler);
     return () => window.removeEventListener('processes:refresh', handler);
-  }, []);
+  }, [user?.id]);
+
+  const fetchRunCounts = async () => {
+    const { data: runsData } = await supabase
+      .from('process_runs')
+      .select('id, status, started_by')
+      .in('status', ['pending', 'in_progress']);
+    if (!runsData) return;
+    const ids = runsData.map((r) => r.id);
+    let mineIds = new Set<string>();
+    if (user) {
+      runsData.forEach((r) => { if (r.started_by === user.id) mineIds.add(r.id); });
+      if (ids.length) {
+        const { data: steps } = await supabase
+          .from('process_run_steps')
+          .select('run_id, assignee_id, status')
+          .in('run_id', ids)
+          .in('status', ['pending', 'in_progress']);
+        steps?.forEach((s: any) => { if (s.assignee_id === user.id) mineIds.add(s.run_id); });
+      }
+    }
+    setRunCounts({ active: runsData.length, mine: mineIds.size });
+  };
 
   const fetchCategories = async () => {
     const { data } = await supabase
@@ -174,11 +201,21 @@ const Processes = () => {
         <TabsList>
           <TabsTrigger value="my">
             <LayoutGrid className="h-4 w-4 mr-2" />
+            {t('allProcesses') || 'Всі процеси'}
+          </TabsTrigger>
+          <TabsTrigger value="mine">
+            <UserCheck className="h-4 w-4 mr-2" />
             {t('myProcesses') || 'Мої процеси'}
+            {runCounts.mine > 0 && (
+              <Badge variant="secondary" className="ml-2">{runCounts.mine}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="active">
             <PlayCircle className="h-4 w-4 mr-2" />
             {t('activeRuns') || 'Активні запуски'}
+            {runCounts.active > 0 && (
+              <Badge variant="secondary" className="ml-2">{runCounts.active}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="templates">
             <FileStack className="h-4 w-4 mr-2" />
@@ -247,8 +284,12 @@ const Processes = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="mine" className="mt-4">
+          <ActiveRunsList mineOnly onCounts={setRunCounts} />
+        </TabsContent>
+
         <TabsContent value="active" className="mt-4">
-          <ActiveRunsList />
+          <ActiveRunsList onCounts={setRunCounts} />
         </TabsContent>
 
 
