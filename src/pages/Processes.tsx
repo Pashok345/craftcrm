@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack, UserCheck } from 'lucide-react';
+import { Plus, Loader2, Sparkles, Search, PlayCircle, LayoutGrid, FileStack, UserCheck, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { ProcessCard } from '@/components/processes/ProcessCard';
