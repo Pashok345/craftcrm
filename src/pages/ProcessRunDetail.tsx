@@ -572,10 +572,7 @@ const ProcessRunDetail = () => {
           <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
-          <Badge className={`${statusConfig.color} border`}>
-            <StatusIcon className="h-3.5 w-3.5 mr-1" />
-            {statusConfig.label}
-          </Badge>
+
         </div>
       </div>
 
