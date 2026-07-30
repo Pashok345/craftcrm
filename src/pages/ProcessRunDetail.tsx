@@ -595,10 +595,21 @@ const ProcessRunDetail = () => {
       {/* Top status/info banner */}
       <Card>
         <CardContent className="py-3 px-4 flex flex-wrap items-center gap-4">
-          <Badge className={`${statusConfig.color} border`}>
-            <StatusIcon className="h-3.5 w-3.5 mr-1" />
-            {statusConfig.label}
-          </Badge>
+          <Select value={run.status} onValueChange={updateStatus}>
+            <SelectTrigger className={`w-[190px] h-9 ${statusConfig.color} border font-medium`}>
+              <div className="flex items-center gap-1.5">
+                <StatusIcon className="h-3.5 w-3.5" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">{t('status_pending') || 'Очікує'}</SelectItem>
+              <SelectItem value="in_progress">{t('status_in_progress') || 'В роботі'}</SelectItem>
+              <SelectItem value="completed">{t('status_completed') || 'Завершено'}</SelectItem>
+              <SelectItem value="cancelled">{t('status_cancelled') || 'Скасовано'}</SelectItem>
+            </SelectContent>
+          </Select>
+
           {starterProfile && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t('startedBy')}:</span>
