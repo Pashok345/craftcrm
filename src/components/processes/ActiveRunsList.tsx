@@ -151,7 +151,7 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
       }
       return true;
     });
-  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search, mineOnly, user]);
+  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search, mineOnly, completedOnly, user]);
 
   const statusMeta = (s: string) => {
     switch (s) {
