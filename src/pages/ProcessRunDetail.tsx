@@ -636,9 +636,9 @@ const ProcessRunDetail = () => {
       </Card>
 
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Main info */}
-        <div className="md:col-span-2 space-y-6">
+      <div>
+        <div className="space-y-6">
+
           {run && <RunStepsPanel runId={run.id} initiatorId={run.started_by} />}
 
           {/* Process info card */}
