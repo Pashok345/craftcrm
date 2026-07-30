@@ -811,86 +811,8 @@ const ProcessRunDetail = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Status card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('status')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select value={run.status} onValueChange={updateStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">{t('status_pending') || 'Ожидает'}</SelectItem>
-                  <SelectItem value="in_progress">{t('status_in_progress') || 'В работе'}</SelectItem>
-                  <SelectItem value="completed">{t('status_completed') || 'Завершено'}</SelectItem>
-                  <SelectItem value="cancelled">{t('status_cancelled') || 'Отменено'}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {run.status === 'pending' && (
-                <Button className="w-full" onClick={() => updateStatus('in_progress')}>
-                  <Play className="h-4 w-4 mr-2" />
-                  {t('takeToWork') || 'Взять в работу'}
-                </Button>
-              )}
-
-              {run.status === 'in_progress' && (
-                <Button className="w-full" variant="outline" onClick={() => updateStatus('completed')}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {t('markComplete') || 'Завершить'}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Info card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('info')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">{t('startedBy')}</p>
-                {starterProfile && (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={starterProfile.avatar_url || undefined} />
-                      <AvatarFallback 
-                        className="text-xs"
-                        style={{ backgroundColor: starterProfile.avatar_color || undefined }}
-                      >
-                        {getInitials(starterProfile.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{starterProfile.name}</span>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">{t('startedAt')}</p>
-                <p className="text-sm">
-                  {format(new Date(run.started_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
-                </p>
-              </div>
-
-              {run.completed_at && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">{t('completedAt')}</p>
-                  <p className="text-sm">
-                    {format(new Date(run.completed_at), 'dd MMM yyyy, HH:mm', { locale: dateLocale })}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </div>
+
     </div>
   );
 };
