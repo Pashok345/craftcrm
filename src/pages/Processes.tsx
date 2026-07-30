@@ -297,8 +297,12 @@ const Processes = () => {
         </TabsContent>
 
 
+        <TabsContent value="completed" className="mt-4">
+          <ActiveRunsList completedOnly />
+        </TabsContent>
+
         <TabsContent value="templates" className="mt-4">
-          <Card>
+
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileStack className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">
