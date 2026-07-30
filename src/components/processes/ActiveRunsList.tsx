@@ -46,10 +46,11 @@ interface Type {
 
 interface ActiveRunsListProps {
   mineOnly?: boolean;
+  completedOnly?: boolean;
   onCounts?: (counts: { active: number; mine: number }) => void;
 }
 
-export function ActiveRunsList({ mineOnly = false, onCounts }: ActiveRunsListProps = {}) {
+export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCounts }: ActiveRunsListProps = {}) {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
