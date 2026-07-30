@@ -46,10 +46,11 @@ interface Type {
 
 interface ActiveRunsListProps {
   mineOnly?: boolean;
+  completedOnly?: boolean;
   onCounts?: (counts: { active: number; mine: number }) => void;
 }
 
-export function ActiveRunsList({ mineOnly = false, onCounts }: ActiveRunsListProps = {}) {
+export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCounts }: ActiveRunsListProps = {}) {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -133,6 +134,9 @@ export function ActiveRunsList({ mineOnly = false, onCounts }: ActiveRunsListPro
 
   const filtered = useMemo(() => {
     return runs.filter(r => {
+      const isDone = r.status === 'completed' || r.status === 'cancelled';
+      if (completedOnly && !isDone) return false;
+      if (!completedOnly && isDone) return false;
       if (mineOnly && !isMine(r)) return false;
       const proc = processes[r.process_id];
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
@@ -147,7 +151,7 @@ export function ActiveRunsList({ mineOnly = false, onCounts }: ActiveRunsListPro
       }
       return true;
     });
-  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search, mineOnly, user]);
+  }, [runs, processes, statusFilter, typeFilter, initiatorFilter, assigneeFilter, assignees, search, mineOnly, completedOnly, user]);
 
   const statusMeta = (s: string) => {
     switch (s) {
