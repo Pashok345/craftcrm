@@ -217,6 +217,10 @@ const Processes = () => {
               <Badge variant="secondary" className="ml-2">{runCounts.active}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="completed">
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            {t('completedRuns') || 'Завершені'}
+          </TabsTrigger>
           <TabsTrigger value="templates">
             <FileStack className="h-4 w-4 mr-2" />
             {t('processTemplates') || 'Шаблони'}
