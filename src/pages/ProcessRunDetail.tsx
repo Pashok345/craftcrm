@@ -543,6 +543,8 @@ const ProcessRunDetail = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
+      <div className="flex items-center gap-4">
+
 
         <Button variant="ghost" size="icon" onClick={() => navigate('/processes')}>
           <ArrowLeft className="h-5 w-5" />
