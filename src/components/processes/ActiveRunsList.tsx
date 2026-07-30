@@ -134,6 +134,9 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
 
   const filtered = useMemo(() => {
     return runs.filter(r => {
+      const isDone = r.status === 'completed' || r.status === 'cancelled';
+      if (completedOnly && !isDone) return false;
+      if (!completedOnly && isDone) return false;
       if (mineOnly && !isMine(r)) return false;
       const proc = processes[r.process_id];
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
