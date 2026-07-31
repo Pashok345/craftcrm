@@ -325,16 +325,18 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     const v = draft[f.id];
     const set = (val: any) => setFieldValue(step.id, f.id, val);
     const readOnly = step.status !== 'in_progress';
+    const invalid = !!errors[step.id]?.[f.id];
+    const err = invalid ? 'border-destructive focus-visible:ring-destructive' : '';
 
     switch (f.type) {
       case 'textarea':
-        return <Textarea rows={3} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Textarea rows={3} className={err} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
       case 'number':
-        return <Input type="number" value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Input type="number" className={err} value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
       case 'select':
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
             <SelectContent>
               {(f.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
@@ -342,7 +344,12 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         );
       case 'radio':
         return (
-          <RadioGroup value={v || ''} onValueChange={set} disabled={readOnly}>
+          <RadioGroup
+            value={v || ''}
+            onValueChange={set}
+            disabled={readOnly}
+            className={invalid ? 'rounded-md border border-destructive p-2' : ''}
+          >
             {(f.options || []).map(o => (
               <div key={o} className="flex items-center gap-2">
                 <RadioGroupItem id={`${f.id}-${o}`} value={o} />
@@ -354,7 +361,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       case 'checkbox': {
         const arr: string[] = Array.isArray(v) ? v : [];
         return (
-          <div className="space-y-1.5">
+          <div className={`space-y-1.5 ${invalid ? 'rounded-md border border-destructive p-2' : ''}`}>
             {(f.options || []).map(o => (
               <div key={o} className="flex items-center gap-2">
                 <Checkbox
@@ -375,6 +382,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             {!readOnly && (
               <Input
                 type="file"
+                className={err}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) uploadFile(step.id, f.id, file);
@@ -403,10 +411,38 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         ) : (
           <p className="text-xs text-muted-foreground italic">{t('noSampleFile') || 'Файл-зразок не додано'}</p>
         );
-      case 'user':
+      case 'user': {
+        // Predefined approver: no user picker, only confirm / decline
+        if (f.assignee_user_id) {
+          const approver = profiles[f.assignee_user_id];
+          const decision = typeof v === 'object' && v ? v.decision : null;
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={approver?.avatar_url || undefined} />
+                  <AvatarFallback style={{ backgroundColor: approver?.avatar_color || undefined }} className="text-[10px]">
+                    {initials(approver?.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-muted-foreground">{approver?.name || '—'}</span>
+                {decision && (
+                  <Badge variant="outline" className={decision === 'approved' ? STATUS_CLS.completed : STATUS_CLS.rejected}>
+                    {decision === 'approved'
+                      ? (t('confirmDecisionYes') || 'Підтверджую')
+                      : (t('confirmDecisionNo') || 'Не підтверджую')}
+                  </Badge>
+                )}
+              </div>
+              {decision === 'rejected' && v?.comment && (
+                <p className="text-xs text-muted-foreground">{v.comment}</p>
+              )}
+            </div>
+          );
+        }
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
             <SelectContent>
               {Object.values(profiles).map(p => (
                 <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
@@ -414,12 +450,14 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             </SelectContent>
           </Select>
         );
+      }
       case 'button':
         return null;
       default:
-        return <Input value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Input className={err} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
     }
   };
+
 
   const actionForOption = (label: string): 'approve' | 'reject' | 'revise' => {
     const l = label.toLowerCase();
