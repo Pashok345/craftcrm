@@ -29,9 +29,11 @@ interface FieldDef {
   type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
   sample_url?: string | null;
   sample_name?: string | null;
+  assignee_user_id?: string | null;
   required?: boolean;
   options?: string[];
 }
+
 
 interface StepConfig {
   id: string;
@@ -79,6 +81,9 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   const [loading, setLoading] = useState(true);
   const [valuesDrafts, setValuesDrafts] = useState<Record<string, Record<string, any>>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [rejectMode, setRejectMode] = useState<Record<string, boolean>>({});
+
 
   // Creates run steps from the process workflow if they were never materialized
   const materializeSteps = async (): Promise<Step[]> => {
@@ -157,13 +162,37 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       ...d,
       [stepId]: { ...(d[stepId] || {}), [fieldId]: val },
     }));
+    setErrors(e => {
+      if (!e[stepId]?.[fieldId]) return e;
+      const next = { ...(e[stepId] || {}) };
+      delete next[fieldId];
+      return { ...e, [stepId]: next };
+    });
+  };
+
+  // Storage keys must be ASCII-safe: keep the original name for display only
+  const sanitizeFileName = (name: string) => {
+    const dot = name.lastIndexOf('.');
+    const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    const base = (dot > 0 ? name.slice(0, dot) : name)
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+    return `${base || 'file'}${ext ? `.${ext}` : ''}`;
   };
 
   const uploadFile = async (stepId: string, fieldId: string, file: File) => {
     if (!user) return;
-    const path = `${user.id}/${runId}/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from('process-attachments').upload(path, file);
+    if (file.size > 50 * 1024 * 1024) {
+      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: t('fileTooLarge') || 'Файл завеликий — максимум 50 МБ' } }));
+      return;
+    }
+    const path = `${user.id}/${runId}/${Date.now()}_${sanitizeFileName(file.name)}`;
+    const { error } = await supabase.storage
+      .from('process-attachments')
+      .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
     if (error) {
+      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: error.message } }));
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
       return;
     }
@@ -180,29 +209,47 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     });
   };
 
-  const completeStep = async (step: Step, action: 'approve' | 'reject' | 'revise' = 'approve', buttonLabel?: string) => {
+  const requiredMessage = (f: FieldDef) => {
+    if (f.type === 'file') return t('fieldRequiredFile') || 'Додайте файл — це поле обовʼязкове';
+    if (f.type === 'select' || f.type === 'radio' || f.type === 'user') return t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
+    if (f.type === 'checkbox') return t('fieldRequiredCheckbox') || 'Позначте хоча б один варіант';
+    return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+  };
+
+  const completeStep = async (
+    step: Step,
+    action: 'approve' | 'reject' | 'revise' = 'approve',
+    buttonLabel?: string,
+    overrides?: Record<string, any>,
+  ) => {
     if (!user) return;
     const cfg = step.step_config;
-    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}) };
+    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}), ...(overrides || {}) };
     if (buttonLabel) draft._action = buttonLabel;
+
 
     // Validate required (skip on reject/revise)
     if (action === 'approve' && cfg?.fields) {
+      const stepErrors: Record<string, string> = {};
       for (const f of cfg.fields) {
-        if (f.required && f.type !== 'button') {
+        if (f.required && f.type !== 'button' && f.type !== 'file_download') {
           const v = draft[f.id];
           const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
-          if (empty) {
-            toast({
-              title: t('fieldRequired') || 'Обовʼязкове поле',
-              description: f.label,
-              variant: 'destructive',
-            });
-            return;
-          }
+          if (empty) stepErrors[f.id] = requiredMessage(f);
         }
       }
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(e => ({ ...e, [step.id]: stepErrors }));
+        toast({
+          title: t('fieldRequired') || 'Обовʼязкові поля',
+          description: t('fillRequiredFields') || 'Заповніть усі поля, позначені зірочкою',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setErrors(e => ({ ...e, [step.id]: {} }));
     }
+
 
     setBusy(step.id);
 
@@ -284,16 +331,18 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     const v = draft[f.id];
     const set = (val: any) => setFieldValue(step.id, f.id, val);
     const readOnly = step.status !== 'in_progress';
+    const invalid = !!errors[step.id]?.[f.id];
+    const err = invalid ? 'border-destructive focus-visible:ring-destructive' : '';
 
     switch (f.type) {
       case 'textarea':
-        return <Textarea rows={3} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Textarea rows={3} className={err} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
       case 'number':
-        return <Input type="number" value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Input type="number" className={err} value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
       case 'select':
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
             <SelectContent>
               {(f.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
@@ -301,7 +350,12 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         );
       case 'radio':
         return (
-          <RadioGroup value={v || ''} onValueChange={set} disabled={readOnly}>
+          <RadioGroup
+            value={v || ''}
+            onValueChange={set}
+            disabled={readOnly}
+            className={invalid ? 'rounded-md border border-destructive p-2' : ''}
+          >
             {(f.options || []).map(o => (
               <div key={o} className="flex items-center gap-2">
                 <RadioGroupItem id={`${f.id}-${o}`} value={o} />
@@ -313,7 +367,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       case 'checkbox': {
         const arr: string[] = Array.isArray(v) ? v : [];
         return (
-          <div className="space-y-1.5">
+          <div className={`space-y-1.5 ${invalid ? 'rounded-md border border-destructive p-2' : ''}`}>
             {(f.options || []).map(o => (
               <div key={o} className="flex items-center gap-2">
                 <Checkbox
@@ -334,6 +388,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             {!readOnly && (
               <Input
                 type="file"
+                className={err}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) uploadFile(step.id, f.id, file);
@@ -362,10 +417,38 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         ) : (
           <p className="text-xs text-muted-foreground italic">{t('noSampleFile') || 'Файл-зразок не додано'}</p>
         );
-      case 'user':
+      case 'user': {
+        // Predefined approver: no user picker, only confirm / decline
+        if (f.assignee_user_id) {
+          const approver = profiles[f.assignee_user_id];
+          const decision = typeof v === 'object' && v ? v.decision : null;
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={approver?.avatar_url || undefined} />
+                  <AvatarFallback style={{ backgroundColor: approver?.avatar_color || undefined }} className="text-[10px]">
+                    {initials(approver?.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-muted-foreground">{approver?.name || '—'}</span>
+                {decision && (
+                  <Badge variant="outline" className={decision === 'approved' ? STATUS_CLS.completed : STATUS_CLS.rejected}>
+                    {decision === 'approved'
+                      ? (t('confirmDecisionYes') || 'Підтверджую')
+                      : (t('confirmDecisionNo') || 'Не підтверджую')}
+                  </Badge>
+                )}
+              </div>
+              {decision === 'rejected' && v?.comment && (
+                <p className="text-xs text-muted-foreground">{v.comment}</p>
+              )}
+            </div>
+          );
+        }
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
             <SelectContent>
               {Object.values(profiles).map(p => (
                 <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
@@ -373,12 +456,14 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             </SelectContent>
           </Select>
         );
+      }
       case 'button':
         return null;
       default:
-        return <Input value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+        return <Input className={err} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
     }
   };
+
 
   const actionForOption = (label: string): 'approve' | 'reject' | 'revise' => {
     const l = label.toLowerCase();
@@ -482,21 +567,109 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 </div>
               )}
 
-              {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed') && (
+              {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed' || step.status === 'rejected') && (
                 <div className="mt-3 space-y-3">
                   {cfg.fields.filter(f => f.type !== 'button').map((f) => (
                     <div key={f.id} className="space-y-1.5">
-                      <Label className="text-xs">
+                      <Label className={`text-xs ${errors[step.id]?.[f.id] ? 'text-destructive' : ''}`}>
                         {f.label}
                         {f.required && <span className="text-destructive ml-0.5">*</span>}
                       </Label>
                       {renderField(step, f)}
+                      {errors[step.id]?.[f.id] && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {errors[step.id][f.id]}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
 
-              {canAct && (() => {
+              {(() => {
+                const approvalField = (cfg?.fields || []).find(f => f.type === 'user' && f.assignee_user_id);
+                if (!approvalField) return null;
+                if (!active) return null;
+                const isApprover = user?.id === approvalField.assignee_user_id;
+                if (!isApprover) {
+                  return (
+                    <p className="mt-4 text-xs text-muted-foreground italic text-center">
+                      {t('waitingForApprover') || 'Очікується рішення відповідального'}
+                    </p>
+                  );
+                }
+                const rejecting = !!rejectMode[step.id];
+                const comment = (valuesDrafts[step.id] || {})._reject_comment || '';
+                return (
+                  <div className="mt-4 space-y-3">
+                    {rejecting && (
+                      <div className="space-y-1.5">
+                        <Label className={`text-xs ${errors[step.id]?._reject_comment ? 'text-destructive' : ''}`}>
+                          {t('declineCommentLabel') || 'Причина відмови'}
+                          <span className="text-destructive ml-0.5">*</span>
+                        </Label>
+                        <Textarea
+                          rows={3}
+                          className={errors[step.id]?._reject_comment ? 'border-destructive focus-visible:ring-destructive' : ''}
+                          value={comment}
+                          onChange={(e) => setFieldValue(step.id, '_reject_comment', e.target.value)}
+                          placeholder={t('declineCommentPlaceholder') || 'Опишіть, чому ви не підтверджуєте'}
+                        />
+                        {errors[step.id]?._reject_comment && (
+                          <p className="text-xs text-destructive flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {errors[step.id]._reject_comment}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button
+                        size="lg"
+                        disabled={busy === step.id}
+                        onClick={() => {
+                          setRejectMode(m => ({ ...m, [step.id]: false }));
+                          completeStep(step, 'approve', undefined, {
+                            [approvalField.id]: { decision: 'approved', by: user?.id },
+                          });
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {t('confirmDecisionYes') || 'Підтверджую'}
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="destructive"
+                        disabled={busy === step.id}
+                        onClick={() => {
+                          if (!rejecting) {
+                            setRejectMode(m => ({ ...m, [step.id]: true }));
+                            return;
+                          }
+                          if (!String(comment).trim()) {
+                            setErrors(e => ({
+                              ...e,
+                              [step.id]: {
+                                ...(e[step.id] || {}),
+                                _reject_comment: t('declineCommentRequired') || 'Вкажіть причину відмови',
+                              },
+                            }));
+                            return;
+                          }
+                          completeStep(step, 'reject', undefined, {
+                            [approvalField.id]: { decision: 'rejected', by: user?.id, comment },
+                          });
+                        }}
+                      >
+                        {t('confirmDecisionNo') || 'Не підтверджую'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {canAct && !(cfg?.fields || []).some(f => f.type === 'user' && f.assignee_user_id) && (() => {
                 const buttonField = (cfg?.fields || []).find(f => f.type === 'button');
                 if (buttonField) {
                   return (
@@ -537,6 +710,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 );
 
               })()}
+
             </div>
           );
         })}

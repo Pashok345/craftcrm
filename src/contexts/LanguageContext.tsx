@@ -420,6 +420,19 @@ export const translations: Translations = {
   deleteProcessConfirm: { ru: 'Удалить этот процесс? Действие необратимо.', en: 'Delete this process? This cannot be undone.', uk: 'Видалити цей процес? Дію не можна скасувати.' },
   processStepAssignedTitle: { ru: 'Вам назначен шаг процесса', en: 'Process step assigned to you', uk: 'Вам призначено крок процесу' },
   fieldRequired: { ru: 'Обязательное', en: 'Required', uk: "Обов'язкове" },
+  fieldRequiredText: { ru: 'Заполните это поле — оно обязательное', en: 'Please fill in this required field', uk: "Заповніть це поле — воно обов'язкове" },
+  fieldRequiredFile: { ru: 'Добавьте файл — это поле обязательное', en: 'Please attach a file — this field is required', uk: "Додайте файл — це поле обов'язкове" },
+  fieldRequiredSelect: { ru: 'Выберите один из вариантов', en: 'Please select an option', uk: 'Оберіть один із варіантів' },
+  fieldRequiredCheckbox: { ru: 'Отметьте хотя бы один вариант', en: 'Please select at least one option', uk: 'Позначте хоча б один варіант' },
+  fillRequiredFields: { ru: 'Заполните все поля, отмеченные звёздочкой', en: 'Fill in all fields marked with an asterisk', uk: 'Заповніть усі поля, позначені зірочкою' },
+  fileTooLarge: { ru: 'Файл слишком большой — максимум 50 МБ', en: 'File is too large — 50 MB max', uk: 'Файл завеликий — максимум 50 МБ' },
+  confirmDecisionYes: { ru: 'Подтверждаю', en: 'Approve', uk: 'Підтверджую' },
+  confirmDecisionNo: { ru: 'Не подтверждаю', en: 'Decline', uk: 'Не підтверджую' },
+  declineCommentLabel: { ru: 'Причина отказа', en: 'Reason for decline', uk: 'Причина відмови' },
+  declineCommentPlaceholder: { ru: 'Опишите, почему вы не подтверждаете', en: 'Describe why you decline', uk: 'Опишіть, чому ви не підтверджуєте' },
+  declineCommentRequired: { ru: 'Укажите причину отказа', en: 'Please provide a reason', uk: 'Вкажіть причину відмови' },
+  waitingForApprover: { ru: 'Ожидается решение ответственного', en: 'Waiting for the approver decision', uk: 'Очікується рішення відповідального' },
+
   addStep: { ru: 'Добавить шаг', en: 'Add step', uk: 'Додати крок' },
   step: { ru: 'Шаг', en: 'Step', uk: 'Крок' },
   copy: { ru: 'копия', en: 'copy', uk: 'копія' },
@@ -693,7 +706,7 @@ export const translations: Translations = {
   invitationError: { ru: 'Не удалось отправить приглашение', en: 'Failed to send invitation', uk: 'Не вдалося надіслати запрошення' },
   userAlreadyExists: { ru: 'Пользователь с таким email уже существует', en: 'User with this email already exists', uk: 'Користувач з такою поштою вже існує' },
   invitationNote: { ru: 'Пользователь получит письмо со ссылкой для входа. После входа ему нужно будет установить пароль и указать должность. Аккаунт станет активным после верификации администратором.', en: 'User will receive an email with login link. After logging in, they need to set password and position. Account will be active after admin verification.', uk: 'Користувач отримає лист із посиланням для входу. Після входу потрібно встановити пароль та вказати посаду. Акаунт стане активним після верифікації адміністратором.' },
-  fillRequiredFields: { ru: 'Заполните все обязательные поля', en: 'Fill all required fields', uk: 'Заповніть усі обовʼязкові поля' },
+  
   
   // User profile dialog
   userProfile: { ru: 'Профиль пользователя', en: 'User Profile', uk: 'Профіль користувача' },
