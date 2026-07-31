@@ -567,21 +567,109 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 </div>
               )}
 
-              {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed') && (
+              {cfg?.fields && cfg.fields.length > 0 && (active || step.status === 'completed' || step.status === 'rejected') && (
                 <div className="mt-3 space-y-3">
                   {cfg.fields.filter(f => f.type !== 'button').map((f) => (
                     <div key={f.id} className="space-y-1.5">
-                      <Label className="text-xs">
+                      <Label className={`text-xs ${errors[step.id]?.[f.id] ? 'text-destructive' : ''}`}>
                         {f.label}
                         {f.required && <span className="text-destructive ml-0.5">*</span>}
                       </Label>
                       {renderField(step, f)}
+                      {errors[step.id]?.[f.id] && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {errors[step.id][f.id]}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
 
-              {canAct && (() => {
+              {(() => {
+                const approvalField = (cfg?.fields || []).find(f => f.type === 'user' && f.assignee_user_id);
+                if (!approvalField) return null;
+                if (!active) return null;
+                const isApprover = user?.id === approvalField.assignee_user_id;
+                if (!isApprover) {
+                  return (
+                    <p className="mt-4 text-xs text-muted-foreground italic text-center">
+                      {t('waitingForApprover') || 'Очікується рішення відповідального'}
+                    </p>
+                  );
+                }
+                const rejecting = !!rejectMode[step.id];
+                const comment = (valuesDrafts[step.id] || {})._reject_comment || '';
+                return (
+                  <div className="mt-4 space-y-3">
+                    {rejecting && (
+                      <div className="space-y-1.5">
+                        <Label className={`text-xs ${errors[step.id]?._reject_comment ? 'text-destructive' : ''}`}>
+                          {t('declineCommentLabel') || 'Причина відмови'}
+                          <span className="text-destructive ml-0.5">*</span>
+                        </Label>
+                        <Textarea
+                          rows={3}
+                          className={errors[step.id]?._reject_comment ? 'border-destructive focus-visible:ring-destructive' : ''}
+                          value={comment}
+                          onChange={(e) => setFieldValue(step.id, '_reject_comment', e.target.value)}
+                          placeholder={t('declineCommentPlaceholder') || 'Опишіть, чому ви не підтверджуєте'}
+                        />
+                        {errors[step.id]?._reject_comment && (
+                          <p className="text-xs text-destructive flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {errors[step.id]._reject_comment}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button
+                        size="lg"
+                        disabled={busy === step.id}
+                        onClick={() => {
+                          setRejectMode(m => ({ ...m, [step.id]: false }));
+                          completeStep(step, 'approve', undefined, {
+                            [approvalField.id]: { decision: 'approved', by: user?.id },
+                          });
+                        }}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {t('confirmDecisionYes') || 'Підтверджую'}
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="destructive"
+                        disabled={busy === step.id}
+                        onClick={() => {
+                          if (!rejecting) {
+                            setRejectMode(m => ({ ...m, [step.id]: true }));
+                            return;
+                          }
+                          if (!String(comment).trim()) {
+                            setErrors(e => ({
+                              ...e,
+                              [step.id]: {
+                                ...(e[step.id] || {}),
+                                _reject_comment: t('declineCommentRequired') || 'Вкажіть причину відмови',
+                              },
+                            }));
+                            return;
+                          }
+                          completeStep(step, 'reject', undefined, {
+                            [approvalField.id]: { decision: 'rejected', by: user?.id, comment },
+                          });
+                        }}
+                      >
+                        {t('confirmDecisionNo') || 'Не підтверджую'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {canAct && !(cfg?.fields || []).some(f => f.type === 'user' && f.assignee_user_id) && (() => {
                 const buttonField = (cfg?.fields || []).find(f => f.type === 'button');
                 if (buttonField) {
                   return (
@@ -622,6 +710,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 );
 
               })()}
+
             </div>
           );
         })}
