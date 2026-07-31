@@ -216,11 +216,17 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
   };
 
-  const completeStep = async (step: Step, action: 'approve' | 'reject' | 'revise' = 'approve', buttonLabel?: string) => {
+  const completeStep = async (
+    step: Step,
+    action: 'approve' | 'reject' | 'revise' = 'approve',
+    buttonLabel?: string,
+    overrides?: Record<string, any>,
+  ) => {
     if (!user) return;
     const cfg = step.step_config;
-    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}) };
+    const draft = { ...(valuesDrafts[step.id] || (step.step_values as any) || {}), ...(overrides || {}) };
     if (buttonLabel) draft._action = buttonLabel;
+
 
     // Validate required (skip on reject/revise)
     if (action === 'approve' && cfg?.fields) {
