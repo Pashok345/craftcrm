@@ -81,6 +81,9 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   const [loading, setLoading] = useState(true);
   const [valuesDrafts, setValuesDrafts] = useState<Record<string, Record<string, any>>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [rejectMode, setRejectMode] = useState<Record<string, boolean>>({});
+
 
   // Creates run steps from the process workflow if they were never materialized
   const materializeSteps = async (): Promise<Step[]> => {
