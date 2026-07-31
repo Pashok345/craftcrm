@@ -162,13 +162,37 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       ...d,
       [stepId]: { ...(d[stepId] || {}), [fieldId]: val },
     }));
+    setErrors(e => {
+      if (!e[stepId]?.[fieldId]) return e;
+      const next = { ...(e[stepId] || {}) };
+      delete next[fieldId];
+      return { ...e, [stepId]: next };
+    });
+  };
+
+  // Storage keys must be ASCII-safe: keep the original name for display only
+  const sanitizeFileName = (name: string) => {
+    const dot = name.lastIndexOf('.');
+    const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    const base = (dot > 0 ? name.slice(0, dot) : name)
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+    return `${base || 'file'}${ext ? `.${ext}` : ''}`;
   };
 
   const uploadFile = async (stepId: string, fieldId: string, file: File) => {
     if (!user) return;
-    const path = `${user.id}/${runId}/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from('process-attachments').upload(path, file);
+    if (file.size > 50 * 1024 * 1024) {
+      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: t('fileTooLarge') || 'Файл завеликий — максимум 50 МБ' } }));
+      return;
+    }
+    const path = `${user.id}/${runId}/${Date.now()}_${sanitizeFileName(file.name)}`;
+    const { error } = await supabase.storage
+      .from('process-attachments')
+      .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
     if (error) {
+      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: error.message } }));
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
       return;
     }
@@ -185,6 +209,13 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     });
   };
 
+  const requiredMessage = (f: FieldDef) => {
+    if (f.type === 'file') return t('fieldRequiredFile') || 'Додайте файл — це поле обовʼязкове';
+    if (f.type === 'select' || f.type === 'radio' || f.type === 'user') return t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
+    if (f.type === 'checkbox') return t('fieldRequiredCheckbox') || 'Позначте хоча б один варіант';
+    return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+  };
+
   const completeStep = async (step: Step, action: 'approve' | 'reject' | 'revise' = 'approve', buttonLabel?: string) => {
     if (!user) return;
     const cfg = step.step_config;
@@ -193,21 +224,26 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
 
     // Validate required (skip on reject/revise)
     if (action === 'approve' && cfg?.fields) {
+      const stepErrors: Record<string, string> = {};
       for (const f of cfg.fields) {
-        if (f.required && f.type !== 'button') {
+        if (f.required && f.type !== 'button' && f.type !== 'file_download') {
           const v = draft[f.id];
           const empty = v == null || v === '' || (Array.isArray(v) && v.length === 0);
-          if (empty) {
-            toast({
-              title: t('fieldRequired') || 'Обовʼязкове поле',
-              description: f.label,
-              variant: 'destructive',
-            });
-            return;
-          }
+          if (empty) stepErrors[f.id] = requiredMessage(f);
         }
       }
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(e => ({ ...e, [step.id]: stepErrors }));
+        toast({
+          title: t('fieldRequired') || 'Обовʼязкові поля',
+          description: t('fillRequiredFields') || 'Заповніть усі поля, позначені зірочкою',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setErrors(e => ({ ...e, [step.id]: {} }));
     }
+
 
     setBusy(step.id);
 
