@@ -396,11 +396,19 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
               />
             )}
             {v && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => downloadStoredFile(v)}
+                className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border bg-muted/40 hover:bg-muted transition-colors"
+              >
                 <Paperclip className="h-3 w-3" />
-                {typeof v === 'object' ? v.name : String(v).split('/').pop()}
-              </div>
+                <span className="max-w-[220px] truncate">
+                  {typeof v === 'object' ? v.name : String(v).split('/').pop()}
+                </span>
+                <span className="text-muted-foreground">↓</span>
+              </button>
             )}
+
           </div>
         );
       case 'file_download':
