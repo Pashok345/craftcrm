@@ -87,6 +87,8 @@ const ProcessRunDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { isAdmin } = useUserRole();
+
   const [run, setRun] = useState<ProcessRun | null>(null);
   const [process, setProcess] = useState<Process | null>(null);
   const [starterProfile, setStarterProfile] = useState<Profile | null>(null);
