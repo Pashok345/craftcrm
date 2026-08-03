@@ -301,23 +301,44 @@ const ProcessRunDetail = () => {
 
   const handleEditRun = async () => {
     if (!run || !editRunName.trim()) return;
-    
+
     const newFieldValues = {
       ...run.field_values,
+      ...editFields,
       _run_name: editRunName.trim(),
     };
-    
+
     const { error } = await supabase
       .from('process_runs')
       .update({ field_values: newFieldValues })
       .eq('id', run.id);
-    
+
     if (!error) {
       setRun({ ...run, field_values: newFieldValues });
       setIsEditing(false);
       toast({ title: t('processRunUpdated') });
+    } else {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     }
   };
+
+  const downloadAttachment = async (att: Attachment) => {
+    try {
+      const res = await fetch(att.file_url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = att.file_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(att.file_url, '_blank', 'noopener');
+    }
+  };
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
