@@ -532,7 +532,6 @@ export const translations: Translations = {
   activeRuns: { ru: 'Активные запуски', en: 'Active runs', uk: 'Активні запуски' },
   completedRuns: { ru: 'Завершённые', en: 'Completed', uk: 'Завершені' },
   editRun: { ru: 'Редактировать запуск', en: 'Edit run', uk: 'Редагувати запуск' },
-  runName: { ru: 'Название запуска', en: 'Run name', uk: 'Назва запуску' },
   downloadFile: { ru: 'Скачать файл', en: 'Download file', uk: 'Завантажити файл' },
   noEditPermission: { ru: 'Недостаточно прав для редактирования', en: 'You do not have permission to edit', uk: 'Недостатньо прав для редагування' },
 
