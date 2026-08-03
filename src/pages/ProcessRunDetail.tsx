@@ -33,6 +33,9 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { RunStepsPanel } from '@/components/processes/RunStepsPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUserRole } from '@/hooks/useUserRole';
+
 
 interface ProcessRun {
   id: string;
