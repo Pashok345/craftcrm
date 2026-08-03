@@ -573,31 +573,53 @@ const ProcessRunDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          {isEditing ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={editRunName}
-                onChange={(e) => setEditRunName(e.target.value)}
-                className="max-w-xs"
-              />
-              <Button size="sm" onClick={handleEditRun}>{t('save')}</Button>
-              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
-            </div>
-          ) : (
-            <h1 className="text-2xl font-bold">{runName}</h1>
-          )}
+          <h1 className="text-2xl font-bold">{runName}</h1>
           <p className="text-muted-foreground">{process.title}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => { setEditRunName(runName); setIsEditing(true); }}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={openEditDialog}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Edit run dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pr-12">
+            <DialogTitle>{t('editRun')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label>{t('runName')}</Label>
+              <Input value={editRunName} onChange={(e) => setEditRunName(e.target.value)} />
+            </div>
+            {Object.entries(run.field_values)
+              .filter(([key]) => !key.startsWith('_'))
+              .map(([key]) => (
+                <div key={key} className="space-y-1.5">
+                  <Label>{key}</Label>
+                  <Input
+                    value={editFields[key] ?? ''}
+                    onChange={(e) => setEditFields((p) => ({ ...p, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
+            <Button onClick={handleEditRun}>{t('save')}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
