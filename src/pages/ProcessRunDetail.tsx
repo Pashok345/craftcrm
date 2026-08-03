@@ -98,6 +98,8 @@ const ProcessRunDetail = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editRunName, setEditRunName] = useState('');
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
