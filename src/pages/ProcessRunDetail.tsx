@@ -783,17 +783,30 @@ const ProcessRunDetail = () => {
                           {comment.attachments && comment.attachments.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {comment.attachments.map((att) => (
-                                <a
+                                <div
                                   key={att.id}
-                                  href={att.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded hover:bg-muted/80"
+                                  className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded"
                                 >
                                   <FileIcon className="h-3 w-3" />
-                                  {att.file_name}
-                                </a>
+                                  <a
+                                    href={att.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline max-w-[200px] truncate"
+                                  >
+                                    {att.file_name}
+                                  </a>
+                                  <button
+                                    type="button"
+                                    title={t('downloadFile')}
+                                    onClick={() => downloadAttachment(att)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </button>
+                                </div>
                               ))}
+
                             </div>
                           )}
                         </div>
