@@ -568,6 +568,19 @@ const ProcessRunDetail = () => {
     ([key]) => !key.startsWith('_')
   );
 
+  const canEdit = !!user && (isAdmin || run.started_by === user.id);
+
+  const openEditDialog = () => {
+    setEditRunName(runName);
+    const init: Record<string, string> = {};
+    displayFields.forEach(([key, value]) => {
+      init[key] = value == null ? '' : String(value);
+    });
+    setEditFields(init);
+    setIsEditing(true);
+  };
+
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
