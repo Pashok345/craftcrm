@@ -199,7 +199,33 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     setFieldValue(stepId, fieldId, { path, name: file.name });
   };
 
+  const downloadStoredFile = async (val: any) => {
+    const path = typeof val === 'object' && val ? val.path : String(val);
+    const name = typeof val === 'object' && val ? val.name : path.split('/').pop();
+    if (!path) return;
+    if (/^https?:\/\//.test(path)) {
+      window.open(path, '_blank', 'noopener');
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from('process-attachments')
+      .download(path);
+    if (error || !data) {
+      toast({ title: t('error'), description: error?.message, variant: 'destructive' });
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name || 'file';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const notifyAssignee = async (userId: string | null, stepLabel: string | null) => {
+
     if (!userId || !user || userId === user.id) return;
     await supabase.from('notifications').insert({
       user_id: userId,
@@ -396,11 +422,19 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
               />
             )}
             {v && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => downloadStoredFile(v)}
+                className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border bg-muted/40 hover:bg-muted transition-colors"
+              >
                 <Paperclip className="h-3 w-3" />
-                {typeof v === 'object' ? v.name : String(v).split('/').pop()}
-              </div>
+                <span className="max-w-[220px] truncate">
+                  {typeof v === 'object' ? v.name : String(v).split('/').pop()}
+                </span>
+                <span className="text-muted-foreground">↓</span>
+              </button>
             )}
+
           </div>
         );
       case 'file_download':

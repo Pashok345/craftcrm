@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,9 @@ import { format } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { RunStepsPanel } from '@/components/processes/RunStepsPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUserRole } from '@/hooks/useUserRole';
+
 
 interface ProcessRun {
   id: string;
@@ -84,6 +87,8 @@ const ProcessRunDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { isAdmin } = useUserRole();
+
   const [run, setRun] = useState<ProcessRun | null>(null);
   const [process, setProcess] = useState<Process | null>(null);
   const [starterProfile, setStarterProfile] = useState<Profile | null>(null);
@@ -98,6 +103,8 @@ const ProcessRunDetail = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editRunName, setEditRunName] = useState('');
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
@@ -301,23 +308,44 @@ const ProcessRunDetail = () => {
 
   const handleEditRun = async () => {
     if (!run || !editRunName.trim()) return;
-    
+
     const newFieldValues = {
       ...run.field_values,
+      ...editFields,
       _run_name: editRunName.trim(),
     };
-    
+
     const { error } = await supabase
       .from('process_runs')
       .update({ field_values: newFieldValues })
       .eq('id', run.id);
-    
+
     if (!error) {
       setRun({ ...run, field_values: newFieldValues });
       setIsEditing(false);
       toast({ title: t('processRunUpdated') });
+    } else {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     }
   };
+
+  const downloadAttachment = async (att: Attachment) => {
+    try {
+      const res = await fetch(att.file_url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = att.file_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(att.file_url, '_blank', 'noopener');
+    }
+  };
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -540,6 +568,19 @@ const ProcessRunDetail = () => {
     ([key]) => !key.startsWith('_')
   );
 
+  const canEdit = !!user && (isAdmin || run.started_by === user.id);
+
+  const openEditDialog = () => {
+    setEditRunName(runName);
+    const init: Record<string, string> = {};
+    displayFields.forEach(([key, value]) => {
+      init[key] = value == null ? '' : String(value);
+    });
+    setEditFields(init);
+    setIsEditing(true);
+  };
+
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
@@ -550,31 +591,53 @@ const ProcessRunDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          {isEditing ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={editRunName}
-                onChange={(e) => setEditRunName(e.target.value)}
-                className="max-w-xs"
-              />
-              <Button size="sm" onClick={handleEditRun}>{t('save')}</Button>
-              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
-            </div>
-          ) : (
-            <h1 className="text-2xl font-bold">{runName}</h1>
-          )}
+          <h1 className="text-2xl font-bold">{runName}</h1>
           <p className="text-muted-foreground">{process.title}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => { setEditRunName(runName); setIsEditing(true); }}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={openEditDialog}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => setShowDeleteDialog(true)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Edit run dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pr-12">
+            <DialogTitle>{t('editRun')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label>{t('runName')}</Label>
+              <Input value={editRunName} onChange={(e) => setEditRunName(e.target.value)} />
+            </div>
+            {Object.entries(run.field_values)
+              .filter(([key]) => !key.startsWith('_'))
+              .map(([key]) => (
+                <div key={key} className="space-y-1.5">
+                  <Label>{key}</Label>
+                  <Input
+                    value={editFields[key] ?? ''}
+                    onChange={(e) => setEditFields((p) => ({ ...p, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
+            <Button onClick={handleEditRun}>{t('save')}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -720,17 +783,30 @@ const ProcessRunDetail = () => {
                           {comment.attachments && comment.attachments.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {comment.attachments.map((att) => (
-                                <a
+                                <div
                                   key={att.id}
-                                  href={att.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded hover:bg-muted/80"
+                                  className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded"
                                 >
                                   <FileIcon className="h-3 w-3" />
-                                  {att.file_name}
-                                </a>
+                                  <a
+                                    href={att.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline max-w-[200px] truncate"
+                                  >
+                                    {att.file_name}
+                                  </a>
+                                  <button
+                                    type="button"
+                                    title={t('downloadFile')}
+                                    onClick={() => downloadAttachment(att)}
+                                    className="text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </button>
+                                </div>
                               ))}
+
                             </div>
                           )}
                         </div>
