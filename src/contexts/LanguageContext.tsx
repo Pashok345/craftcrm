@@ -530,6 +530,12 @@ export const translations: Translations = {
   allProcesses: { ru: 'Все процессы', en: 'All processes', uk: 'Всі процеси' },
   myProcesses: { ru: 'Мои процессы', en: 'My processes', uk: 'Мої процеси' },
   activeRuns: { ru: 'Активные запуски', en: 'Active runs', uk: 'Активні запуски' },
+  completedRuns: { ru: 'Завершённые', en: 'Completed', uk: 'Завершені' },
+  editRun: { ru: 'Редактировать запуск', en: 'Edit run', uk: 'Редагувати запуск' },
+  runName: { ru: 'Название запуска', en: 'Run name', uk: 'Назва запуску' },
+  downloadFile: { ru: 'Скачать файл', en: 'Download file', uk: 'Завантажити файл' },
+  noEditPermission: { ru: 'Недостаточно прав для редактирования', en: 'You do not have permission to edit', uk: 'Недостатньо прав для редагування' },
+
   activeRunsComingSoon: { ru: 'Раздел активных запусков', en: 'Active runs section', uk: 'Розділ активних запусків' },
   activeRunsComingSoonDesc: { ru: 'Скоро здесь появятся все запущенные процессы с фильтрами по исполнителям, постановщикам и SLA-индикаторами.', en: 'Soon all active runs will appear here with filters by assignees, initiators and SLA indicators.', uk: 'Незабаром тут з\'являться усі запущені процеси з фільтрами за виконавцями, постановниками та SLA-індикаторами.' },
   processTemplates: { ru: 'Шаблоны процессов', en: 'Process templates', uk: 'Шаблони процесів' },
