@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, Play, CheckCircle, XCircle, Send, Clock, Paperclip, X, FileIcon, Trash2, Pencil, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
