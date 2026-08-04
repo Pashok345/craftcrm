@@ -25,6 +25,7 @@ import Processes from "./pages/Processes";
 import ProcessEditor from "./pages/ProcessEditor";
 
 import RunProcess from "./pages/RunProcess";
+import ProcessRunEdit from "./pages/ProcessRunEdit";
 import ProcessRunDetail from "./pages/ProcessRunDetail";
 import Analytics from "./pages/Analytics";
 import Sales from "./pages/Sales";
@@ -62,6 +63,7 @@ const App = () => (
 
             <Route path="/processes/run/:id" element={<RunProcess />} />
             <Route path="/processes/runs/:id" element={<ProcessRunDetail />} />
+            <Route path="/processes/runs/:id/edit" element={<ProcessRunEdit />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/sales/deals/new" element={<CreateDeal />} />
