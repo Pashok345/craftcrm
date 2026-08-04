@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckCircle, Clock, GitBranch, AlertTriangle, Loader2, Paperclip } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { DateFieldPicker } from '@/components/processes/DateFieldPicker';
 
 interface Profile {
   user_id: string;
@@ -26,7 +27,7 @@ interface Profile {
 interface FieldDef {
   id: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
+  type: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'radio' | 'checkbox' | 'file' | 'file_download' | 'user' | 'button';
   sample_url?: string | null;
   sample_name?: string | null;
   assignee_user_id?: string | null;
@@ -363,6 +364,8 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     switch (f.type) {
       case 'textarea':
         return <Textarea rows={3} className={err} value={v || ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
+      case 'date':
+        return <DateFieldPicker value={v || ''} onChange={set} disabled={readOnly} invalid={invalid} />;
       case 'number':
         return <Input type="number" className={err} value={v ?? ''} onChange={(e) => set(e.target.value)} disabled={readOnly} />;
       case 'select':

@@ -33,6 +33,7 @@ const FIELD_TYPES = [
   { value: 'text', label: 'fieldTypeText' },
   { value: 'textarea', label: 'fieldTypeTextarea' },
   { value: 'select', label: 'fieldTypeSelect' },
+  { value: 'date', label: 'fieldTypeDate' },
   { value: 'file', label: 'fieldTypeFile' },
 ];
 

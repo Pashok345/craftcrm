@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Play, Plus, ArrowLeft, Paperclip, X, FileIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { DateFieldPicker } from '@/components/processes/DateFieldPicker';
 
 interface ProcessField {
   id: string;
@@ -242,6 +243,13 @@ const RunProcess = () => {
             value={fieldValues[field.name] || ''}
             onChange={(e) => updateFieldValue(field.name, e.target.value)}
             rows={3}
+          />
+        );
+      case 'date':
+        return (
+          <DateFieldPicker
+            value={fieldValues[field.name] || ''}
+            onChange={(val) => updateFieldValue(field.name, val)}
           />
         );
       case 'select':
