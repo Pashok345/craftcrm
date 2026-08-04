@@ -596,7 +596,7 @@ const ProcessRunDetail = () => {
         </div>
         <div className="flex items-center gap-2">
           {canEdit && (
-            <Button variant="ghost" size="icon" onClick={openEditDialog}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/processes/runs/${run.id}/edit`)}>
               <Pencil className="h-4 w-4" />
             </Button>
           )}
