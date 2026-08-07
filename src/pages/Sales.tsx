@@ -5,7 +5,9 @@ import { SalesFunnel } from '@/components/sales/SalesFunnel';
 import { ClientsList } from '@/components/sales/ClientsList';
 import { ProposalsList } from '@/components/sales/ProposalsList';
 import { FunnelAnalytics } from '@/components/sales/FunnelAnalytics';
-import { TrendingUp, Users, FileText, BarChart3 } from 'lucide-react';
+import { InvoicesList } from '@/components/sales/InvoicesList';
+import { FinanceDashboard } from '@/components/sales/FinanceDashboard';
+import { TrendingUp, Users, FileText, BarChart3, Receipt, Wallet } from 'lucide-react';
 
 const Sales = () => {
   const { t } = useLanguage();
@@ -19,7 +21,7 @@ const Sales = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="funnel" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             {t('salesFunnel')}
@@ -27,6 +29,14 @@ const Sales = () => {
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             {t('funnelAnalytics')}
+          </TabsTrigger>
+          <TabsTrigger value="finance" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            {t('financeDashboard')}
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            {t('invoices')}
           </TabsTrigger>
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -46,6 +56,14 @@ const Sales = () => {
           <FunnelAnalytics />
         </TabsContent>
 
+        <TabsContent value="finance" className="mt-6">
+          <FinanceDashboard />
+        </TabsContent>
+
+        <TabsContent value="invoices" className="mt-6">
+          <InvoicesList />
+        </TabsContent>
+
         <TabsContent value="clients" className="mt-6">
           <ClientsList />
         </TabsContent>
@@ -57,5 +75,6 @@ const Sales = () => {
     </div>
   );
 };
+
 
 export default Sales;
