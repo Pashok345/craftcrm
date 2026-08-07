@@ -426,6 +426,42 @@ export type Database = {
         }
         Relationships: []
       }
+      document_templates: {
+        Row: {
+          company: Json
+          created_at: string
+          created_by: string
+          doc_type: string
+          id: string
+          is_default: boolean
+          name: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          company?: Json
+          created_at?: string
+          created_by: string
+          doc_type?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          company?: Json
+          created_at?: string
+          created_by?: string
+          doc_type?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -449,6 +485,135 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          invoice_id: string
+          method: string | null
+          note: string | null
+          paid_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          note?: string | null
+          paid_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          note?: string | null
+          paid_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          deal_id: string | null
+          due_date: string | null
+          id: string
+          issue_date: string
+          items: Json
+          notes: string | null
+          number: string
+          proposal_id: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          title: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          items?: Json
+          notes?: string | null
+          number: string
+          proposal_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          title?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          deal_id?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          items?: Json
+          notes?: string | null
+          number?: string
+          proposal_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          title?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kanban_columns: {
         Row: {
@@ -2361,6 +2526,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_invoice: {
+        Args: { _invoice_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_access_task_file: {
         Args: { _task_id: string; _user_id: string }
         Returns: boolean
