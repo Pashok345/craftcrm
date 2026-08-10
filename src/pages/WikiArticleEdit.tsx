@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { WikiContent } from '@/lib/wikiMarkdown';
+import { WikiEditor } from '@/components/wiki/WikiEditor';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -185,13 +186,7 @@ export default function WikiArticleEdit() {
           <TabsTrigger value="preview">{t('wikiPreview')}</TabsTrigger>
         </TabsList>
         <TabsContent value="write">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={20}
-            className="font-mono text-sm"
-            placeholder={t('wikiContentPlaceholder')}
-          />
+          <WikiEditor value={content} onChange={setContent} rows={20} placeholder={t('wikiContentPlaceholder')} />
           <p className="text-xs text-muted-foreground mt-2">{t('wikiMarkdownHint')}</p>
         </TabsContent>
         <TabsContent value="preview">
