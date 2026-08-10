@@ -11,6 +11,7 @@ import {
   BarChart3,
   TrendingUp,
   PenSquare,
+  BookOpen,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -42,6 +43,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
     { icon: TrendingUp, label: t('sales'), path: '/sales' },
     { icon: Calendar, label: t('meetings'), path: '/meetings' },
     { icon: PenSquare, label: t('whiteboards'), path: '/whiteboards' },
+    { icon: BookOpen, label: t('wiki'), path: '/wiki' },
     { icon: BarChart3, label: t('analytics'), path: '/analytics' },
     { icon: Users, label: t('users'), path: '/users' },
     ...(isAdmin ? [{ icon: SettingsIcon, label: t('settings'), path: '/settings' }] : []),

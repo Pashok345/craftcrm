@@ -32,6 +32,9 @@ import Sales from "./pages/Sales";
 import CreateDeal from "./pages/CreateDeal";
 import DealDetail from "./pages/DealDetail";
 import Whiteboards from "./pages/Whiteboards";
+import Wiki from "./pages/Wiki";
+import WikiArticle from "./pages/WikiArticle";
+import WikiArticleEdit from "./pages/WikiArticleEdit";
 import WhiteboardDetail from "./pages/WhiteboardDetail";
 
 const queryClient = new QueryClient();
@@ -69,6 +72,10 @@ const App = () => (
             <Route path="/sales/deals/new" element={<CreateDeal />} />
             <Route path="/sales/deals/:id" element={<DealDetail />} />
             <Route path="/sales/deals/:id/edit" element={<CreateDeal />} />
+            <Route path="/wiki" element={<Wiki />} />
+            <Route path="/wiki/new" element={<WikiArticleEdit />} />
+            <Route path="/wiki/:id" element={<WikiArticle />} />
+            <Route path="/wiki/:id/edit" element={<WikiArticleEdit />} />
             <Route path="/whiteboards" element={<Whiteboards />} />
             <Route path="/whiteboards/:id" element={<WhiteboardDetail />} />
             <Route path="/settings" element={<Settings />} />
