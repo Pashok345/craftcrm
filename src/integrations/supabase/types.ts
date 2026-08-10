@@ -2489,6 +2489,133 @@ export type Database = {
           },
         ]
       }
+      wiki_article_comments: {
+        Row: {
+          article_id: string
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_article_comments_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_articles: {
+        Row: {
+          category_id: string | null
+          content: string
+          created_at: string
+          created_by: string
+          excerpt: string | null
+          id: string
+          is_pinned: boolean
+          is_published: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          views_count: number
+        }
+        Insert: {
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          created_by: string
+          excerpt?: string | null
+          id?: string
+          is_pinned?: boolean
+          is_published?: boolean
+          tags?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          views_count?: number
+        }
+        Update: {
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          excerpt?: string | null
+          id?: string
+          is_pinned?: boolean
+          is_published?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_categories: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_profiles: {
