@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Play, Plus, ArrowLeft, Paperclip, X, FileIcon } from 'lucide-react';
+import { Loader2, Play, Plus, ArrowLeft, Paperclip, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { DateFieldPicker } from '@/components/processes/DateFieldPicker';
+import { cn } from '@/lib/utils';
 
 interface ProcessField {
   id: string;
@@ -25,6 +26,7 @@ interface ProcessField {
   field_type: string;
   options: unknown;
   sort_order: number;
+  required?: boolean;
 }
 
 interface Department {
@@ -38,22 +40,27 @@ interface Process {
   description: string | null;
 }
 
-interface UploadedFile {
-  file: File;
+interface StoredFile {
+  path: string;
   name: string;
 }
 
 // IBAN mask utility
 const formatIBAN = (value: string): string => {
-  // Remove all non-alphanumeric characters
   const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  
-  // IBAN max length is 34 characters
   const limited = cleaned.slice(0, 34);
-  
-  // Format in groups of 4
   const groups = limited.match(/.{1,4}/g) || [];
   return groups.join(' ');
+};
+
+const sanitizeFileName = (name: string) => {
+  const dot = name.lastIndexOf('.');
+  const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  const base = (dot > 0 ? name.slice(0, dot) : name)
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return `${base || 'file'}${ext ? `.${ext}` : ''}`;
 };
 
 const RunProcess = () => {
@@ -61,19 +68,20 @@ const RunProcess = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [process, setProcess] = useState<Process | null>(null);
   const [runName, setRunName] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [fileValues, setFileValues] = useState<Record<string, StoredFile>>({});
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [fields, setFields] = useState<ProcessField[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
   const [isAddingDept, setIsAddingDept] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   useEffect(() => {
     if (processId) {
@@ -83,7 +91,7 @@ const RunProcess = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     const [processRes, fieldsRes, deptsRes] = await Promise.all([
       supabase.from('processes').select('id, title, description').eq('id', processId).maybeSingle(),
       supabase.from('process_fields').select('*').eq('process_id', processId).order('sort_order'),
@@ -92,11 +100,10 @@ const RunProcess = () => {
 
     if (processRes.data) {
       setProcess(processRes.data);
-      setRunName(processRes.data.title || '');
     }
 
     if (fieldsRes.data) {
-      setFields(fieldsRes.data);
+      setFields(fieldsRes.data as ProcessField[]);
       const initialValues: Record<string, string> = {};
       fieldsRes.data.forEach((field) => {
         initialValues[field.name] = '';
@@ -118,7 +125,7 @@ const RunProcess = () => {
       .insert({ name: newDeptName.trim(), created_by: user.id })
       .select()
       .single();
-    
+
     if (!error && data) {
       setDepartments([...departments, data]);
       setSelectedDepartment(data.id);
@@ -127,28 +134,75 @@ const RunProcess = () => {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    
-    const newFiles: UploadedFile[] = Array.from(files).map(file => ({
-      file,
-      name: file.name,
-    }));
-    
-    setUploadedFiles(prev => [...prev, ...newFiles]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const clearError = (key: string) =>
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+
+  const handleFileUpload = async (field: ProcessField, file: File) => {
+    if (!user) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, [field.name]: t('fileTooLarge') || 'Файл завеликий — максимум 50 МБ' }));
+      return;
     }
+    setUploading(field.id);
+    const path = `${user.id}/${processId}/${Date.now()}_${sanitizeFileName(file.name)}`;
+    const { error } = await supabase.storage
+      .from('process-attachments')
+      .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+    setUploading(null);
+    if (error) {
+      setErrors((prev) => ({ ...prev, [field.name]: error.message }));
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    setFileValues((prev) => ({ ...prev, [field.name]: { path, name: file.name } }));
+    clearError(field.name);
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  const removeFile = (fieldName: string) => {
+    setFileValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
+  };
+
+  const requiredMessage = (field: ProcessField) => {
+    if (field.field_type === 'file') return t('fieldRequiredFile') || 'Додайте файл — це поле обовʼязкове';
+    if (field.field_type === 'select') return t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
+    return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+  };
+
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (!runName.trim()) next._run_name = t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+    if (!selectedDepartment) next._department = t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
+    fields.forEach((field) => {
+      if (!field.required) return;
+      const filled = field.field_type === 'file'
+        ? Boolean(fileValues[field.name])
+        : Boolean((fieldValues[field.name] || '').trim());
+      if (!filled) next[field.name] = requiredMessage(field);
+    });
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !runName.trim() || !selectedDepartment) return;
+    if (!user) return;
+    if (!validate()) {
+      toast({
+        title: t('fieldRequired') || 'Обовʼязкові поля',
+        description: t('fillRequiredFields') || 'Заповніть усі поля, позначені зірочкою',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -161,18 +215,34 @@ const RunProcess = () => {
       const stepsDef: any = (procData as any)?.steps || {};
       const workflow: any[] = Array.isArray(stepsDef.workflow) ? stepsDef.workflow : [];
 
+      const fileEntries = Object.fromEntries(
+        Object.entries(fileValues).map(([k, v]) => [k, v.path]),
+      );
+
       const { data, error } = await supabase.from('process_runs').insert({
         process_id: processId,
         field_values: {
           _run_name: runName.trim(),
           _initiator_department: selectedDepartment,
           ...fieldValues,
+          ...fileEntries,
         },
         started_by: user.id,
         status: workflow.length > 0 ? 'in_progress' : 'pending',
       }).select().single();
 
       if (error) throw error;
+
+      // Persist uploaded files as run attachments
+      const attachments = Object.entries(fileValues).map(([, v]) => ({
+        process_run_id: data.id,
+        file_name: v.name,
+        file_url: v.path,
+        uploaded_by: user.id,
+      }));
+      if (attachments.length > 0) {
+        await supabase.from('process_run_attachments').insert(attachments);
+      }
 
       // Materialize workflow steps
       if (data && workflow.length > 0) {
@@ -212,22 +282,21 @@ const RunProcess = () => {
 
       toast({ title: t('processStarted') });
       navigate(`/processes/runs/${data.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      toast({ title: t('error'), variant: 'destructive' });
+      toast({ title: t('error'), description: error?.message, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
   };
 
-
   const updateFieldValue = (fieldName: string, value: string) => {
     setFieldValues((prev) => ({ ...prev, [fieldName]: value }));
+    clearError(fieldName);
   };
 
   const handleIBANChange = (fieldName: string, value: string) => {
-    const formatted = formatIBAN(value);
-    updateFieldValue(fieldName, formatted);
+    updateFieldValue(fieldName, formatIBAN(value));
   };
 
   const isIBANField = (fieldName: string) => {
@@ -236,10 +305,14 @@ const RunProcess = () => {
   };
 
   const renderField = (field: ProcessField) => {
+    const hasError = Boolean(errors[field.name]);
+    const errCls = hasError ? 'border-destructive focus-visible:ring-destructive' : '';
+
     switch (field.field_type) {
       case 'textarea':
         return (
           <Textarea
+            className={errCls}
             value={fieldValues[field.name] || ''}
             onChange={(e) => updateFieldValue(field.name, e.target.value)}
             rows={3}
@@ -247,19 +320,53 @@ const RunProcess = () => {
         );
       case 'date':
         return (
-          <DateFieldPicker
-            value={fieldValues[field.name] || ''}
-            onChange={(val) => updateFieldValue(field.name, val)}
-          />
+          <div className={cn(hasError && 'rounded-md ring-1 ring-destructive')}>
+            <DateFieldPicker
+              value={fieldValues[field.name] || ''}
+              onChange={(val) => updateFieldValue(field.name, val)}
+            />
+          </div>
         );
-      case 'select':
+      case 'file': {
+        const stored = fileValues[field.name];
+        return (
+          <div className="space-y-2">
+            {stored ? (
+              <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-md border bg-muted/40">
+                <Paperclip className="h-4 w-4 shrink-0" />
+                <span className="truncate flex-1">{stored.name}</span>
+                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeFile(field.name)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Input
+                type="file"
+                className={errCls}
+                disabled={uploading === field.id}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(field, file);
+                  e.target.value = '';
+                }}
+              />
+            )}
+            {uploading === field.id && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> {t('uploading') || 'Завантаження...'}
+              </p>
+            )}
+          </div>
+        );
+      }
+      case 'select': {
         const options = Array.isArray(field.options) ? field.options : [];
         return (
           <Select
             value={fieldValues[field.name] || ''}
             onValueChange={(value) => updateFieldValue(field.name, value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className={errCls}>
               <SelectValue placeholder={t('selectOption')} />
             </SelectTrigger>
             <SelectContent>
@@ -271,28 +378,27 @@ const RunProcess = () => {
             </SelectContent>
           </Select>
         );
+      }
       default:
-        // Check if field is IBAN type
         if (isIBANField(field.name)) {
           return (
             <Input
               value={fieldValues[field.name] || ''}
               onChange={(e) => handleIBANChange(field.name, e.target.value)}
               placeholder="UA00 0000 0000 0000 0000 0000 0000 0"
-              className="font-mono"
+              className={cn('font-mono', errCls)}
             />
           );
         }
         return (
           <Input
+            className={errCls}
             value={fieldValues[field.name] || ''}
             onChange={(e) => updateFieldValue(field.name, e.target.value)}
           />
         );
     }
   };
-
-  const isValid = runName.trim() && selectedDepartment;
 
   if (loading) {
     return (
@@ -337,7 +443,7 @@ const RunProcess = () => {
 
       <Card>
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Required: Run Name */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1">
@@ -345,9 +451,14 @@ const RunProcess = () => {
               </Label>
               <Input
                 value={runName}
-                onChange={(e) => setRunName(e.target.value)}
+                onChange={(e) => {
+                  setRunName(e.target.value);
+                  clearError('_run_name');
+                }}
                 placeholder={t('enterRunName')}
+                className={errors._run_name ? 'border-destructive focus-visible:ring-destructive' : ''}
               />
+              {errors._run_name && <p className="text-xs text-destructive">{errors._run_name}</p>}
             </div>
 
             {/* Required: Initiator Department */}
@@ -371,9 +482,12 @@ const RunProcess = () => {
                 <div className="flex gap-2">
                   <Select
                     value={selectedDepartment}
-                    onValueChange={setSelectedDepartment}
+                    onValueChange={(v) => {
+                      setSelectedDepartment(v);
+                      clearError('_department');
+                    }}
                   >
-                    <SelectTrigger className="flex-1">
+                    <SelectTrigger className={cn('flex-1', errors._department && 'border-destructive focus:ring-destructive')}>
                       <SelectValue placeholder={t('selectDepartment')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -389,24 +503,26 @@ const RunProcess = () => {
                   </Button>
                 </div>
               )}
+              {errors._department && <p className="text-xs text-destructive">{errors._department}</p>}
             </div>
 
             {/* Dynamic process fields */}
             {fields.map((field) => (
               <div key={field.id} className="space-y-2">
-                <Label>{field.name}</Label>
+                <Label className="flex items-center gap-1">
+                  {field.name}
+                  {field.required && <span className="text-destructive">*</span>}
+                </Label>
                 {renderField(field)}
+                {errors[field.name] && <p className="text-xs text-destructive">{errors[field.name]}</p>}
               </div>
             ))}
-
-
-
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => navigate('/processes')}>
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={submitting || !isValid}>
+              <Button type="submit" disabled={submitting || Boolean(uploading)}>
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
