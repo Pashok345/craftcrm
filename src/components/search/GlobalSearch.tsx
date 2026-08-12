@@ -2,7 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare } from 'lucide-react';
+import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare, BookOpen, CalendarDays, Workflow, PlayCircle, PenTool, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+
+interface SearchResult {
+  id: string;
+  title: string;
+  subtitle?: string;
+  type: 'task' | 'project' | 'client' | 'deal' | 'comment' | 'wiki' | 'meeting' | 'process' | 'run' | 'whiteboard' | 'employee';
+  navigateTo?: string;
+}
 import { Input } from '@/components/ui/input';
 
 interface SearchResult {
