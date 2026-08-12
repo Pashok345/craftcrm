@@ -197,6 +197,12 @@ export const GlobalSearch = () => {
     client: Users,
     deal: DollarSign,
     comment: MessageSquare,
+    wiki: BookOpen,
+    meeting: CalendarDays,
+    process: Workflow,
+    run: PlayCircle,
+    whiteboard: PenTool,
+    employee: User,
   };
 
   const labelMap = {
@@ -205,7 +211,14 @@ export const GlobalSearch = () => {
     client: t('clients') || 'Клиенты',
     deal: t('deals') || 'Сделки',
     comment: t('comments') || 'Комментарии',
+    wiki: t('wiki') || 'База знань',
+    meeting: t('meetings') || 'Зустрічі',
+    process: t('processes') || 'Процеси',
+    run: t('activeRuns') || 'Запущені процеси',
+    whiteboard: t('whiteboards') || 'Дошки',
+    employee: t('users') || 'Співробітники',
   };
+
 
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, item) => {
     if (!acc[item.type]) acc[item.type] = [];
