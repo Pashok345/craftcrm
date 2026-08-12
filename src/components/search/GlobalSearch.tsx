@@ -12,15 +12,6 @@ interface SearchResult {
   type: 'task' | 'project' | 'client' | 'deal' | 'comment' | 'wiki' | 'meeting' | 'process' | 'run' | 'whiteboard' | 'employee';
   navigateTo?: string;
 }
-import { Input } from '@/components/ui/input';
-
-interface SearchResult {
-  id: string;
-  title: string;
-  subtitle?: string;
-  type: 'task' | 'project' | 'client' | 'deal' | 'comment';
-  navigateTo?: string;
-}
 
 export const GlobalSearch = () => {
   const [query, setQuery] = useState('');
