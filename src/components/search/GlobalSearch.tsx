@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare } from 'lucide-react';
+import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare, BookOpen, CalendarDays, Workflow, PlayCircle, PenTool, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface SearchResult {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'task' | 'project' | 'client' | 'deal' | 'comment';
+  type: 'task' | 'project' | 'client' | 'deal' | 'comment' | 'wiki' | 'meeting' | 'process' | 'run' | 'whiteboard' | 'employee';
   navigateTo?: string;
 }
 
@@ -64,7 +64,14 @@ export const GlobalSearch = () => {
     setOpen(true);
     try {
       const pattern = `%${q}%`;
-      const [tasksRes, projectsRes, clientsRes, dealsRes, taskCommentsRes, dealCommentsRes, proposalCommentsRes] = await Promise.all([
+      // Sanitize for PostgREST .or() filters (commas/parens break the syntax)
+      const safe = q.replace(/[,()]/g, ' ');
+      const safePattern = `%${safe}%`;
+      const [
+        tasksRes, projectsRes, clientsRes, dealsRes,
+        taskCommentsRes, dealCommentsRes, proposalCommentsRes,
+        wikiRes, meetingsRes, processesRes, runsRes, whiteboardsRes, peopleRes,
+      ] = await Promise.all([
         supabase.from('tasks').select('id, title, status').ilike('title', pattern).limit(5),
         supabase.from('projects').select('id, title, status').ilike('title', pattern).limit(5),
         supabase.from('clients').select('id, name, company').ilike('name', pattern).limit(5),
@@ -72,6 +79,15 @@ export const GlobalSearch = () => {
         supabase.from('task_comments').select('id, content, task_id, tasks(title)').ilike('content', pattern).limit(5),
         supabase.from('deal_comments').select('id, content, deal_id, deals(title)').ilike('content', pattern).limit(5),
         supabase.from('proposal_comments').select('id, content, proposal_id, proposals(title)').ilike('content', pattern).limit(5),
+        supabase.from('wiki_articles')
+          .select('id, title, excerpt, content, is_published, wiki_categories(name)')
+          .or(`title.ilike.${safePattern},excerpt.ilike.${safePattern},content.ilike.${safePattern}`)
+          .limit(5),
+        supabase.from('meetings').select('id, title, meeting_date, start_time').ilike('title', pattern).limit(5),
+        supabase.from('processes').select('id, title, status, process_categories(name)').ilike('title', pattern).limit(5),
+        supabase.from('process_runs').select('id, title, status, processes(title)').ilike('title', pattern).limit(5),
+        supabase.from('whiteboards').select('id, title, description').ilike('title', pattern).limit(5),
+        supabase.from('profiles').select('id, user_id, name, position').ilike('name', pattern).limit(5),
       ]);
 
       const truncate = (s: string) => s.length > 70 ? s.slice(0, 70) + '…' : s;
@@ -102,7 +118,50 @@ export const GlobalSearch = () => {
           type: 'comment' as const,
           navigateTo: `/sales`,
         })),
+        ...(wikiRes.data || []).map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          subtitle: [a.wiki_categories?.name, a.is_published ? undefined : (t('draft') || 'Чернетка')].filter(Boolean).join(' · ') || undefined,
+          type: 'wiki' as const,
+          navigateTo: `/wiki/${a.id}`,
+        })),
+        ...(meetingsRes.data || []).map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          subtitle: [m.meeting_date, m.start_time?.slice(0, 5)].filter(Boolean).join(' '),
+          type: 'meeting' as const,
+          navigateTo: `/meetings`,
+        })),
+        ...(processesRes.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          subtitle: p.process_categories?.name || undefined,
+          type: 'process' as const,
+          navigateTo: `/processes`,
+        })),
+        ...(runsRes.data || []).map((r: any) => ({
+          id: r.id,
+          title: r.title || r.processes?.title || '—',
+          subtitle: r.processes?.title || undefined,
+          type: 'run' as const,
+          navigateTo: `/processes/runs/${r.id}`,
+        })),
+        ...(whiteboardsRes.data || []).map((w: any) => ({
+          id: w.id,
+          title: w.title,
+          subtitle: w.description ? truncate(w.description) : undefined,
+          type: 'whiteboard' as const,
+          navigateTo: `/whiteboards/${w.id}`,
+        })),
+        ...(peopleRes.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.name,
+          subtitle: p.position ? (t(p.position) === p.position ? p.position : t(p.position)) : undefined,
+          type: 'employee' as const,
+          navigateTo: `/users`,
+        })),
       ];
+
       setResults(items);
       setOpen(true);
     } catch (err) {
@@ -138,6 +197,12 @@ export const GlobalSearch = () => {
     client: Users,
     deal: DollarSign,
     comment: MessageSquare,
+    wiki: BookOpen,
+    meeting: CalendarDays,
+    process: Workflow,
+    run: PlayCircle,
+    whiteboard: PenTool,
+    employee: User,
   };
 
   const labelMap = {
@@ -146,7 +211,14 @@ export const GlobalSearch = () => {
     client: t('clients') || 'Клиенты',
     deal: t('deals') || 'Сделки',
     comment: t('comments') || 'Комментарии',
+    wiki: t('wiki') || 'База знань',
+    meeting: t('meetings') || 'Зустрічі',
+    process: t('processes') || 'Процеси',
+    run: t('activeRuns') || 'Запущені процеси',
+    whiteboard: t('whiteboards') || 'Дошки',
+    employee: t('users') || 'Співробітники',
   };
+
 
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, item) => {
     if (!acc[item.type]) acc[item.type] = [];

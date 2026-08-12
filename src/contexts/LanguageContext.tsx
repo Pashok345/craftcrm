@@ -937,7 +937,7 @@ export const translations: Translations = {
   proposalSentSuccess: { ru: 'КП отмечено как отправленное', en: 'Proposal marked as sent', uk: 'КП позначено як надіслане' },
   sentTo: { ru: 'Отправлено на', en: 'Sent to', uk: 'Надіслано на' },
   // Global search
-  globalSearchPlaceholder: { ru: 'Поиск по задачам, проектам, клиентам, сделкам...', en: 'Search tasks, projects, clients, deals...', uk: 'Пошук по завданнях, проектах, клієнтах, угодах...' },
+  globalSearchPlaceholder: { ru: 'Поиск: задачи, проекты, клиенты, сделки, Wiki, встречи, процессы, доски, сотрудники...', en: 'Search tasks, projects, clients, deals, wiki, meetings, processes, boards, people...', uk: 'Пошук: завдання, проєкти, клієнти, угоди, Wiki, зустрічі, процеси, дошки, співробітники...' },
   noResults: { ru: 'Ничего не найдено', en: 'No results found', uk: 'Нічого не знайдено' },
   deals: { ru: 'Сделки', en: 'Deals', uk: 'Угоди' },
   
