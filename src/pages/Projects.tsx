@@ -22,6 +22,10 @@ const Projects = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [totalProjects, setTotalProjects] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
 
