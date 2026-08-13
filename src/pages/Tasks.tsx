@@ -45,6 +45,8 @@ interface TaskAssignee {
   profiles: Profile;
 }
 
+const TASKS_PAGE_SIZE = 100;
+
 const Tasks = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
