@@ -97,7 +97,7 @@ export const DEFAULT_MENU: MenuItemDef[] = [
   { id: 'analytics', path: '/analytics', labelKey: 'analytics', icon: 'BarChart3' },
   { id: 'users', path: '/users', labelKey: 'users', icon: 'Users' },
   { id: 'audit', path: '/audit-log', labelKey: 'auditLog', icon: 'ScrollText', adminOnly: true },
-  { id: 'settings', path: '/settings', labelKey: 'settings', icon: 'SettingsIcon' },
+  { id: 'settings', path: '/settings', labelKey: 'settings', icon: 'Settings' },
 ];
 
 export interface MenuItemOverride {
