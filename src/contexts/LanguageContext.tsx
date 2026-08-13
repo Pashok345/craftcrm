@@ -1124,6 +1124,51 @@ export const translations: Translations = {
 
   adminOnly: { ru: 'Доступно только администраторам', en: 'Available to administrators only', uk: 'Доступно лише адміністраторам' },
   keyHidden: { ru: 'Значение скрыто', en: 'Value hidden', uk: 'Значення приховано' },
+
+  // Menu customization
+  menuSettingsTitle: { ru: 'Настройка меню', en: 'Menu customization', uk: 'Налаштування меню' },
+  menuSettingsDescription: { ru: 'Скрывайте лишние пункты, меняйте названия, иконки и цвета. Настройки личные.', en: 'Hide items you do not need, change titles, icons and colors. Settings are personal.', uk: 'Приховуйте зайві пункти, змінюйте назви, іконки та кольори. Налаштування особисті.' },
+  menuSettingsResetAction: { ru: 'Сбросить', en: 'Reset', uk: 'Скинути' },
+  menuSettingsReset: { ru: 'Меню сброшено к настройкам по умолчанию', en: 'Menu reset to defaults', uk: 'Меню скинуто до налаштувань за замовчуванням' },
+  menuColorDefault: { ru: 'Цвет по умолчанию', en: 'Default color', uk: 'Колір за замовчуванням' },
+  menuTab: { ru: 'Меню', en: 'Menu', uk: 'Меню' },
+
+  // Pagination
+  paginationShowing: { ru: 'Показано', en: 'Showing', uk: 'Показано' },
+  paginationOf: { ru: 'из', en: 'of', uk: 'з' },
+  paginationPage: { ru: 'стр.', en: 'page', uk: 'стор.' },
+  paginationPrev: { ru: 'Назад', en: 'Previous', uk: 'Назад' },
+  paginationNext: { ru: 'Вперёд', en: 'Next', uk: 'Вперед' },
+
+  // Audit log
+  auditLog: { ru: 'Журнал действий', en: 'Audit log', uk: 'Журнал дій' },
+  auditLogDescription: { ru: 'Кто и что изменил в системе', en: 'Who changed what in the system', uk: 'Хто і що змінив у системі' },
+  auditSearchPlaceholder: { ru: 'Поиск по записи или пользователю...', en: 'Search by record or user...', uk: 'Пошук за записом або користувачем...' },
+  auditAllSections: { ru: 'Все разделы', en: 'All sections', uk: 'Усі розділи' },
+  auditAllActions: { ru: 'Все действия', en: 'All actions', uk: 'Усі дії' },
+  auditActionInsert: { ru: 'Создание', en: 'Created', uk: 'Створення' },
+  auditActionUpdate: { ru: 'Изменение', en: 'Updated', uk: 'Зміна' },
+  auditActionDelete: { ru: 'Удаление', en: 'Deleted', uk: 'Видалення' },
+  auditEmpty: { ru: 'Записей пока нет', en: 'No entries yet', uk: 'Записів поки немає' },
+  auditDetails: { ru: 'Детали записи', en: 'Entry details', uk: 'Деталі запису' },
+  auditWho: { ru: 'Кто', en: 'Who', uk: 'Хто' },
+  auditWhen: { ru: 'Когда', en: 'When', uk: 'Коли' },
+  auditSection: { ru: 'Раздел', en: 'Section', uk: 'Розділ' },
+  auditRecord: { ru: 'Запись', en: 'Record', uk: 'Запис' },
+  auditChanges: { ru: 'Изменения', en: 'Changes', uk: 'Зміни' },
+  auditData: { ru: 'Данные', en: 'Data', uk: 'Дані' },
+  auditSystem: { ru: 'Система', en: 'System', uk: 'Система' },
+  auditTable_projects: { ru: 'Проекты', en: 'Projects', uk: 'Проєкти' },
+  auditTable_tasks: { ru: 'Задачи', en: 'Tasks', uk: 'Завдання' },
+  auditTable_deals: { ru: 'Сделки', en: 'Deals', uk: 'Угоди' },
+  auditTable_clients: { ru: 'Клиенты', en: 'Clients', uk: 'Клієнти' },
+  auditTable_invoices: { ru: 'Счета', en: 'Invoices', uk: 'Рахунки' },
+  auditTable_proposals: { ru: 'Предложения', en: 'Proposals', uk: 'Пропозиції' },
+  auditTable_processes: { ru: 'Процессы', en: 'Processes', uk: 'Процеси' },
+  auditTable_process_runs: { ru: 'Запуски процессов', en: 'Process runs', uk: 'Запуски процесів' },
+  auditTable_wiki_articles: { ru: 'Статьи Wiki', en: 'Wiki articles', uk: 'Статті Wiki' },
+  auditTable_meetings: { ru: 'Встречи', en: 'Meetings', uk: 'Зустрічі' },
+  auditTable_user_roles: { ru: 'Роли пользователей', en: 'User roles', uk: 'Ролі користувачів' },
 };
 
 interface LanguageContextType {
