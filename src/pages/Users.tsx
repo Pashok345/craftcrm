@@ -201,6 +201,14 @@ const Users = () => {
         </div>
       )}
 
+      <DataPagination
+        page={page}
+        pageSize={pageSize}
+        total={totalUsers}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+      />
+
       {selectedUser && (
         <UserDialog
           open={dialogOpen}
