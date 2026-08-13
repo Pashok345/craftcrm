@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
