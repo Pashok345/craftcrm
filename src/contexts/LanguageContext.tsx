@@ -1135,6 +1135,7 @@ export const translations: Translations = {
 
   // Pagination
   paginationShowing: { ru: 'Показано', en: 'Showing', uk: 'Показано' },
+  loadMore: { ru: 'Загрузить ещё', en: 'Load more', uk: 'Завантажити ще' },
   paginationOf: { ru: 'из', en: 'of', uk: 'з' },
   paginationPage: { ru: 'стр.', en: 'page', uk: 'стор.' },
   paginationPrev: { ru: 'Назад', en: 'Previous', uk: 'Назад' },
