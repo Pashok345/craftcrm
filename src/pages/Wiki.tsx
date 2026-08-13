@@ -48,6 +48,10 @@ export default function Wiki() {
 
   const [categories, setCategories] = useState<WikiCategory[]>([]);
   const [articles, setArticles] = useState<WikiArticle[]>([]);
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [categoryIds, setCategoryIds] = useState<(string | null)[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'all'>('all');
   const [loading, setLoading] = useState(true);
@@ -61,37 +65,46 @@ export default function Wiki() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: cats }, { data: arts }] = await Promise.all([
+
+    let query = supabase
+      .from('wiki_articles')
+      .select(
+        'id,title,excerpt,category_id,tags,is_published,is_pinned,views_count,created_by,updated_at',
+        { count: 'exact' }
+      )
+      .order('is_pinned', { ascending: false })
+      .order('updated_at', { ascending: false });
+
+    if (activeCategory !== 'all') query = query.eq('category_id', activeCategory);
+    const q = search.trim().replace(/[%,()]/g, '');
+    if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
+
+    const [{ data: cats }, artsRes, { data: catRows }] = await Promise.all([
       supabase.from('wiki_categories').select('*').order('sort_order').order('name'),
-      supabase
-        .from('wiki_articles')
-        .select('id,title,excerpt,category_id,tags,is_published,is_pinned,views_count,created_by,updated_at')
-        .order('is_pinned', { ascending: false })
-        .order('updated_at', { ascending: false }),
+      query.range((page - 1) * pageSize, page * pageSize - 1),
+      supabase.from('wiki_articles').select('category_id'),
     ]);
+
     setCategories((cats || []) as WikiCategory[]);
-    setArticles((arts || []) as WikiArticle[]);
+    setArticles((artsRes.data || []) as WikiArticle[]);
+    setTotalArticles(artsRes.count || 0);
+    setCategoryIds(((catRows || []) as { category_id: string | null }[]).map((r) => r.category_id));
     setLoading(false);
   };
 
   useEffect(() => {
-    load();
-  }, []);
+    const timer = setTimeout(load, search ? 300 : 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, search, activeCategory]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return articles.filter((a) => {
-      if (activeCategory !== 'all' && a.category_id !== activeCategory) return false;
-      if (!q) return true;
-      return (
-        a.title.toLowerCase().includes(q) ||
-        (a.excerpt || '').toLowerCase().includes(q) ||
-        a.tags.some((tag) => tag.toLowerCase().includes(q))
-      );
-    });
-  }, [articles, search, activeCategory]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeCategory, pageSize]);
 
-  const countFor = (id: string) => articles.filter((a) => a.category_id === id).length;
+  const filtered = articles;
+
+  const countFor = (id: string) => categoryIds.filter((c) => c === id).length;
 
   const openCatDialog = (cat?: WikiCategory) => {
     setEditingCat(cat || null);
