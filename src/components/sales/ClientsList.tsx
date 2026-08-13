@@ -143,6 +143,14 @@ export const ClientsList = () => {
         </div>
       )}
 
+      <DataPagination
+        page={page}
+        pageSize={pageSize}
+        total={totalClients}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+      />
+
       <ClientDialog open={dialogOpen} onOpenChange={setDialogOpen} />
 
       {selectedClient && (
