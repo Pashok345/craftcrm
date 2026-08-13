@@ -1,20 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  Calendar, 
-  Users,
-  Folder,
-  ChevronLeft,
-  Menu,
-  GitBranch,
-  BarChart3,
-  TrendingUp,
-  PenSquare,
-  BookOpen,
-  Settings as SettingsIcon
-} from 'lucide-react';
+import { ChevronLeft, Menu } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useMenuSettings } from '@/hooks/useMenuSettings';
+import { getMenuIcon } from '@/lib/menuConfig';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -32,25 +20,24 @@ interface SidebarProps {
 export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenChange }: SidebarProps) => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
-  
   const { isAdmin } = useUserRole();
+  const { items, overrides } = useMenuSettings();
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: t('dashboard'), path: '/dashboard' },
-    { icon: Folder, label: t('projects'), path: '/projects' },
-    { icon: CheckSquare, label: t('tasks'), path: '/tasks' },
-    { icon: GitBranch, label: t('processes'), path: '/processes' },
-    { icon: TrendingUp, label: t('sales'), path: '/sales' },
-    { icon: Calendar, label: t('meetings'), path: '/meetings' },
-    { icon: PenSquare, label: t('whiteboards'), path: '/whiteboards' },
-    { icon: BookOpen, label: t('wiki'), path: '/wiki' },
-    { icon: BarChart3, label: t('analytics'), path: '/analytics' },
-    { icon: Users, label: t('users'), path: '/users' },
-    ...(isAdmin ? [{ icon: SettingsIcon, label: t('settings'), path: '/settings' }] : []),
-  ];
+  const menuItems = items
+    .filter((item) => (!item.adminOnly || isAdmin) && overrides[item.id]?.hidden !== true)
+    .filter((item) => item.id !== 'settings' || isAdmin)
+    .map((item) => {
+      const ov = overrides[item.id] || {};
+      return {
+        path: item.path,
+        label: ov.label?.trim() || t(item.labelKey),
+        color: ov.color,
+        Icon: getMenuIcon(ov.icon || item.icon),
+      };
+    });
 
   const renderNav = (onClickItem?: () => void) => (
-    <nav className="flex-1 p-2 space-y-1">
+    <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
       {menuItems.map((item) => (
         <NavLink
           key={item.path}
@@ -66,8 +53,9 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
               !isMobile && collapsed && 'justify-center px-2'
             )
           }
+          style={item.color ? { color: item.color } : undefined}
         >
-          <item.icon className="h-5 w-5 shrink-0" />
+          <item.Icon className="h-5 w-5 shrink-0" />
           {(isMobile || !collapsed) && <span>{item.label}</span>}
         </NavLink>
       ))}
