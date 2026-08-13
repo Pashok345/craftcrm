@@ -272,6 +272,14 @@ export default function Wiki() {
               );
             })
           )}
+
+          <DataPagination
+            page={page}
+            pageSize={pageSize}
+            total={totalArticles}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
 
