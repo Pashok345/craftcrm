@@ -45,12 +45,16 @@ interface TaskAssignee {
   profiles: Profile;
 }
 
+const TASKS_PAGE_SIZE = 100;
+
 const Tasks = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { columns, getColumnForTask, moveTaskToColumn, refetch: refetchKanban } = useKanbanColumns();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskLimit, setTaskLimit] = useState(TASKS_PAGE_SIZE);
+  const [totalTasks, setTotalTasks] = useState(0);
   const [manualOrder, setManualOrder] = useState<string[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
   const [creators, setCreators] = useState<Record<string, Profile>>({});
@@ -117,19 +121,28 @@ const Tasks = () => {
     }
   }, []);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (limitArg?: unknown) => {
+    const limit = typeof limitArg === 'number' ? limitArg : taskLimit;
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(0, limit - 1);
       if (error) throw error;
       setTasks((data || []) as unknown as Task[]);
+      setTotalTasks(count || 0);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreTasks = () => {
+    const next = taskLimit + TASKS_PAGE_SIZE;
+    setTaskLimit(next);
+    fetchTasks(next);
   };
 
   const fetchCreators = async () => {
@@ -908,6 +921,19 @@ const Tasks = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {tasks.length < totalTasks && (
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <p className="text-sm text-muted-foreground">
+            {t('paginationShowing')} {tasks.length} {t('paginationOf')} {totalTasks}
+          </p>
+          <Button variant="outline" onClick={loadMoreTasks}>
+            {t('loadMore')}
+          </Button>
+        </div>
+      )}
+
+      
 
       
       <TaskTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onTaskGenerated={fetchTasks} />

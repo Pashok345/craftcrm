@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,10 @@ const Projects = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [totalProjects, setTotalProjects] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [, setManagers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
 
@@ -46,18 +51,53 @@ const Projects = () => {
   };
 
   useEffect(() => {
-    fetchProjects();
     fetchManagers();
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(fetchProjects, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, searchQuery, sortBy, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, sortBy, statusFilter, pageSize]);
+
+  useEffect(() => {
+    if (recentIds.length === 0) { setRecentProjects([]); return; }
+    supabase
+      .from('projects')
+      .select('*')
+      .in('id', recentIds)
+      .then(({ data }) => {
+        const map = new Map(((data || []) as unknown as Project[]).map((p) => [p.id, p]));
+        setRecentProjects(recentIds.map((id) => map.get(id)).filter(Boolean) as Project[]);
+      });
+  }, [recentIds]);
+
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
+      setLoading(true);
+      let query = supabase.from('projects').select('*', { count: 'exact' });
+
+      if (statusFilter === 'active') {
+        query = query.in('status', ['planning', 'active', 'on_hold']);
+      } else if (statusFilter === 'completed') {
+        query = query.in('status', ['completed', 'cancelled']);
+      }
+
+      const q = searchQuery.trim().replace(/[%,()]/g, '');
+      if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+
+      if (sortBy === 'name') query = query.order('title', { ascending: true });
+      else if (sortBy === 'status') query = query.order('status', { ascending: true });
+      else query = query.order('created_at', { ascending: sortBy === 'date_asc' });
+
+      const { data, error, count } = await query.range((page - 1) * pageSize, page * pageSize - 1);
       if (error) throw error;
       setProjects((data || []) as unknown as Project[]);
+      setTotalProjects(count || 0);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -83,35 +123,7 @@ const Projects = () => {
     navigate(`/projects/${id}`);
   };
 
-  const filteredAndSortedProjects = useMemo(() => {
-    let filtered = projects;
-    if (statusFilter === 'active') {
-      filtered = filtered.filter(p => ['planning', 'active', 'on_hold'].includes(p.status));
-    } else if (statusFilter === 'completed') {
-      filtered = filtered.filter(p => ['completed', 'cancelled'].includes(p.status));
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.title.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
-      );
-    }
-    return [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'date_asc': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case 'date_desc': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'status': return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-        case 'name': return a.title.localeCompare(b.title);
-        default: return 0;
-      }
-    });
-  }, [projects, searchQuery, sortBy, statusFilter]);
-
-  const recentProjects = useMemo(() => {
-    const map = new Map(projects.map((p) => [p.id, p]));
-    return recentIds.map((id) => map.get(id)).filter(Boolean) as Project[];
-  }, [projects, recentIds]);
+  const filteredAndSortedProjects = projects;
 
   if (loading) {
     return (
@@ -226,6 +238,13 @@ const Projects = () => {
               <ProjectTile key={project.id} project={project} />
             ))}
           </div>
+          <DataPagination
+            page={page}
+            pageSize={pageSize}
+            total={totalProjects}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,9 @@ const Users = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalUsers, setTotalUsers] = useState(0);
   const { isAdmin } = useUserRole();
 
   const positionLabels: Record<UserPosition, string> = {
@@ -40,16 +44,19 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize]);
 
   const fetchUsers = async () => {
     try {
-      // Fetch users and admin roles in parallel
+      setLoading(true);
+      // Fetch users (paginated) and admin roles in parallel
       const [usersResult, rolesResult] = await Promise.all([
         supabase
           .from('profiles')
-          .select('*')
-          .order('name', { ascending: true }),
+          .select('*', { count: 'exact' })
+          .order('name', { ascending: true })
+          .range((page - 1) * pageSize, page * pageSize - 1),
         supabase
           .from('user_roles')
           .select('user_id, role')
@@ -71,6 +78,7 @@ const Users = () => {
       }));
       
       setUsers(usersWithRoles);
+      setTotalUsers(usersResult.count || 0);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -193,6 +201,14 @@ const Users = () => {
           })}
         </div>
       )}
+
+      <DataPagination
+        page={page}
+        pageSize={pageSize}
+        total={totalUsers}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+      />
 
       {selectedUser && (
         <UserDialog

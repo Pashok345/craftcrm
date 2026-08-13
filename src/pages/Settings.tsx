@@ -14,7 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Globe, Bell, Moon, Key, Building2, MapPin, ShieldCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Globe, Bell, Moon, Key, Building2, MapPin, ShieldCheck, Eye, EyeOff, Loader2, Menu as MenuIcon } from 'lucide-react';
+import { MenuSettings } from '@/components/settings/MenuSettings';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -131,14 +132,20 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto">
           <TabsTrigger value="general"><Globe className="h-4 w-4 mr-2" />{t('settingsTabGeneral')}</TabsTrigger>
+          <TabsTrigger value="menu"><MenuIcon className="h-4 w-4 mr-2" />{t('menuTab')}</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />{t('settingsTabNotifications')}</TabsTrigger>
           <TabsTrigger value="integrations"><Key className="h-4 w-4 mr-2" />{t('settingsTabIntegrations')}</TabsTrigger>
           <TabsTrigger value="company"><Building2 className="h-4 w-4 mr-2" />{t('settingsTabCompany')}</TabsTrigger>
           <TabsTrigger value="regional"><MapPin className="h-4 w-4 mr-2" />{t('settingsTabRegional')}</TabsTrigger>
           <TabsTrigger value="security"><ShieldCheck className="h-4 w-4 mr-2" />{t('settingsTabSecurity')}</TabsTrigger>
         </TabsList>
+
+        {/* MENU */}
+        <TabsContent value="menu" className="mt-4">
+          <MenuSettings />
+        </TabsContent>
 
         {/* GENERAL */}
         <TabsContent value="general" className="space-y-4 mt-4">
