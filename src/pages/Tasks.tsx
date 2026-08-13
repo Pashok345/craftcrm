@@ -922,6 +922,19 @@ const Tasks = () => {
         </TabsContent>
       </Tabs>
 
+      {tasks.length < totalTasks && (
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <p className="text-sm text-muted-foreground">
+            {t('paginationShowing')} {tasks.length} {t('paginationOf')} {totalTasks}
+          </p>
+          <Button variant="outline" onClick={loadMoreTasks}>
+            {t('loadMore')}
+          </Button>
+        </div>
+      )}
+
+      
+
       
       <TaskTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} onTaskGenerated={fetchTasks} />
     </div>
