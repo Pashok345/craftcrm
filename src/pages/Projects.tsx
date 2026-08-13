@@ -237,6 +237,13 @@ const Projects = () => {
               <ProjectTile key={project.id} project={project} />
             ))}
           </div>
+          <DataPagination
+            page={page}
+            pageSize={pageSize}
+            total={totalProjects}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       )}
     </div>
