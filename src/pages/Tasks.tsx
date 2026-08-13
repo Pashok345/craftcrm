@@ -121,7 +121,8 @@ const Tasks = () => {
     }
   }, []);
 
-  const fetchTasks = async (limit = taskLimit) => {
+  const fetchTasks = async (limitArg?: unknown) => {
+    const limit = typeof limitArg === 'number' ? limitArg : taskLimit;
     try {
       const { data, error, count } = await supabase
         .from('tasks')
