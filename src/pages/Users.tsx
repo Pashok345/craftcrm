@@ -25,6 +25,9 @@ const Users = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalUsers, setTotalUsers] = useState(0);
   const { isAdmin } = useUserRole();
 
   const positionLabels: Record<UserPosition, string> = {
