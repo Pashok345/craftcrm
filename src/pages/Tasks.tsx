@@ -117,19 +117,27 @@ const Tasks = () => {
     }
   }, []);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (limit = taskLimit) => {
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(0, limit - 1);
       if (error) throw error;
       setTasks((data || []) as unknown as Task[]);
+      setTotalTasks(count || 0);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMoreTasks = () => {
+    const next = taskLimit + TASKS_PAGE_SIZE;
+    setTaskLimit(next);
+    fetchTasks(next);
   };
 
   const fetchCreators = async () => {
