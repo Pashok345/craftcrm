@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { DataPagination } from '@/components/ui/data-pagination';
 import { Plus, Search, Mail, Phone, Building2, User } from 'lucide-react';
 import { ClientDialog } from './ClientDialog';
 import { ClientDetailDialog } from './ClientDetailDialog';
@@ -15,28 +16,38 @@ import type { Client } from '@/types/sales';
 export const ClientsList = () => {
   const { t } = useLanguage();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ['clients'],
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['clients', debouncedSearch, page, pageSize],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name');
+      let query = supabase.from('clients').select('*', { count: 'exact' }).order('name');
+      const q = debouncedSearch.trim().replace(/[%,()]/g, '');
+      if (q) {
+        query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,company.ilike.%${q}%`);
+      }
+      const { data, error, count } = await query.range((page - 1) * pageSize, page * pageSize - 1);
       if (error) throw error;
-      return data as Client[];
+      return { rows: (data || []) as Client[], count: count || 0 };
     },
   });
 
-  const filteredClients = clients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(search.toLowerCase()) ||
-      client.email?.toLowerCase().includes(search.toLowerCase()) ||
-      client.company?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredClients = data?.rows ?? [];
+  const totalClients = data?.count ?? 0;
+
 
   const getInitials = (name: string) => {
     return name
