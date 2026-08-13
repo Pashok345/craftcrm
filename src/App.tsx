@@ -36,6 +36,7 @@ import Wiki from "./pages/Wiki";
 import WikiArticle from "./pages/WikiArticle";
 import WikiArticleEdit from "./pages/WikiArticleEdit";
 import WhiteboardDetail from "./pages/WhiteboardDetail";
+import AuditLog from "./pages/AuditLog";
 
 const queryClient = new QueryClient();
 
