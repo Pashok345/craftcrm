@@ -51,6 +51,8 @@ const Tasks = () => {
   const navigate = useNavigate();
   const { columns, getColumnForTask, moveTaskToColumn, refetch: refetchKanban } = useKanbanColumns();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskLimit, setTaskLimit] = useState(TASKS_PAGE_SIZE);
+  const [totalTasks, setTotalTasks] = useState(0);
   const [manualOrder, setManualOrder] = useState<string[]>([]);
   const [projects, setProjects] = useState<Record<string, Project>>({});
   const [creators, setCreators] = useState<Record<string, Profile>>({});
