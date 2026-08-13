@@ -79,6 +79,7 @@ const App = () => (
             <Route path="/wiki/:id/edit" element={<WikiArticleEdit />} />
             <Route path="/whiteboards" element={<Whiteboards />} />
             <Route path="/whiteboards/:id" element={<WhiteboardDetail />} />
+            <Route path="/audit-log" element={<AuditLog />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
