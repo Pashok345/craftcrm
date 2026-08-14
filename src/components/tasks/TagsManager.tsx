@@ -264,7 +264,7 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteTag')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('deleteTagConfirm') || `Тег "${tagToDelete?.name}" буде видалено з усіх задач. Цю дію неможливо скасувати.`}
+              {t("deleteTagConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
