@@ -19,7 +19,7 @@ import { MenuSettings } from '@/components/settings/MenuSettings';
 import { PermissionsSettings } from '@/components/settings/PermissionsSettings';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -91,7 +91,8 @@ const SecretInput = ({ value, onChange, placeholder }: { value: string; onChange
 const Settings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { can, loading: roleLoading } = usePermissions();
+  const isAdmin = can('settings.manage');
   const { user } = useAuth();
 
   const [notifyMeetings, setNotifyMeetings] = useState(() => localStorage.getItem('notify-meetings') !== 'false');

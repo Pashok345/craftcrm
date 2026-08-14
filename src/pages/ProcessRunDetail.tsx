@@ -34,7 +34,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { RunStepsPanel } from '@/components/processes/RunStepsPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 
 
 interface ProcessRun {
@@ -87,7 +87,8 @@ const ProcessRunDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('processes.editAnyRun');
 
   const [run, setRun] = useState<ProcessRun | null>(null);
   const [process, setProcess] = useState<Process | null>(null);

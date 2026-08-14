@@ -23,7 +23,7 @@ import { DataPagination } from '@/components/ui/data-pagination';
 import { ScrollText, Search, Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface AuditEntry {
   id: string;
@@ -62,7 +62,8 @@ const ACTION_COLORS: Record<string, string> = {
 
 export default function AuditLog() {
   const { t } = useLanguage();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { can, loading: roleLoading } = usePermissions();
+  const isAdmin = can('auditlog.view');
 
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);

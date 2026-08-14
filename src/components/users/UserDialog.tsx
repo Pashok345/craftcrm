@@ -34,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, BadgeCheck, Trash2, Send, Mail } from 'lucide-react';
 import { Profile, UserPosition, AppRole } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const POSITION_LABELS_LOCALIZED: Record<string, Record<UserPosition, string>> = {
@@ -95,7 +95,8 @@ export const UserDialog = ({ open, onOpenChange, user, onUpdate, isInvitedUser =
   const [resendLoading, setResendLoading] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('users.manage');
 
   const isOwnProfile = currentUser?.id === user.user_id;
   const positionLabels = POSITION_LABELS_LOCALIZED[language] || POSITION_LABELS_LOCALIZED.uk;

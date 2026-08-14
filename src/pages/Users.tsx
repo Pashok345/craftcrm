@@ -10,7 +10,7 @@ import { Profile, UserPosition } from '@/types/database';
 import { UserDialog } from '@/components/users/UserDialog';
 import { AddUserDialog } from '@/components/users/AddUserDialog';
 import { InviteUserDialog } from '@/components/users/InviteUserDialog';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UserWithRole extends Profile {
@@ -29,7 +29,8 @@ const Users = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalUsers, setTotalUsers] = useState(0);
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('users.manage');
 
   const positionLabels: Record<UserPosition, string> = {
     director: t('director'),

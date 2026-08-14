@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -42,7 +42,8 @@ interface StageDialogProps {
 
 export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: StageDialogProps) => {
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('sales.manage');
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();

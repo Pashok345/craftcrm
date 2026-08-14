@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { ChevronLeft, Menu } from 'lucide-react';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useMenuSettings } from '@/hooks/useMenuSettings';
 import { getMenuIcon } from '@/lib/menuConfig';
 import { cn } from '@/lib/utils';
@@ -20,12 +20,13 @@ interface SidebarProps {
 export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenChange }: SidebarProps) => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
-  const { isAdmin } = useUserRole();
+  const { can, isAdmin } = usePermissions();
   const { items, overrides } = useMenuSettings();
 
   const menuItems = items
     .filter((item) => (!item.adminOnly || isAdmin) && overrides[item.id]?.hidden !== true)
-    .filter((item) => item.id !== 'settings' || isAdmin)
+    .filter((item) => item.id !== 'settings' || can('settings.manage'))
+    .filter((item) => item.id !== 'audit-log' || can('auditlog.view'))
     .map((item) => {
       const ov = overrides[item.id] || {};
       return {

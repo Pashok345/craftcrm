@@ -26,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface TemplateField {
   name: string;
@@ -65,7 +65,8 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('processes.manage');
   const [templates, setTemplates] = useState<ProcessTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingId, setCreatingId] = useState<string | null>(null);
