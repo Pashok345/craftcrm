@@ -179,12 +179,12 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
       <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
         <div className="relative md:col-span-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('searchRuns') || 'Пошук запусків...'} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder={t('searchRuns')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('allStatuses') || 'Всі статуси'}</SelectItem>
+            <SelectItem value="all">{t('allStatuses')}</SelectItem>
             <SelectItem value="pending">{t('status_pending')}</SelectItem>
             <SelectItem value="in_progress">{t('status_in_progress')}</SelectItem>
             <SelectItem value="completed">{t('status_completed')}</SelectItem>
@@ -194,28 +194,28 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger><SelectValue placeholder={t('processType')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('allTypes') || 'Всі типи'}</SelectItem>
+            <SelectItem value="all">{t('allTypes')}</SelectItem>
             {types.map(tp => (<SelectItem key={tp.id} value={tp.id}>{tp.name}</SelectItem>))}
           </SelectContent>
         </Select>
         <Select value={initiatorFilter} onValueChange={setInitiatorFilter}>
-          <SelectTrigger><SelectValue placeholder={t('initiator') || 'Ініціатор'} /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t('initiator')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('allInitiators') || 'Всі ініціатори'}</SelectItem>
+            <SelectItem value="all">{t('allInitiators')}</SelectItem>
             {initiators.map(p => (<SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>))}
           </SelectContent>
         </Select>
         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-          <SelectTrigger className="md:col-start-5"><SelectValue placeholder={t('assignee') || 'Виконавець'} /></SelectTrigger>
+          <SelectTrigger className="md:col-start-5"><SelectValue placeholder={t('assignee')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('allAssignees') || 'Всі виконавці'}</SelectItem>
+            <SelectItem value="all">{t('allAssignees')}</SelectItem>
             {allAssignees.map(p => (<SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>))}
           </SelectContent>
         </Select>
       </div>
 
       {filtered.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">{t('noRunsFound') || 'Запусків не знайдено'}</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">{t('noRunsFound')}</CardContent></Card>
       ) : (
         (() => {
           // Group runs by process type
@@ -223,7 +223,7 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
           filtered.forEach(r => {
             const proc = processes[r.process_id];
             const typeId = proc?.type_id || '__none__';
-            const typeName = types.find(t => t.id === typeId)?.name || (t('withoutType') || 'Без типу');
+            const typeName = types.find(t => t.id === typeId)?.name || (t('withoutType'));
             if (!groups[typeId]) groups[typeId] = { typeName, runs: [] };
             groups[typeId].runs.push(r);
           });
@@ -270,7 +270,7 @@ export function ActiveRunsList({ mineOnly = false, completedOnly = false, onCoun
                             )}
                             {initiator && (
                               <div className="hidden md:flex items-center gap-1.5 text-xs">
-                                <span className="text-muted-foreground">{t('by') || 'від'}</span>
+                                <span className="text-muted-foreground">{t('by')}</span>
                                 <Avatar className="h-6 w-6">
                                   <AvatarImage src={initiator.avatar_url || undefined} />
                                   <AvatarFallback style={{ backgroundColor: initiator.avatar_color || undefined }} className="text-[10px]">

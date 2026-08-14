@@ -499,7 +499,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                 await supabase.from('notifications').insert({
                   user_id: userId,
                   type: 'status_change',
-                  title: t('taskStatusChanged') || 'Статус задачи изменён',
+                  title: t('taskStatusChanged'),
                   message: `${myProfile?.name || ''}: "${movedTask.title}" → ${statusLabel(newStatus)}`,
                   task_id: taskId,
                   created_by: user.id,
@@ -682,7 +682,7 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
                                     <div className="px-2 py-1.5">
                                       <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
                                         <Palette className="h-3 w-3" />
-                                        {t('columnColor') || 'Цвет колонки'}
+                                        {t('columnColor')}
                                       </p>
                                       <div className="grid grid-cols-4 gap-1">
                                         {COLUMN_COLORS.map((colorOption) => (

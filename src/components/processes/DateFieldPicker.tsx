@@ -34,7 +34,7 @@ export function DateFieldPicker({ value, onChange, disabled, invalid, className 
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, 'dd.MM.yyyy') : <span>{t('selectDate') || 'Оберіть дату'}</span>}
+          {date ? format(date, 'dd.MM.yyyy') : <span>{t('selectDate')}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

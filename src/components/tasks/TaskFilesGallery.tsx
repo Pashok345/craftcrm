@@ -201,7 +201,7 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           <Files className="h-10 w-10 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium mb-1">
-          {t('noAttachments') || 'Нет вложений'}
+          {t('noAttachments')}
         </h3>
         <p className="text-sm text-muted-foreground mb-6 max-w-sm">
           {t('uploadFirstFile')}
@@ -303,15 +303,15 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               <Files className="h-3.5 w-3.5" />
-              {t('all') || 'Все'} ({attachments.length})
+              {t('all')} ({attachments.length})
             </TabsTrigger>
             <TabsTrigger value="images" className="gap-1.5">
               <ImageIcon className="h-3.5 w-3.5" />
-              {t('photos') || 'Фото'} ({images.length})
+              {t('photos')} ({images.length})
             </TabsTrigger>
             <TabsTrigger value="files" className="gap-1.5">
               <FileText className="h-3.5 w-3.5" />
-              {t('documents') || 'Документы'} ({files.length})
+              {t('documents')} ({files.length})
             </TabsTrigger>
           </TabsList>
           {onUpload && (
@@ -340,7 +340,7 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
         <TabsContent value="images" className="mt-0">
           {images.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noPhotos') || 'Фото нет'}
+              {t('noPhotos')}
             </p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
@@ -351,7 +351,7 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
         <TabsContent value="files" className="mt-0">
           {files.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noFiles') || 'Файлов нет'}
+              {t('noFiles')}
             </p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
@@ -384,7 +384,7 @@ export const TaskFilesGallery = ({ attachments, onUpload, uploading }: TaskFiles
                     className="bg-white/10 text-white hover:bg-white/20 border-0"
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    {t('download') || 'Скачать'}
+                    {t('download')}
                   </Button>
                   <Button
                     size="icon"

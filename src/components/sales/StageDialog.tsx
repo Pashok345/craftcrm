@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -42,7 +42,8 @@ interface StageDialogProps {
 
 export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: StageDialogProps) => {
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('sales.manage');
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -109,7 +110,7 @@ export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: Sta
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deal-stages'] });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
-      toast({ title: t('stageDeleted') || 'Этап удалён' });
+      toast({ title: t('stageDeleted') });
       onOpenChange(false);
     },
     onError: () => {
@@ -164,14 +165,14 @@ export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: Sta
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive" size="sm" disabled={deleteMutation.isPending}>
                     <Trash2 className="h-4 w-4 mr-2" />
-                    {t('delete') || 'Удалить'}
+                    {t('delete')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>{t('confirmDelete') || 'Подтвердите удаление'}</AlertDialogTitle>
+                    <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      {t('deleteStageConfirm') || 'Этап и все связанные сделки будут удалены. Продолжить?'}
+                      {t('deleteStageConfirm')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -180,7 +181,7 @@ export const StageDialog = ({ open, onOpenChange, stage, maxSortOrder = 0 }: Sta
                       onClick={() => deleteMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {t('delete') || 'Удалить'}
+                      {t('delete')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

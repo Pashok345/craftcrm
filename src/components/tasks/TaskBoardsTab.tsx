@@ -163,7 +163,7 @@ export const TaskBoardsTab = ({ taskId, projectId }: Props) => {
       return;
     }
 
-    toast({ title: t('whiteboardCreated') || 'Дошку створено' });
+    toast({ title: t('whiteboardCreated') });
     resetDialog();
     setDialogOpen(false);
     fetchLinks();
@@ -270,30 +270,30 @@ export const TaskBoardsTab = ({ taskId, projectId }: Props) => {
 
           <Tabs value={mode} onValueChange={(v) => setMode(v as 'attach' | 'create')}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="create">{t('createNew') || 'Створити нову'}</TabsTrigger>
+              <TabsTrigger value="create">{t('createNew')}</TabsTrigger>
               <TabsTrigger value="attach" disabled={availableBoards.length === 0}>
-                {t('selectExisting') || 'Обрати існуючу'}
+                {t('selectExisting')}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="create" className="space-y-3 pt-2">
               <div className="space-y-2">
-                <Label htmlFor="board-title">{t('whiteboardTitle') || 'Назва'}</Label>
+                <Label htmlFor="board-title">{t('whiteboardTitle')}</Label>
                 <Input
                   id="board-title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder={t('whiteboardTitle') || 'Назва дошки'}
+                  placeholder={t('whiteboardTitle')}
                   autoFocus
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="board-desc">{t('description') || 'Опис'}</Label>
+                <Label htmlFor="board-desc">{t('description')}</Label>
                 <Textarea
                   id="board-desc"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder={t('description') || 'Опис (необов’язково)'}
+                  placeholder={t('description')}
                   rows={3}
                 />
               </div>
@@ -325,7 +325,7 @@ export const TaskBoardsTab = ({ taskId, projectId }: Props) => {
             </Button>
             {mode === 'create' ? (
               <Button onClick={handleCreate} disabled={!newTitle.trim() || submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (t('create') || 'Створити')}
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (t('create'))}
               </Button>
             ) : (
               <Button onClick={handleAttach} disabled={!selectedBoardId || submitting}>

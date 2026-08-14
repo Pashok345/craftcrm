@@ -177,7 +177,7 @@ export const SubtasksList = ({ taskId }: SubtasksListProps) => {
                           {...prov.dragHandleProps}
                           className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none p-1 -m-1 rounded hover:bg-muted"
                           aria-label="drag"
-                          title={t('dragToReorder') || 'Перетащите для изменения порядка'}
+                          title={t('dragToReorder')}
                         >
                           <GripVertical className="h-5 w-5" />
                         </button>

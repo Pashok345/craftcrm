@@ -78,18 +78,18 @@ export const AddAssigneeDialog = ({
       await supabase.from('notifications').insert({
         user_id: selectedUserId,
         type: 'task_assigned',
-        title: t('newTaskAssigned') || 'Вас добавили в задачу',
-        message: `${t('youWereAddedToTask') || 'Вы добавлены в задачу'}: "${taskTitle}" (${role === 'executor' ? t('executor') : t('observer')})`,
+        title: t('newTaskAssigned'),
+        message: `${t('youWereAddedToTask')}: "${taskTitle}" (${role === 'executor' ? t('executor') : t('observer')})`,
         task_id: taskId,
       });
 
-      toast({ title: t('assigneeAdded') || 'Участник добавлен' });
+      toast({ title: t('assigneeAdded') });
       onAssigneeAdded();
       onOpenChange(false);
       setSelectedUserId(null);
     } catch (error) {
       console.error('Error adding assignee:', error);
-      toast({ title: t('error') || 'Ошибка', variant: 'destructive' });
+      toast({ title: t('error'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -99,12 +99,12 @@ export const AddAssigneeDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('addParticipant') || 'Добавить участника'}</DialogTitle>
+          <DialogTitle>{t('addParticipant')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label className="text-sm font-medium mb-2 block">{t('role') || 'Роль'}</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('role')}</Label>
             <RadioGroup value={role} onValueChange={(v) => setRole(v as 'executor' | 'observer')} className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="executor" id="executor" />
@@ -118,11 +118,11 @@ export const AddAssigneeDialog = ({
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-2 block">{t('selectUser') || 'Выберите пользователя'}</Label>
+            <Label className="text-sm font-medium mb-2 block">{t('selectUser')}</Label>
             <ScrollArea className="h-64 border rounded-lg">
               {profiles.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">
-                  {t('noAvailableUsers') || 'Нет доступных пользователей'}
+                  {t('noAvailableUsers')}
                 </div>
               ) : (
                 <div className="divide-y">

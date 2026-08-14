@@ -369,7 +369,7 @@ const Whiteboards = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              {t('cancel') || 'Отмена'}
+              {t('cancel')}
             </Button>
             <Button onClick={handleCreate} disabled={creating}>
               {t('createWhiteboard')}
@@ -386,10 +386,10 @@ const Whiteboards = () => {
             <AlertDialogDescription>{t('whiteboardConfirmDelete')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel') || 'Отмена'}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
               <Trash2 className="h-4 w-4 mr-1" />
-              {t('delete') || 'Удалить'}
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

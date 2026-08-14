@@ -115,8 +115,8 @@ const CreateProject = () => {
       }
 
       toast({
-        title: t('projectCreated') || 'Проект создан',
-        description: t('projectCreatedDescription') || 'Новый проект успешно добавлен',
+        title: t('projectCreated'),
+        description: t('projectCreatedDescription'),
       });
 
       navigate('/projects');
@@ -124,7 +124,7 @@ const CreateProject = () => {
       console.error('Error creating project:', error);
       toast({
         title: t('error'),
-        description: t('errorCreating') || 'Не удалось создать проект',
+        description: t('errorCreating'),
         variant: 'destructive',
       });
     } finally {
@@ -140,7 +140,7 @@ const CreateProject = () => {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('newProject')}</h1>
-          <p className="text-muted-foreground">{t('fillProjectDetails') || 'Заполните данные проекта'}</p>
+          <p className="text-muted-foreground">{t('fillProjectDetails')}</p>
         </div>
       </div>
 
@@ -204,10 +204,10 @@ const CreateProject = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>{t('reviewer') || 'Проверяющий'}</Label>
+              <Label>{t('reviewer')}</Label>
               <Select value={reviewerId} onValueChange={setReviewerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('selectReviewer') || 'Выберите проверяющего'} />
+                  <SelectValue placeholder={t('selectReviewer')} />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -278,7 +278,7 @@ const CreateProject = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, 'd MMM yyyy', { locale: dateLocale }) : t('select') || 'Выберите'}
+                      {startDate ? format(startDate, 'd MMM yyyy', { locale: dateLocale }) : t('select')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -304,7 +304,7 @@ const CreateProject = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, 'd MMM yyyy', { locale: dateLocale }) : t('select') || 'Выберите'}
+                      {endDate ? format(endDate, 'd MMM yyyy', { locale: dateLocale }) : t('select')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">

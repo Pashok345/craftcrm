@@ -145,7 +145,7 @@ const RunProcess = () => {
   const handleFileUpload = async (field: ProcessField, file: File) => {
     if (!user) return;
     if (file.size > 50 * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, [field.name]: t('fileTooLarge') || 'Файл завеликий — максимум 50 МБ' }));
+      setErrors((prev) => ({ ...prev, [field.name]: t('fileTooLarge') }));
       return;
     }
     setUploading(field.id);
@@ -172,15 +172,15 @@ const RunProcess = () => {
   };
 
   const requiredMessage = (field: ProcessField) => {
-    if (field.field_type === 'file') return t('fieldRequiredFile') || 'Додайте файл — це поле обовʼязкове';
-    if (field.field_type === 'select') return t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
-    return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+    if (field.field_type === 'file') return t('fieldRequiredFile');
+    if (field.field_type === 'select') return t('fieldRequiredSelect');
+    return t('fieldRequiredText');
   };
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!runName.trim()) next._run_name = t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
-    if (!selectedDepartment) next._department = t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
+    if (!runName.trim()) next._run_name = t('fieldRequiredText');
+    if (!selectedDepartment) next._department = t('fieldRequiredSelect');
     fields.forEach((field) => {
       if (!field.required) return;
       const filled = field.field_type === 'file'
@@ -197,8 +197,8 @@ const RunProcess = () => {
     if (!user) return;
     if (!validate()) {
       toast({
-        title: t('fieldRequired') || 'Обовʼязкові поля',
-        description: t('fillRequiredFields') || 'Заповніть усі поля, позначені зірочкою',
+        title: t('fieldRequired'),
+        description: t('fillRequiredFields'),
         variant: 'destructive',
       });
       return;
@@ -274,7 +274,7 @@ const RunProcess = () => {
           await supabase.from('notifications').insert({
             user_id: first.assignee_id,
             type: 'process_step',
-            title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+            title: t('processStepAssignedTitle'),
             message: `${procData?.title || ''}: ${first.step_label || ''}`,
           });
         }
@@ -353,7 +353,7 @@ const RunProcess = () => {
             )}
             {uploading === field.id && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" /> {t('uploading') || 'Завантаження...'}
+                <Loader2 className="h-3 w-3 animate-spin" /> {t('uploading')}
               </p>
             )}
           </div>

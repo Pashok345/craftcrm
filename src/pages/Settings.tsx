@@ -16,9 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Globe, Bell, Moon, Key, Building2, MapPin, ShieldCheck, Eye, EyeOff, Loader2, Menu as MenuIcon } from 'lucide-react';
 import { MenuSettings } from '@/components/settings/MenuSettings';
+import { PermissionsSettings } from '@/components/settings/PermissionsSettings';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -90,7 +91,8 @@ const SecretInput = ({ value, onChange, placeholder }: { value: string; onChange
 const Settings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { can, loading: roleLoading } = usePermissions();
+  const isAdmin = can('settings.manage');
   const { user } = useAuth();
 
   const [notifyMeetings, setNotifyMeetings] = useState(() => localStorage.getItem('notify-meetings') !== 'false');
@@ -125,14 +127,14 @@ const Settings = () => {
   const languageLabels: Record<Language, string> = { ru: 'RUS', en: 'ENG', uk: 'UKR' };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">{t('settingsTitle')}</h1>
         <p className="text-muted-foreground">{t('settingsDescription')}</p>
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto">
+        <TabsList className="flex flex-wrap w-full h-auto justify-start gap-1 p-1">
           <TabsTrigger value="general"><Globe className="h-4 w-4 mr-2" />{t('settingsTabGeneral')}</TabsTrigger>
           <TabsTrigger value="menu"><MenuIcon className="h-4 w-4 mr-2" />{t('menuTab')}</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />{t('settingsTabNotifications')}</TabsTrigger>
@@ -140,7 +142,13 @@ const Settings = () => {
           <TabsTrigger value="company"><Building2 className="h-4 w-4 mr-2" />{t('settingsTabCompany')}</TabsTrigger>
           <TabsTrigger value="regional"><MapPin className="h-4 w-4 mr-2" />{t('settingsTabRegional')}</TabsTrigger>
           <TabsTrigger value="security"><ShieldCheck className="h-4 w-4 mr-2" />{t('settingsTabSecurity')}</TabsTrigger>
+          <TabsTrigger value="permissions"><ShieldCheck className="h-4 w-4 mr-2" />{t('settingsTabPermissions')}</TabsTrigger>
         </TabsList>
+
+        {/* PERMISSIONS */}
+        <TabsContent value="permissions" className="mt-4">
+          <PermissionsSettings />
+        </TabsContent>
 
         {/* MENU */}
         <TabsContent value="menu" className="mt-4">

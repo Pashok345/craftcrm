@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ArrowLeft, Pencil, Trash2, Pin, Eye, MessageSquare, Send } from 'lucide-react';
 import { WikiContent } from '@/lib/wikiMarkdown';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -40,7 +40,8 @@ export default function WikiArticle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('wiki.manage');
   const { user } = useAuth();
 
   const [article, setArticle] = useState<Article | null>(null);

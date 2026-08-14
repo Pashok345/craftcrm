@@ -473,7 +473,7 @@ const TaskDetail = () => {
         await supabase.from('notifications').insert({
           user_id: userId,
           type: 'comment',
-          title: t('newCommentOnTask') || 'Новий коментар до завдання',
+          title: t('newCommentOnTask'),
           message: `${myProfile?.name || t('user')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
           task_id: task.id,
           created_by: user.id,
@@ -493,7 +493,7 @@ const TaskDetail = () => {
             await supabase.from('notifications').insert({
               user_id: mentionedUserId,
               type: 'mention',
-              title: t('mentionInComment') || 'Згадка в коментарі',
+              title: t('mentionInComment'),
               message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${newComment.slice(0, 50)}${newComment.length > 50 ? '...' : ''}"`,
               task_id: task.id,
               created_by: user.id,
@@ -562,7 +562,7 @@ const TaskDetail = () => {
       const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
       if (error) throw error;
       fetchComments();
-      toast({ title: t('commentDeleted') || 'Коментар видалено' });
+      toast({ title: t('commentDeleted') });
     } catch (error) {
       console.error('Error deleting comment:', error);
       toast({ title: t('error'), variant: 'destructive' });
@@ -582,7 +582,7 @@ const TaskDetail = () => {
       fetchComments();
       setEditingCommentId(null);
       setEditingCommentText('');
-      toast({ title: t('commentUpdated') || 'Коментар оновлено' });
+      toast({ title: t('commentUpdated') });
     } catch (error) {
       console.error('Error editing comment:', error);
       toast({ title: t('error'), variant: 'destructive' });
@@ -1024,7 +1024,7 @@ const TaskDetail = () => {
                 onSubmit={handleSubmitComment}
                 onPasteImage={(file) => {
                   setFiles(prev => [...prev, file]);
-                  toast({ title: t('imagePasted') || 'Изображение добавлено из буфера', description: file.name });
+                  toast({ title: t('imagePasted'), description: file.name });
                 }}
               />
               <input
@@ -1223,7 +1223,7 @@ const TaskDetail = () => {
                                             size="icon"
                                             onClick={() => toggleOptionalBlock(blockId)}
                                             className="absolute right-2 top-2 z-10 h-7 w-7 opacity-40 group-hover/block:opacity-100 transition-opacity"
-                                            title={t('removeBlock') || 'Прибрати блок'}
+                                            title={t('removeBlock')}
                                           >
                                             <X className="h-4 w-4" />
                                           </Button>
@@ -1272,8 +1272,8 @@ const TaskDetail = () => {
             {user && (() => {
               const available = OPTIONAL_BLOCKS.filter(b => !enabledOptional.includes(b));
               const blockLabel = (b: string) =>
-                b === 'dependencies' ? (t('dependencies') || 'Залежності')
-                : b === 'timeTracker' ? (t('timeTracker') || 'Облік часу')
+                b === 'dependencies' ? (t('dependencies'))
+                : b === 'timeTracker' ? (t('timeTracker'))
                 : b;
               return (
                 <TaskBlocksToolbar
@@ -1373,9 +1373,9 @@ const TaskDetail = () => {
       <AlertDialog open={!!deleteCommentId} onOpenChange={(open) => !open && setDeleteCommentId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteComment') || 'Видалити коментар'}</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteComment')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('deleteCommentConfirm') || 'Ви впевнені, що хочете видалити цей коментар?'}
+              {t('deleteCommentConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1481,7 +1481,7 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
         const { error } = await supabase.from('tasks').update({ bg_image_url: url } as any).eq('id', task.id);
         if (error) throw error;
         onChanged(url);
-        toast({ title: t('coverUpdated') || 'Обложка обновлена' });
+        toast({ title: t('coverUpdated') });
       }
     } catch (err: any) {
       console.error(err);
@@ -1496,7 +1496,7 @@ const TaskHeaderCover = ({ task, onChanged }: TaskHeaderCoverProps) => {
     const { error } = await supabase.from('tasks').update({ bg_image_url: null } as any).eq('id', task.id);
     if (!error) {
       onChanged(null);
-      toast({ title: t('coverRemoved') || 'Обложка удалена' });
+      toast({ title: t('coverRemoved') });
     }
   };
 

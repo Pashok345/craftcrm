@@ -128,14 +128,14 @@ export const ChatMembersDialog = ({
 
       if (error) throw error;
 
-      toast.success(t('membersAdded') || 'Участники добавлены');
+      toast.success(t('membersAdded'));
       setSelectedToAdd([]);
       setShowAddSection(false);
       fetchMembers();
       onMembersUpdated();
     } catch (error) {
       console.error('Error adding members:', error);
-      toast.error(t('errorAddingMembers') || 'Ошибка при добавлении участников');
+      toast.error(t('errorAddingMembers'));
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export const ChatMembersDialog = ({
 
   const handleRemoveMember = async (userId: string) => {
     if (userId === chatCreatorId) {
-      toast.error(t('cannotRemoveCreator') || 'Нельзя удалить создателя чата');
+      toast.error(t('cannotRemoveCreator'));
       return;
     }
 
@@ -157,12 +157,12 @@ export const ChatMembersDialog = ({
 
       if (error) throw error;
 
-      toast.success(t('memberRemoved') || 'Участник удалён');
+      toast.success(t('memberRemoved'));
       fetchMembers();
       onMembersUpdated();
     } catch (error) {
       console.error('Error removing member:', error);
-      toast.error(t('errorRemovingMember') || 'Ошибка при удалении участника');
+      toast.error(t('errorRemovingMember'));
     } finally {
       setLoading(false);
     }
@@ -185,7 +185,7 @@ export const ChatMembersDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t('chatParticipants') || 'Участники чата'}
+            {t('chatParticipants')}
           </DialogTitle>
         </DialogHeader>
 
@@ -193,7 +193,7 @@ export const ChatMembersDialog = ({
           {/* Current members */}
           <div>
             <h4 className="text-sm font-medium mb-2">
-              {t('currentMembers') || 'Текущие участники'} ({members.length})
+              {t('currentMembers')} ({members.length})
             </h4>
             <ScrollArea className="h-48 border rounded-md">
               {members.map(member => (
@@ -216,7 +216,7 @@ export const ChatMembersDialog = ({
                       {member.user_id === chatCreatorId && (
                         <Badge variant="secondary" className="text-xs flex items-center gap-1">
                           <Crown className="h-3 w-3" />
-                          {t('creator') || 'Создатель'}
+                          {t('creator')}
                         </Badge>
                       )}
                     </div>
@@ -246,12 +246,12 @@ export const ChatMembersDialog = ({
               {showAddSection ? (
                 <div>
                   <h4 className="text-sm font-medium mb-2">
-                    {t('addParticipants') || 'Добавить участников'}
+                    {t('addParticipants')}
                   </h4>
                   <ScrollArea className="h-40 border rounded-md p-2">
                     {nonMembers.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        {t('noUsersToAdd') || 'Все пользователи уже добавлены'}
+                        {t('noUsersToAdd')}
                       </p>
                     ) : (
                       nonMembers.map(profile => (
@@ -285,7 +285,7 @@ export const ChatMembersDialog = ({
                   </ScrollArea>
                   {selectedToAdd.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {t('selected') || 'Выбрано'}: {selectedToAdd.length}
+                      {t('selected')}: {selectedToAdd.length}
                     </p>
                   )}
                   <div className="flex gap-2 mt-3">
@@ -294,7 +294,7 @@ export const ChatMembersDialog = ({
                       disabled={loading || selectedToAdd.length === 0}
                       className="flex-1"
                     >
-                      {loading ? (t('adding') || 'Добавление...') : (t('addSelected') || 'Добавить выбранных')}
+                      {loading ? (t('adding')) : (t('addSelected'))}
                     </Button>
                     <Button
                       variant="outline"
@@ -303,7 +303,7 @@ export const ChatMembersDialog = ({
                         setSelectedToAdd([]);
                       }}
                     >
-                      {t('cancel') || 'Отмена'}
+                      {t('cancel')}
                     </Button>
                   </div>
                 </div>
@@ -314,7 +314,7 @@ export const ChatMembersDialog = ({
                   onClick={() => setShowAddSection(true)}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  {t('addParticipants') || 'Добавить участников'}
+                  {t('addParticipants')}
                 </Button>
               )}
             </>
@@ -322,7 +322,7 @@ export const ChatMembersDialog = ({
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {t('close') || 'Закрыть'}
+              {t('close')}
             </Button>
           </div>
         </div>

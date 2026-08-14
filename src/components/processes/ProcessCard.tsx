@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,8 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
   const dateLocale = language === 'en' ? enUS : language === 'uk' ? uk : ru;
 
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('processes.manage');
   const canManage = isAdmin || user?.id === process.created_by;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -188,7 +189,7 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
                   {categories.length > 0 && (
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
-                        <FolderInput className="h-4 w-4 mr-2" />{t('moveToCategory') || 'Перемістити в категорію'}
+                        <FolderInput className="h-4 w-4 mr-2" />{t('moveToCategory')}
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent>
                         <DropdownMenuItem
@@ -199,7 +200,7 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
                           }}
                         >
                           {!process.category_id && <Check className="h-4 w-4 mr-2" />}
-                          {t('uncategorized') || 'Без категорії'}
+                          {t('uncategorized')}
                         </DropdownMenuItem>
                         {categories.map((c) => (
                           <DropdownMenuItem
@@ -262,7 +263,7 @@ export const ProcessCard = ({ process, onEdit, categories = [], onCategoryChange
         {activeCount > 0 && (
           <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
             <Play className="h-3 w-3 mr-1" />
-            {t('activeRuns') || 'Активні запуски'}: {activeCount}
+            {t('activeRuns')}: {activeCount}
           </Badge>
         )}
       </CardContent>

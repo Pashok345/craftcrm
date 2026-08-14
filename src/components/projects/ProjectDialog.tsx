@@ -118,8 +118,8 @@ export const ProjectDialog = ({ open, onOpenChange, onSuccess }: ProjectDialogPr
       }
 
       toast({
-        title: t('projectCreated') || 'Проект создан',
-        description: t('projectCreatedDescription') || 'Новый проект успешно добавлен',
+        title: t('projectCreated'),
+        description: t('projectCreatedDescription'),
       });
 
       resetForm();
@@ -129,7 +129,7 @@ export const ProjectDialog = ({ open, onOpenChange, onSuccess }: ProjectDialogPr
       console.error('Error creating project:', error);
       toast({
         title: t('error'),
-        description: t('errorCreating') || 'Не удалось создать проект',
+        description: t('errorCreating'),
         variant: 'destructive',
       });
     } finally {
@@ -215,10 +215,10 @@ export const ProjectDialog = ({ open, onOpenChange, onSuccess }: ProjectDialogPr
             </div>
 
             <div className="space-y-2">
-              <Label>{t('reviewer') || 'Проверяющий'}</Label>
+              <Label>{t('reviewer')}</Label>
               <Select value={reviewerId} onValueChange={setReviewerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('selectReviewer') || 'Выберите проверяющего'} />
+                  <SelectValue placeholder={t('selectReviewer')} />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -256,7 +256,7 @@ export const ProjectDialog = ({ open, onOpenChange, onSuccess }: ProjectDialogPr
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, 'd MMM yyyy', { locale: ru }) : t('select') || 'Выберите'}
+                      {startDate ? format(startDate, 'd MMM yyyy', { locale: ru }) : t('select')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -282,7 +282,7 @@ export const ProjectDialog = ({ open, onOpenChange, onSuccess }: ProjectDialogPr
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, 'd MMM yyyy', { locale: ru }) : t('select') || 'Выберите'}
+                      {endDate ? format(endDate, 'd MMM yyyy', { locale: ru }) : t('select')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">

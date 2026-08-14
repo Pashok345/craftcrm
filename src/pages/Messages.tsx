@@ -218,14 +218,14 @@ const Messages = () => {
       setSidebarTab('chats');
 
       toast({
-        title: t('chatCreated') || 'Чат создан',
-        description: `${t('chatWith') || 'Чат с'} ${profile.name}`,
+        title: t('chatCreated'),
+        description: `${t('chatWith')} ${profile.name}`,
       });
     } catch (error) {
       console.error('Error creating direct chat:', error);
       toast({
-        title: t('error') || 'Ошибка',
-        description: t('failedToCreateChat') || 'Не удалось создать чат',
+        title: t('error'),
+        description: t('failedToCreateChat'),
         variant: 'destructive',
       });
     }
@@ -362,7 +362,7 @@ const Messages = () => {
           await supabase.from('notifications').insert({
             user_id: userId,
             type: 'mention',
-            title: t('mentionInChat') || 'Упоминание в чате',
+            title: t('mentionInChat'),
             message: `${myProfile?.name || t('user')} ${t('mentionedYou')}: "${messageContent.slice(0, 80)}${messageContent.length > 80 ? '...' : ''}"`,
           });
         }
@@ -370,8 +370,8 @@ const Messages = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: t('error') || 'Ошибка',
-        description: t('failedToSendMessage') || 'Не удалось отправить сообщение',
+        title: t('error'),
+        description: t('failedToSendMessage'),
         variant: 'destructive',
       });
     } finally {
@@ -648,7 +648,7 @@ const Messages = () => {
         await supabase.from('chat_groups').delete().eq('id', chatToDelete.id);
         
         toast({
-          title: t('chatDeleted') || 'Чат удалён',
+          title: t('chatDeleted'),
         });
       } else {
         // Just leave the group
@@ -659,7 +659,7 @@ const Messages = () => {
           .eq('user_id', user.id);
         
         toast({
-          title: t('leftChat') || 'Вы вышли из чата',
+          title: t('leftChat'),
         });
       }
 
@@ -670,7 +670,7 @@ const Messages = () => {
     } catch (error) {
       console.error('Error deleting/leaving chat:', error);
       toast({
-        title: t('error') || 'Ошибка',
+        title: t('error'),
         variant: 'destructive',
       });
     } finally {
@@ -853,12 +853,12 @@ const Messages = () => {
                     {selectedChat.created_by === user?.id || selectedChat.type === 'direct' ? (
                       <>
                         <Trash2 className="h-4 w-4 mr-2" />
-                        {t('deleteChat') || 'Удалить чат'}
+                        {t('deleteChat')}
                       </>
                     ) : (
                       <>
                         <LogOut className="h-4 w-4 mr-2" />
-                        {t('leaveChat') || 'Покинуть чат'}
+                        {t('leaveChat')}
                       </>
                     )}
                   </DropdownMenuItem>
@@ -1084,24 +1084,24 @@ const Messages = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
-                ? (t('confirmDeleteChat') || 'Удалить чат?')
-                : (t('confirmLeaveChat') || 'Покинуть чат?')}
+                ? (t('confirmDeleteChat'))
+                : (t('confirmLeaveChat'))}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
-                ? (t('deleteWarning') || 'Все сообщения будут удалены безвозвратно.')
-                : (t('leaveWarning') || 'Вы больше не сможете видеть сообщения этого чата.')}
+                ? (t('deleteWarning'))
+                : (t('leaveWarning'))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel') || 'Отмена'}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteChat}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {chatToDelete?.created_by === user?.id || chatToDelete?.type === 'direct'
-                ? (t('delete') || 'Удалить')
-                : (t('leave') || 'Покинуть')}
+                ? (t('delete'))
+                : (t('leave'))}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

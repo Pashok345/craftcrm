@@ -177,7 +177,7 @@ const ProjectDetail = () => {
     });
     return Object.entries(counts)
       .map(([uid, value]) => ({
-        name: uid === 'unassigned' ? (t('unassigned') || 'Без виконавця') : profiles[uid]?.name || '—',
+        name: uid === 'unassigned' ? (t('unassigned')) : profiles[uid]?.name || '—',
         value,
       }))
       .sort((a, b) => b.value - a.value)
@@ -219,11 +219,11 @@ const ProjectDetail = () => {
         old_value: oldStatus,
         new_value: newStatus,
       });
-      toast({ title: t('statusUpdated') || 'Статус обновлён' });
+      toast({ title: t('statusUpdated') });
       load();
     } catch (e) {
       console.error(e);
-      toast({ title: t('errorUpdatingStatus') || 'Ошибка обновления статуса', variant: 'destructive' });
+      toast({ title: t('errorUpdatingStatus'), variant: 'destructive' });
     }
   };
 
@@ -251,9 +251,9 @@ const ProjectDetail = () => {
       <div className="space-y-4">
         <Button variant="ghost" onClick={() => navigate('/projects')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('backToProjects') || 'Назад до проектів'}
+          {t('backToProjects')}
         </Button>
-        <p className="text-muted-foreground">{t('projectNotFound') || 'Проект не знайдено'}</p>
+        <p className="text-muted-foreground">{t('projectNotFound')}</p>
       </div>
     );
   }
@@ -266,11 +266,11 @@ const ProjectDetail = () => {
     const when = format(new Date(h.created_at), 'd MMM yyyy, HH:mm', { locale: dateLocale });
     let text = '';
     if (h.action === 'status_changed') {
-      text = `${t('changedStatus') || 'змінив(ла) статус'}: ${projectStatusLabels[h.old_value || ''] || h.old_value} → ${projectStatusLabels[h.new_value || ''] || h.new_value}`;
+      text = `${t('changedStatus')}: ${projectStatusLabels[h.old_value || ''] || h.old_value} → ${projectStatusLabels[h.new_value || ''] || h.new_value}`;
     } else if (h.action === 'created') {
-      text = t('createdProject') || 'створив(ла) проект';
+      text = t('createdProject');
     } else if (h.action === 'updated') {
-      text = `${t('updatedField') || 'оновив(ла) поле'} "${h.field_name}"`;
+      text = `${t('updatedField')} "${h.field_name}"`;
     } else {
       text = h.action;
     }
@@ -294,7 +294,7 @@ const ProjectDetail = () => {
       <div className="flex items-center justify-between gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('backToProjects') || 'Назад'}
+          {t('backToProjects')}
         </Button>
         <div className="flex gap-2 flex-wrap">
           <ShareButton type="project" id={project.id} title={project.title} />
@@ -377,7 +377,7 @@ const ProjectDetail = () => {
             {project.manager_id && profiles[project.manager_id] && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                <span>{t('manager') || 'Менеджер'}: {profiles[project.manager_id].name}</span>
+                <span>{t('manager')}: {profiles[project.manager_id].name}</span>
               </div>
             )}
             {project.budget && (
@@ -398,7 +398,7 @@ const ProjectDetail = () => {
             )}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <CheckCircle2 className="h-4 w-4" />
-              <span>{t('completion') || 'Виконання'}: {stats.completion}%</span>
+              <span>{t('completion')}: {stats.completion}%</span>
             </div>
           </div>
 
@@ -421,12 +421,12 @@ const ProjectDetail = () => {
             });
             if (peopleIds.length === 0) return null;
             const roleLabel = (r: 'manager' | 'creator' | 'member') =>
-              r === 'manager' ? (t('manager') || 'Менеджер')
-              : r === 'creator' ? (t('createdBy') || 'Створив')
-              : (t('participant') || 'Учасник');
+              r === 'manager' ? (t('manager'))
+              : r === 'creator' ? (t('createdBy'))
+              : (t('participant'));
             return (
               <div className="pt-3">
-                <div className="text-xs text-muted-foreground mb-2">{t('participants') || 'Учасники'}</div>
+                <div className="text-xs text-muted-foreground mb-2">{t('participants')}</div>
                 <div className="flex flex-wrap items-center gap-2">
                   {peopleIds.map(({ id: uid, role }) => {
                     const p = profiles[uid];
@@ -480,18 +480,18 @@ const ProjectDetail = () => {
 
       <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="analytics">{t('analytics') || 'Аналітика'}</TabsTrigger>
+          <TabsTrigger value="analytics">{t('analytics')}</TabsTrigger>
           <TabsTrigger value="tasks">{t('projectTasks')}</TabsTrigger>
           <TabsTrigger value="files">Файли</TabsTrigger>
           <TabsTrigger value="comments">Коментарі</TabsTrigger>
-          <TabsTrigger value="history">{t('history') || 'Історія'}</TabsTrigger>
+          <TabsTrigger value="history">{t('history')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{t('tasksByStatus') || 'Завдання за статусом'}</CardTitle>
+                <CardTitle className="text-base">{t('tasksByStatus')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -512,7 +512,7 @@ const ProjectDetail = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{t('tasksByAssignee') || 'Завдання за виконавцями'}</CardTitle>
+                <CardTitle className="text-base">{t('tasksByAssignee')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -531,7 +531,7 @@ const ProjectDetail = () => {
 
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-base">{t('activityTimeline') || 'Динаміка'}</CardTitle>
+                <CardTitle className="text-base">{t('activityTimeline')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -542,7 +542,7 @@ const ProjectDetail = () => {
                       <YAxis allowDecimals={false} />
                       <RTooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="created" stroke="hsl(var(--primary))" name={t('created') || 'Створено'} />
+                      <Line type="monotone" dataKey="created" stroke="hsl(var(--primary))" name={t('created')} />
                       <Line type="monotone" dataKey="completed" stroke="hsl(142, 70%, 45%)" name={t('statusDone')} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -616,7 +616,7 @@ const ProjectDetail = () => {
           <Card>
             <CardContent className="p-4">
               {history.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">{t('noHistory') || 'Немає змін'}</p>
+                <p className="text-muted-foreground text-center py-8">{t('noHistory')}</p>
               ) : (
                 <div>
                   {history.map(renderHistoryEntry)}

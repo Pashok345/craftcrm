@@ -26,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface TemplateField {
   name: string;
@@ -65,7 +65,8 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('processes.manage');
   const [templates, setTemplates] = useState<ProcessTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingId, setCreatingId] = useState<string | null>(null);
@@ -140,10 +141,9 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto pr-12">
         <DialogHeader>
-          <DialogTitle>{t('processTemplates') || 'Шаблони процесів'}</DialogTitle>
+          <DialogTitle>{t('processTemplates')}</DialogTitle>
           <DialogDescription>
-            {t('processTemplatesDescription') ||
-              'Оберіть готовий шаблон, щоб швидко створити процес із набором полів.'}
+            {t('processTemplatesDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -152,7 +152,7 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchTemplates') || 'Пошук шаблонів...'}
+            placeholder={t('searchTemplates')}
             className="pl-9"
           />
         </div>
@@ -163,7 +163,7 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {t('noTemplates') || 'Шаблонів не знайдено'}
+            {t('noTemplates')}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -186,7 +186,7 @@ export const ProcessTemplatesDialog = ({ open, onOpenChange, onCreated }: Props)
                         <h4 className="font-medium">{tpl.name}</h4>
                         {tpl.is_system && (
                           <Badge variant="secondary" className="text-[10px]">
-                            {t('systemTemplate') || 'Системний'}
+                            {t('systemTemplate')}
                           </Badge>
                         )}
                       </div>

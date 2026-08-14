@@ -84,9 +84,9 @@ const DealDetail = () => {
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/sales')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('backToSales') || 'Назад'}
+          {t('backToSales')}
         </Button>
-        <p className="text-muted-foreground">{t('dealNotFound') || 'Сделка не найдена'}</p>
+        <p className="text-muted-foreground">{t('dealNotFound')}</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ const DealDetail = () => {
       <div className="flex items-center justify-between gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/sales')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('backToSales') || 'Назад'}
+          {t('backToSales')}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate(`/sales/deals/${deal.id}/edit`)}>

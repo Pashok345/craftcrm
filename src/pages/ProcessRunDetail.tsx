@@ -34,7 +34,7 @@ import { ru, enUS, uk } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { RunStepsPanel } from '@/components/processes/RunStepsPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useUserRole } from '@/hooks/useUserRole';
+import { usePermissions } from '@/hooks/usePermissions';
 
 
 interface ProcessRun {
@@ -87,7 +87,8 @@ const ProcessRunDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { isAdmin } = useUserRole();
+  const { can } = usePermissions();
+  const isAdmin = can('processes.editAnyRun');
 
   const [run, setRun] = useState<ProcessRun | null>(null);
   const [process, setProcess] = useState<Process | null>(null);
@@ -426,7 +427,7 @@ const ProcessRunDetail = () => {
     const notifications = Array.from(usersToNotify).map(userId => ({
       user_id: userId,
       type: 'process_comment',
-      title: t('newCommentOnProcess') || 'Новый комментарий к процессу',
+      title: t('newCommentOnProcess'),
       message: `${profiles[user.id]?.name || user.email}: ${newComment.substring(0, 100)}`,
       created_by: user.id,
     }));
@@ -443,8 +444,8 @@ const ProcessRunDetail = () => {
       .map(uid => ({
         user_id: uid,
         type: 'mention',
-        title: t('mentionInComment') || 'Вас упомянули в комментарии',
-        message: `${profiles[user.id]?.name || user.email} ${t('mentionedYouInComment') || 'упомянул(а) вас в комментарии к процессу'}`,
+        title: t('mentionInComment'),
+        message: `${profiles[user.id]?.name || user.email} ${t('mentionedYouInComment')}`,
         created_by: user.id,
       }));
 
@@ -514,13 +515,13 @@ const ProcessRunDetail = () => {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed':
-        return { color: 'bg-green-500/10 text-green-600 border-green-500/30', icon: CheckCircle, label: t('status_completed') || 'Завершено' };
+        return { color: 'bg-green-500/10 text-green-600 border-green-500/30', icon: CheckCircle, label: t('status_completed') };
       case 'in_progress':
-        return { color: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: Play, label: t('status_in_progress') || 'В работе' };
+        return { color: 'bg-blue-500/10 text-blue-600 border-blue-500/30', icon: Play, label: t('status_in_progress') };
       case 'cancelled':
-        return { color: 'bg-red-500/10 text-red-600 border-red-500/30', icon: XCircle, label: t('status_cancelled') || 'Отменено' };
+        return { color: 'bg-red-500/10 text-red-600 border-red-500/30', icon: XCircle, label: t('status_cancelled') };
       default:
-        return { color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30', icon: Clock, label: t('status_pending') || 'Ожидает' };
+        return { color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30', icon: Clock, label: t('status_pending') };
     }
   };
 
@@ -666,10 +667,10 @@ const ProcessRunDetail = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">{t('status_pending') || 'Очікує'}</SelectItem>
-              <SelectItem value="in_progress">{t('status_in_progress') || 'В роботі'}</SelectItem>
-              <SelectItem value="completed">{t('status_completed') || 'Завершено'}</SelectItem>
-              <SelectItem value="cancelled">{t('status_cancelled') || 'Скасовано'}</SelectItem>
+              <SelectItem value="pending">{t('status_pending')}</SelectItem>
+              <SelectItem value="in_progress">{t('status_in_progress')}</SelectItem>
+              <SelectItem value="completed">{t('status_completed')}</SelectItem>
+              <SelectItem value="cancelled">{t('status_cancelled')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -878,7 +879,7 @@ const ProcessRunDetail = () => {
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-1" />
-                        {t('send') || 'Отправить'}
+                        {t('send')}
                       </>
                     )}
                   </Button>

@@ -438,7 +438,7 @@ export const DashboardWidgets = () => {
                 </div>
               ) : (
                 <div className="h-[100px] flex items-center justify-center text-muted-foreground text-sm">
-                  {t('noFavorites') || 'Нет избранных элементов'}
+                  {t('noFavorites')}
                 </div>
               )}
             </CardContent>
@@ -499,7 +499,7 @@ export const DashboardWidgets = () => {
           className="gap-2"
         >
           {editing ? <X className="h-4 w-4" /> : <Settings2 className="h-4 w-4" />}
-          {editing ? (t('done') || 'Готово') : (t('customize') || 'Настроить')}
+          {editing ? (t('done')) : (t('customize'))}
         </Button>
       </div>
 
@@ -507,7 +507,7 @@ export const DashboardWidgets = () => {
         <Card className="p-4">
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">
-              {t('toggleWidgets') || 'Включить/выключить виджеты'}
+              {t('toggleWidgets')}
             </p>
             {widgets.map((w) => (
               <div key={w.id} className="flex items-center justify-between">
