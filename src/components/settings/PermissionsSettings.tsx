@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -84,8 +84,8 @@ export const PermissionsSettings = () => {
             </thead>
             <tbody>
               {PERMISSION_GROUPS.map((group) => (
-                <>
-                  <tr key={group.group} className="bg-muted/40">
+                <Fragment key={group.group}>
+                  <tr className="bg-muted/40">
                     <td colSpan={ROLES.length + 1} className="py-2 px-2 font-medium text-muted-foreground">
                       {t(group.labelKey)}
                     </td>
@@ -116,7 +116,7 @@ export const PermissionsSettings = () => {
                       })}
                     </tr>
                   ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
