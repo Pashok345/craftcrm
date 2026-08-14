@@ -1170,6 +1170,61 @@ export const translations: Translations = {
   auditTable_wiki_articles: { ru: 'Статьи Wiki', en: 'Wiki articles', uk: 'Статті Wiki' },
   auditTable_meetings: { ru: 'Встречи', en: 'Meetings', uk: 'Зустрічі' },
   auditTable_user_roles: { ru: 'Роли пользователей', en: 'User roles', uk: 'Ролі користувачів' },
+  backToSales: { ru: 'Назад к продажам', en: 'Back to sales', uk: 'Назад до продажів' },
+  dealNotFound: { ru: 'Сделка не найдена', en: 'Deal not found', uk: 'Угоду не знайдено' },
+  meetingDeleted: { ru: 'Встреча удалена', en: 'Meeting deleted', uk: 'Зустріч видалено' },
+  organizer: { ru: 'Организатор', en: 'Organizer', uk: 'Організатор' },
+  deleteMeetingConfirm: { ru: 'Удалить встречу?', en: 'Delete meeting?', uk: 'Видалити зустріч?' },
+  deleteMeetingDescription: { ru: 'Это действие нельзя отменить. Встреча будет удалена навсегда.', en: 'This action cannot be undone. The meeting will be permanently deleted.', uk: 'Цю дію не можна скасувати. Зустріч буде видалено назавжди.' },
+  noProject: { ru: 'Без проекта', en: 'No project', uk: 'Без проєкту' },
+  errorUpdatingStatus: { ru: 'Ошибка обновления статуса', en: 'Failed to update status', uk: 'Помилка оновлення статусу' },
+  participant: { ru: 'Участник', en: 'Participant', uk: 'Учасник' },
+  imagePasted: { ru: 'Изображение добавлено из буфера', en: 'Image pasted from clipboard', uk: 'Зображення додано з буфера' },
+  removeBlock: { ru: 'Убрать блок', en: 'Remove block', uk: 'Прибрати блок' },
+  timeTracker: { ru: 'Учёт времени', en: 'Time tracking', uk: 'Облік часу' },
+  basicInfo: { ru: 'Основные данные', en: 'Basic info', uk: 'Основні дані' },
+  responsible: { ru: 'Ответственный', en: 'Responsible', uk: 'Відповідальний' },
+  task: { ru: 'Задача', en: 'Task', uk: 'Завдання' },
+  draft: { ru: 'Черновик', en: 'Draft', uk: 'Чернетка' },
+  noSteps: { ru: 'Нет шагов', en: 'No steps', uk: 'Немає кроків' },
+  enterValue: { ru: 'Введите значение', en: 'Enter a value', uk: 'Введіть значення' },
+  taskStatusChanged: { ru: 'Статус задачи изменён', en: 'Task status changed', uk: 'Статус завдання змінено' },
+  columnColor: { ru: 'Цвет колонки', en: 'Column color', uk: 'Колір колонки' },
+  createNew: { ru: 'Создать новую', en: 'Create new', uk: 'Створити нову' },
+  selectExisting: { ru: 'Выбрать существующую', en: 'Select existing', uk: 'Обрати існуючу' },
+  fillProjectDetails: { ru: 'Заполните данные проекта', en: 'Fill in the project details', uk: 'Заповніть дані проєкту' },
+  confirmDelete: { ru: 'Подтвердите удаление', en: 'Confirm deletion', uk: 'Підтвердьте видалення' },
+  withoutType: { ru: 'Без типа', en: 'No type', uk: 'Без типу' },
+  dragToReorder: { ru: 'Перетащите для изменения порядка', en: 'Drag to reorder', uk: 'Перетягніть, щоб змінити порядок' },
+  stageDeleted: { ru: 'Этап удалён', en: 'Stage deleted', uk: 'Етап видалено' },
+  deleteStageConfirm: { ru: 'Этап и все связанные сделки будут удалены. Продолжить?', en: 'The stage and all related deals will be deleted. Continue?', uk: 'Етап і всі повʼязані угоди буде видалено. Продовжити?' },
+  // Permissions matrix
+  settingsTabPermissions: { ru: 'Права', en: 'Permissions', uk: 'Права' },
+  permissionsTitle: { ru: 'Матрица прав доступа', en: 'Permission matrix', uk: 'Матриця прав доступу' },
+  permissionsDescription: { ru: 'Настройте, какие действия доступны каждой роли. Изменения применяются ко всем пользователям.', en: 'Configure which actions are available to each role. Changes apply to all users.', uk: 'Налаштуйте, які дії доступні кожній ролі. Зміни застосовуються до всіх користувачів.' },
+  permissionsSaved: { ru: 'Права сохранены', en: 'Permissions saved', uk: 'Права збережено' },
+  permission: { ru: 'Право', en: 'Permission', uk: 'Право' },
+  permissionLocked: { ru: 'всегда у админа', en: 'always admin', uk: 'завжди в адміна' },
+  roleAdmin: { ru: 'Администратор', en: 'Administrator', uk: 'Адміністратор' },
+  roleUser: { ru: 'Сотрудник', en: 'Employee', uk: 'Співробітник' },
+  permGroupSystem: { ru: 'Система и пользователи', en: 'System and users', uk: 'Система та користувачі' },
+  permGroupWork: { ru: 'Работа и задачи', en: 'Work and tasks', uk: 'Робота та завдання' },
+  permGroupProcesses: { ru: 'Процессы', en: 'Processes', uk: 'Процеси' },
+  permGroupBusiness: { ru: 'Продажи и знания', en: 'Sales and knowledge', uk: 'Продажі та знання' },
+  permUsersManage: { ru: 'Управление пользователями', en: 'Manage users', uk: 'Керування користувачами' },
+  permUsersInvite: { ru: 'Приглашение пользователей', en: 'Invite users', uk: 'Запрошення користувачів' },
+  permRolesManage: { ru: 'Управление ролями', en: 'Manage roles', uk: 'Керування ролями' },
+  permSettingsManage: { ru: 'Настройки системы', en: 'System settings', uk: 'Налаштування системи' },
+  permAuditView: { ru: 'Просмотр журнала действий', en: 'View activity log', uk: 'Перегляд журналу дій' },
+  permProjectsManage: { ru: 'Управление проектами', en: 'Manage projects', uk: 'Керування проєктами' },
+  permTasksManageAll: { ru: 'Редактирование чужих задач', en: 'Edit others\' tasks', uk: 'Редагування чужих завдань' },
+  permProcessesManage: { ru: 'Создание и редактирование процессов', en: 'Create and edit processes', uk: 'Створення та редагування процесів' },
+  permProcessesEditRun: { ru: 'Редактирование любых запусков', en: 'Edit any process run', uk: 'Редагування будь-яких запусків' },
+  permSalesManage: { ru: 'Управление продажами', en: 'Manage sales', uk: 'Керування продажами' },
+  permFinanceManage: { ru: 'Финансы и счета', en: 'Finance and invoices', uk: 'Фінанси та рахунки' },
+  permWikiManage: { ru: 'Управление Wiki', en: 'Manage Wiki', uk: 'Керування Wiki' },
+  permWhiteboardsManage: { ru: 'Управление досками', en: 'Manage whiteboards', uk: 'Керування дошками' },
+  permKanbanColumns: { ru: 'Настройка колонок канбана', en: 'Configure kanban columns', uk: 'Налаштування колонок канбану' },
 };
 
 interface LanguageContextType {
@@ -1207,7 +1262,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       console.warn(`Translation not found for key: ${key}`);
       return key;
     }
-    return translation[language] || translation.ru || key;
+    return translation[language] || translation.uk || translation.en || translation.ru || key;
   };
 
   return (
