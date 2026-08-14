@@ -26,7 +26,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
   const menuItems = items
     .filter((item) => (!item.adminOnly || isAdmin) && overrides[item.id]?.hidden !== true)
     .filter((item) => item.id !== 'settings' || can('settings.manage'))
-    .filter((item) => item.id !== 'audit-log' || can('auditlog.view'))
+    .filter((item) => item.id !== 'audit' || can('auditlog.view'))
     .map((item) => {
       const ov = overrides[item.id] || {};
       return {
