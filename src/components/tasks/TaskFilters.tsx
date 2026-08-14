@@ -60,7 +60,7 @@ export const TaskFilters = ({ filters, onFiltersChange, projects, allTags }: Tas
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Filter className="h-4 w-4" />
-          {t('filters') || 'Фильтры'}
+          {t('filters')}
           {activeCount > 0 && (
             <Badge variant="secondary" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-xs">
               {activeCount}
@@ -107,7 +107,7 @@ export const TaskFilters = ({ filters, onFiltersChange, projects, allTags }: Tas
           {/* Tags */}
           {allTags.length > 0 && (
             <div>
-              <p className="text-sm font-medium mb-2">{t('tags') || 'Теги'}</p>
+              <p className="text-sm font-medium mb-2">{t('tags')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {allTags.map((tag) => (
                   <Badge
@@ -130,13 +130,13 @@ export const TaskFilters = ({ filters, onFiltersChange, projects, allTags }: Tas
 
           {/* Deadline range */}
           <div>
-            <p className="text-sm font-medium mb-2">{t('deadline') || 'Дедлайн'}</p>
+            <p className="text-sm font-medium mb-2">{t('deadline')}</p>
             <div className="grid grid-cols-2 gap-2">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-start text-xs gap-1">
                     <CalendarDays className="h-3 w-3" />
-                    {filters.deadlineFrom ? format(filters.deadlineFrom, 'dd.MM.yy', { locale: dateLocale }) : (t('from') || 'От')}
+                    {filters.deadlineFrom ? format(filters.deadlineFrom, 'dd.MM.yy', { locale: dateLocale }) : (t('from'))}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -152,7 +152,7 @@ export const TaskFilters = ({ filters, onFiltersChange, projects, allTags }: Tas
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="w-full justify-start text-xs gap-1">
                     <CalendarDays className="h-3 w-3" />
-                    {filters.deadlineTo ? format(filters.deadlineTo, 'dd.MM.yy', { locale: dateLocale }) : (t('to') || 'До')}
+                    {filters.deadlineTo ? format(filters.deadlineTo, 'dd.MM.yy', { locale: dateLocale }) : (t('to'))}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

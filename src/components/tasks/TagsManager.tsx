@@ -133,7 +133,7 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
     setAllTags(allTags.filter(t => t.id !== tag.id));
     setTaskTagIds(taskTagIds.filter(id => id !== tag.id));
     setTagToDelete(null);
-    toast.success(t('tagDeleted') || 'Тег видалено');
+    toast.success(t('tagDeleted'));
   };
 
   const toggleTag = async (tagId: string) => {
@@ -262,7 +262,7 @@ export const TagsManager = ({ taskId, userId }: TagsManagerProps) => {
       <AlertDialog open={!!tagToDelete} onOpenChange={(open) => !open && setTagToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteTag') || 'Видалити тег?'}</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteTag')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('deleteTagConfirm') || `Тег "${tagToDelete?.name}" буде видалено з усіх задач. Цю дію неможливо скасувати.`}
             </AlertDialogDescription>

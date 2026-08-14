@@ -100,14 +100,14 @@ export const GlobalSearch = () => {
         ...(taskCommentsRes.data || []).map((c: any) => ({
           id: c.id,
           title: truncate(c.content),
-          subtitle: c.tasks?.title ? `${t('task') || 'Задача'}: ${c.tasks.title}` : undefined,
+          subtitle: c.tasks?.title ? `${t('task')}: ${c.tasks.title}` : undefined,
           type: 'comment' as const,
           navigateTo: `/tasks/${c.task_id}`,
         })),
         ...(dealCommentsRes.data || []).map((c: any) => ({
           id: c.id,
           title: truncate(c.content),
-          subtitle: c.deals?.title ? `${t('deal') || 'Сделка'}: ${c.deals.title}` : undefined,
+          subtitle: c.deals?.title ? `${t('deal')}: ${c.deals.title}` : undefined,
           type: 'comment' as const,
           navigateTo: `/sales`,
         })),
@@ -121,7 +121,7 @@ export const GlobalSearch = () => {
         ...(wikiRes.data || []).map((a: any) => ({
           id: a.id,
           title: a.title,
-          subtitle: [a.wiki_categories?.name, a.is_published ? undefined : (t('draft') || 'Чернетка')].filter(Boolean).join(' · ') || undefined,
+          subtitle: [a.wiki_categories?.name, a.is_published ? undefined : (t('draft'))].filter(Boolean).join(' · ') || undefined,
           type: 'wiki' as const,
           navigateTo: `/wiki/${a.id}`,
         })),
@@ -208,15 +208,15 @@ export const GlobalSearch = () => {
   const labelMap = {
     task: t('tasks'),
     project: t('projects'),
-    client: t('clients') || 'Клиенты',
-    deal: t('deals') || 'Сделки',
-    comment: t('comments') || 'Комментарии',
-    wiki: t('wiki') || 'База знань',
-    meeting: t('meetings') || 'Зустрічі',
-    process: t('processes') || 'Процеси',
-    run: t('activeRuns') || 'Запущені процеси',
-    whiteboard: t('whiteboards') || 'Дошки',
-    employee: t('users') || 'Співробітники',
+    client: t('clients'),
+    deal: t('deals'),
+    comment: t('comments'),
+    wiki: t('wiki'),
+    meeting: t('meetings'),
+    process: t('processes'),
+    run: t('activeRuns'),
+    whiteboard: t('whiteboards'),
+    employee: t('users'),
   };
 
 
@@ -232,7 +232,7 @@ export const GlobalSearch = () => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
-          placeholder={t('globalSearchPlaceholder') || 'Поиск по задачам, проектам, клиентам, сделкам...'}
+          placeholder={t('globalSearchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
@@ -275,7 +275,7 @@ export const GlobalSearch = () => {
 
       {open && query.length >= 3 && results.length === 0 && !loading && (
         <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border bg-popover shadow-lg p-4 text-center text-sm text-muted-foreground">
-          {t('noResults') || 'Ничего не найдено'}
+          {t('noResults')}
         </div>
       )}
     </div>

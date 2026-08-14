@@ -161,7 +161,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
       meetingTime.setHours(h, m, 0, 0);
       
       if (meetingTime < now) {
-        setTimeError(t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время');
+        setTimeError(t('cannotSchedulePastTime'));
         return false;
       }
     }
@@ -181,7 +181,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     
     // Final time validation before submit
     if (!validateTime()) {
-      toast({ title: t('cannotSchedulePastTime') || 'Нельзя назначить встречу на прошедшее время', variant: 'destructive' });
+      toast({ title: t('cannotSchedulePastTime'), variant: 'destructive' });
       return;
     }
 
@@ -223,8 +223,8 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         const notifications = participants.map((userId) => ({
           user_id: userId,
           type: 'meeting_invite',
-          title: t('meetingInviteTitle') || 'Приглашение на встречу',
-          message: `${t('meetingInviteMessage') || 'Вас пригласили на встречу'} "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} ${t('at') || 'в'} ${startTime}`,
+          title: t('meetingInviteTitle'),
+          message: `${t('meetingInviteMessage')} "${title}" ${format(date, 'd MMMM yyyy', { locale: dateLocale })} ${t('at')} ${startTime}`,
           created_by: user.id,
         }));
         await supabase.from('notifications').insert(notifications);
@@ -247,13 +247,13 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
         }
       }
 
-      toast({ title: t('meetingCreated') || 'Встреча создана' });
+      toast({ title: t('meetingCreated') });
       resetForm();
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error creating meeting:', error);
-      toast({ title: t('errorCreatingMeeting') || 'Ошибка при создании встречи', variant: 'destructive' });
+      toast({ title: t('errorCreatingMeeting'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -283,33 +283,33 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('createMeeting') || 'Создать встречу'}</DialogTitle>
+          <DialogTitle>{t('createMeeting')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">{t('meetingTitle') || 'Название встречи'} *</Label>
+            <Label htmlFor="title">{t('meetingTitle')} *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('enterTitle') || 'Введите название'}
+              placeholder={t('enterTitle')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">{t('description') || 'Описание'}</Label>
+            <Label htmlFor="description">{t('description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('describeMeeting') || 'Опишите встречу'}
+              placeholder={t('describeMeeting')}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>{t('date') || 'Дата'} *</Label>
+            <Label>{t('date')} *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -317,7 +317,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate') || 'Выберите дату'}
+                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -335,7 +335,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">{t('startTime') || 'Начало'} *</Label>
+              <Label htmlFor="startTime">{t('startTime')} *</Label>
               <Input
                 id="startTime"
                 type="time"
@@ -350,7 +350,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">{t('endTime') || 'Окончание'}</Label>
+              <Label htmlFor="endTime">{t('endTime')}</Label>
               <Input
                 id="endTime"
                 type="time"
@@ -362,7 +362,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           </div>
 
           <div className="space-y-2">
-            <Label>{t('participants') || 'Участники'}</Label>
+            <Label>{t('participants')}</Label>
             <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
               {users.map((u) => (
                 <label key={u.user_id} className="flex items-center gap-2 cursor-pointer">
@@ -377,17 +377,17 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
           </div>
 
           <div className="space-y-2 border-t pt-4">
-            <Label>{t('repeatMeeting') || 'Повторение'}</Label>
+            <Label>{t('repeatMeeting')}</Label>
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={recurrenceFreq}
                 onChange={(e) => setRecurrenceFreq(e.target.value as any)}
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               >
-                <option value="none">{t('noRepeat') || 'Не повторять'}</option>
-                <option value="daily">{t('daily') || 'Ежедневно'}</option>
-                <option value="weekly">{t('weekly') || 'Еженедельно'}</option>
-                <option value="monthly">{t('monthly') || 'Ежемесячно'}</option>
+                <option value="none">{t('noRepeat')}</option>
+                <option value="daily">{t('daily')}</option>
+                <option value="weekly">{t('weekly')}</option>
+                <option value="monthly">{t('monthly')}</option>
               </select>
               {recurrenceFreq !== 'none' && (
                 <Input
@@ -396,7 +396,7 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   max={30}
                   value={recurrenceInterval}
                   onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value || '1', 10)))}
-                  placeholder={t('every') || 'Каждые N'}
+                  placeholder={t('every')}
                 />
               )}
             </div>
@@ -409,8 +409,8 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {recurrenceUntil
-                      ? `${t('until') || 'До'}: ${format(recurrenceUntil, 'PPP', { locale: dateLocale })}`
-                      : (t('endDateOptional') || 'Дата окончания (опционально)')}
+                      ? `${t('until')}: ${format(recurrenceUntil, 'PPP', { locale: dateLocale })}`
+                      : (t('endDateOptional'))}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -426,18 +426,18 @@ export const MeetingDialog = ({ open, onOpenChange, selectedDate, defaultStartTi
             )}
             {recurrenceFreq !== 'none' && (
               <p className="text-xs text-muted-foreground">
-                {t('recurrenceHint') || 'Повторы будут отображаться в календаре до даты окончания (или 1 год вперёд).'}
+                {t('recurrenceHint')}
               </p>
             )}
           </div>
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              {t('cancel') || 'Отмена'}
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading || !title.trim() || !date || !!timeError} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('create') || 'Создать'}
+              {t('create')}
             </Button>
           </div>
         </form>

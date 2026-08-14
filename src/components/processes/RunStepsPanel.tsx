@@ -185,7 +185,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
   const uploadFile = async (stepId: string, fieldId: string, file: File) => {
     if (!user) return;
     if (file.size > 50 * 1024 * 1024) {
-      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: t('fileTooLarge') || 'Файл завеликий — максимум 50 МБ' } }));
+      setErrors(e => ({ ...e, [stepId]: { ...(e[stepId] || {}), [fieldId]: t('fileTooLarge') } }));
       return;
     }
     const path = `${user.id}/${runId}/${Date.now()}_${sanitizeFileName(file.name)}`;
@@ -231,16 +231,16 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     await supabase.from('notifications').insert({
       user_id: userId,
       type: 'process_step',
-      title: t('processStepAssignedTitle') || 'Вам призначено крок процесу',
+      title: t('processStepAssignedTitle'),
       message: stepLabel || '',
     });
   };
 
   const requiredMessage = (f: FieldDef) => {
-    if (f.type === 'file') return t('fieldRequiredFile') || 'Додайте файл — це поле обовʼязкове';
-    if (f.type === 'select' || f.type === 'radio' || f.type === 'user') return t('fieldRequiredSelect') || 'Оберіть один із варіантів — це поле обовʼязкове';
-    if (f.type === 'checkbox') return t('fieldRequiredCheckbox') || 'Позначте хоча б один варіант';
-    return t('fieldRequiredText') || 'Заповніть це поле — воно обовʼязкове';
+    if (f.type === 'file') return t('fieldRequiredFile');
+    if (f.type === 'select' || f.type === 'radio' || f.type === 'user') return t('fieldRequiredSelect');
+    if (f.type === 'checkbox') return t('fieldRequiredCheckbox');
+    return t('fieldRequiredText');
   };
 
   const completeStep = async (
@@ -268,8 +268,8 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       if (Object.keys(stepErrors).length > 0) {
         setErrors(e => ({ ...e, [step.id]: stepErrors }));
         toast({
-          title: t('fieldRequired') || 'Обовʼязкові поля',
-          description: t('fillRequiredFields') || 'Заповніть усі поля, позначені зірочкою',
+          title: t('fieldRequired'),
+          description: t('fillRequiredFields'),
           variant: 'destructive',
         });
         return;
@@ -291,7 +291,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         completed_at: new Date().toISOString(),
       }).eq('id', runId);
       await load();
-      toast({ title: t('status_cancelled') || 'Скасовано' });
+      toast({ title: t('status_cancelled') });
       setBusy(null);
       return;
     }
@@ -312,7 +312,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         await notifyAssignee(prev.assignee_id, prev.step_label);
       }
       await load();
-      toast({ title: t('buttonActionRevise') || 'На доопрацювання' });
+      toast({ title: t('buttonActionRevise') });
       setBusy(null);
       return;
     }
@@ -347,7 +347,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
     }
 
     await load();
-    toast({ title: t('statusUpdated') || 'Крок завершено' });
+    toast({ title: t('statusUpdated') });
     setBusy(null);
   };
 
@@ -371,7 +371,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       case 'select':
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger className={err}><SelectValue placeholder={t('selectOption') || 'Оберіть...'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectOption')} /></SelectTrigger>
             <SelectContent>
               {(f.options || []).map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
@@ -449,10 +449,10 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border bg-muted/40 hover:bg-muted transition-colors"
           >
             <Paperclip className="h-4 w-4" />
-            {f.sample_name || (t('downloadSample') || 'Завантажити файл')}
+            {f.sample_name || (t('downloadSample'))}
           </a>
         ) : (
-          <p className="text-xs text-muted-foreground italic">{t('noSampleFile') || 'Файл-зразок не додано'}</p>
+          <p className="text-xs text-muted-foreground italic">{t('noSampleFile')}</p>
         );
       case 'user': {
         // Predefined approver: no user picker, only confirm / decline
@@ -472,8 +472,8 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 {decision && (
                   <Badge variant="outline" className={decision === 'approved' ? STATUS_CLS.completed : STATUS_CLS.rejected}>
                     {decision === 'approved'
-                      ? (t('confirmDecisionYes') || 'Підтверджую')
-                      : (t('confirmDecisionNo') || 'Не підтверджую')}
+                      ? (t('confirmDecisionYes'))
+                      : (t('confirmDecisionNo'))}
                   </Badge>
                 )}
               </div>
@@ -485,7 +485,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
         }
         return (
           <Select value={v || ''} onValueChange={set} disabled={readOnly}>
-            <SelectTrigger className={err}><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+            <SelectTrigger className={err}><SelectValue placeholder={t('selectUser')} /></SelectTrigger>
             <SelectContent>
               {Object.values(profiles).map(p => (
                 <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
@@ -504,8 +504,8 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
 
   const actionForOption = (label: string): 'approve' | 'reject' | 'revise' => {
     const l = label.toLowerCase();
-    if (l.includes(String(t('buttonActionRevise') || '').toLowerCase()) || l.includes('доопрац') || l.includes('revis')) return 'revise';
-    if (l.includes(String(t('buttonActionReject') || '').toLowerCase()) || l.includes('скасув') || l.includes('cancel') || l.includes('отмен') || l.includes('reject')) return 'reject';
+    if (l.includes(String(t('buttonActionRevise')).toLowerCase()) || l.includes('доопрац') || l.includes('revis')) return 'revise';
+    if (l.includes(String(t('buttonActionReject')).toLowerCase()) || l.includes('скасув') || l.includes('cancel') || l.includes('отмен') || l.includes('reject')) return 'reject';
     return 'approve';
   };
 
@@ -521,7 +521,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <GitBranch className="h-4 w-4" />
-          {t('processSteps') || 'Кроки процесу'}
+          {t('processSteps')}
           <Badge variant="outline" className="ml-auto font-normal">
             {doneCount} / {steps.length}
           </Badge>
@@ -569,7 +569,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
             >
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-muted-foreground">
-                  {t('step') || 'Крок'} {idx + 1}
+                  {t('step')} {idx + 1}
                 </span>
                 <span className="font-medium">{step.step_label || cfg?.title}</span>
                 <Badge variant="outline" className={STATUS_CLS[step.status] || ''}>
@@ -632,7 +632,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                 if (!isApprover) {
                   return (
                     <p className="mt-4 text-xs text-muted-foreground italic text-center">
-                      {t('waitingForApprover') || 'Очікується рішення відповідального'}
+                      {t('waitingForApprover')}
                     </p>
                   );
                 }
@@ -643,7 +643,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                     {rejecting && (
                       <div className="space-y-1.5">
                         <Label className={`text-xs ${errors[step.id]?._reject_comment ? 'text-destructive' : ''}`}>
-                          {t('declineCommentLabel') || 'Причина відмови'}
+                          {t('declineCommentLabel')}
                           <span className="text-destructive ml-0.5">*</span>
                         </Label>
                         <Textarea
@@ -651,7 +651,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                           className={errors[step.id]?._reject_comment ? 'border-destructive focus-visible:ring-destructive' : ''}
                           value={comment}
                           onChange={(e) => setFieldValue(step.id, '_reject_comment', e.target.value)}
-                          placeholder={t('declineCommentPlaceholder') || 'Опишіть, чому ви не підтверджуєте'}
+                          placeholder={t('declineCommentPlaceholder')}
                         />
                         {errors[step.id]?._reject_comment && (
                           <p className="text-xs text-destructive flex items-center gap-1">
@@ -673,7 +673,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                         }}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        {t('confirmDecisionYes') || 'Підтверджую'}
+                        {t('confirmDecisionYes')}
                       </Button>
                       <Button
                         size="lg"
@@ -689,7 +689,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                               ...e,
                               [step.id]: {
                                 ...(e[step.id] || {}),
-                                _reject_comment: t('declineCommentRequired') || 'Вкажіть причину відмови',
+                                _reject_comment: t('declineCommentRequired'),
                               },
                             }));
                             return;
@@ -699,7 +699,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                           });
                         }}
                       >
-                        {t('confirmDecisionNo') || 'Не підтверджую'}
+                        {t('confirmDecisionNo')}
                       </Button>
                     </div>
                   </div>
@@ -741,7 +741,7 @@ export function RunStepsPanel({ runId, initiatorId }: Props) {
                       ) : (
                         <CheckCircle className="h-4 w-4 mr-2" />
                       )}
-                      {t('nextStep') || 'Наступний крок'}
+                      {t('nextStep')}
                     </Button>
                   </div>
                 );

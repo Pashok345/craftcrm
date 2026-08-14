@@ -232,14 +232,14 @@ const ProcessEditor = () => {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">
-            {isEdit ? (t('editProcess') || 'Редагування процесу') : (t('createProcess') || 'Створення процесу')}
+            {isEdit ? (t('editProcess')) : (t('createProcess'))}
           </h1>
           <p className="text-sm text-muted-foreground">
             {step === 1
-              ? (t('processStep1Hint') || 'Крок 1 з 3 — основні дані процесу')
+              ? (t('processStep1Hint'))
               : step === 2
-                ? (t('processStep2Hint') || 'Крок 2 з 3 — схема виконання')
-                : (t('processStep3Hint') || 'Крок 3 з 3 — перевірка процесу')}
+                ? (t('processStep2Hint'))
+                : (t('processStep3Hint'))}
           </p>
         </div>
       </div>
@@ -259,10 +259,10 @@ const ProcessEditor = () => {
                 step === n ? 'bg-primary-foreground/20' : 'bg-muted'
               }`}>{n}</span>
               {n === 1
-                ? (t('basicData') || 'Основні дані')
+                ? (t('basicData'))
                 : n === 2
-                  ? (t('processScheme') || 'Схема процесу')
-                  : (t('processPreview') || 'Перевірка')}
+                  ? (t('processScheme'))
+                  : (t('processPreview'))}
             </button>
             {n < 3 && <div className="flex-1 h-px bg-border" />}
           </div>
@@ -274,27 +274,27 @@ const ProcessEditor = () => {
         <Card>
           <CardContent className="pt-6 space-y-5">
             <div className="space-y-2">
-              <Label>{t('processName') || 'Назва процесу'} *</Label>
+              <Label>{t('processName')} *</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)}
-                     placeholder={t('enterProcessName') || 'Наприклад, Погодження оплати рахунку'} />
+                     placeholder={t('enterProcessName')} />
             </div>
 
             <div className="space-y-2">
-              <Label>{t('description') || 'Опис'}</Label>
+              <Label>{t('description')}</Label>
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)}
                         rows={3}
-                        placeholder={t('processDescriptionPlaceholder') || 'Для чого потрібен процес і коли його запускати'} />
+                        placeholder={t('processDescriptionPlaceholder')} />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               {categories.length > 0 && (
                 <div className="space-y-2">
-                  <Label>{t('category') || 'Категорія'}</Label>
+                  <Label>{t('category')}</Label>
                   <Select value={categoryId || '__none__'}
                           onValueChange={(v) => setCategoryId(v === '__none__' ? '' : v)}>
-                    <SelectTrigger><SelectValue placeholder={t('selectCategory') || 'Оберіть категорію'} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('selectCategory')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">{t('uncategorized') || 'Без категорії'}</SelectItem>
+                      <SelectItem value="__none__">{t('uncategorized')}</SelectItem>
                       {categories.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           <span className="inline-flex items-center gap-2">
@@ -309,9 +309,9 @@ const ProcessEditor = () => {
               )}
 
               <div className="space-y-2">
-                <Label>{t('processType') || 'Тип процесу'}</Label>
+                <Label>{t('processType')}</Label>
                 <Select value={typeId || '__none__'} onValueChange={(v) => setTypeId(v === '__none__' ? '' : v)}>
-                  <SelectTrigger><SelectValue placeholder={t('selectType') || 'Оберіть тип'} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectType')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">—</SelectItem>
                     {processTypes.map((tp) => <SelectItem key={tp.id} value={tp.id}>{tp.name}</SelectItem>)}
@@ -319,15 +319,15 @@ const ProcessEditor = () => {
                 </Select>
                 <div className="flex gap-2">
                   <Input value={newTypeName} onChange={(e) => setNewTypeName(e.target.value)}
-                         placeholder={t('newTypeName') || 'Новий тип...'} />
+                         placeholder={t('newTypeName')} />
                   <Button size="sm" variant="outline" onClick={addNewType}><Plus className="h-4 w-4" /></Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>{t('responsibleDepartment') || 'Відповідальний відділ'}</Label>
+                <Label>{t('responsibleDepartment')}</Label>
                 <Select value={departmentId || '__none__'} onValueChange={(v) => setDepartmentId(v === '__none__' ? '' : v)}>
-                  <SelectTrigger><SelectValue placeholder={t('selectDepartment') || 'Оберіть відділ'} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectDepartment')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">—</SelectItem>
                     {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
@@ -335,7 +335,7 @@ const ProcessEditor = () => {
                 </Select>
                 <div className="flex gap-2">
                   <Input value={newDeptName} onChange={(e) => setNewDeptName(e.target.value)}
-                         placeholder={t('newDepartmentName') || 'Новий відділ...'} />
+                         placeholder={t('newDepartmentName')} />
                   <Button size="sm" variant="outline" onClick={addNewDept}><Plus className="h-4 w-4" /></Button>
                 </div>
               </div>
@@ -344,13 +344,13 @@ const ProcessEditor = () => {
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>{t('customFields') || 'Поля запуску'}</Label>
+                  <Label>{t('customFields')}</Label>
                   <p className="text-xs text-muted-foreground">
-                    {t('customFieldsHint') || 'Дані, які потрібно заповнити при запуску процесу (напр. сума, контрагент, коментар).'}
+                    {t('customFieldsHint')}
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={addField}>
-                  <Plus className="h-4 w-4 mr-1" />{t('addField') || 'Додати поле'}
+                  <Plus className="h-4 w-4 mr-1" />{t('addField')}
                 </Button>
               </div>
 
@@ -358,7 +358,7 @@ const ProcessEditor = () => {
                 <div key={i} className="flex gap-2 items-start p-3 border rounded-lg bg-muted/40">
                   <div className="flex-1 space-y-2">
                     <Input value={f.name} onChange={(e) => updateField(i, { name: e.target.value })}
-                           placeholder={t('fieldName') || 'Назва поля'} />
+                           placeholder={t('fieldName')} />
                     <Select value={f.field_type} onValueChange={(v) => updateField(i, { field_type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -372,11 +372,11 @@ const ProcessEditor = () => {
                              onChange={(e) => updateField(i, {
                                options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
                              })}
-                             placeholder={t('selectOptionsPlaceholder') || 'Варіанти через кому'} />
+                             placeholder={t('selectOptionsPlaceholder')} />
                     )}
                     <div className="flex items-center gap-2 pt-1">
                       <Switch checked={!!f.required} onCheckedChange={(c) => updateField(i, { required: c })} />
-                      <Label className="text-xs">{t('fieldRequired') || 'Обовʼязкове'}</Label>
+                      <Label className="text-xs">{t('fieldRequired')}</Label>
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" className="text-destructive" onClick={() => removeField(i)}>
@@ -393,10 +393,9 @@ const ProcessEditor = () => {
         <div className="space-y-4">
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>{t('howWorkflowWorks') || 'Як працює робочий процес'}</AlertTitle>
+            <AlertTitle>{t('howWorkflowWorks')}</AlertTitle>
             <AlertDescription className="text-xs leading-relaxed">
-              {t('workflowHelp') ||
-                'Створіть послідовність кроків. На кожному кроці додайте поля (текст, файл, вибір зі списку тощо), позначте обовʼязкові та оберіть виконавця. При запуску процесу користувач заповнить перший крок, після завершення система передасть наступний крок наступному виконавцю.'}
+              {t('workflowHelp')}
             </AlertDescription>
           </Alert>
           <WorkflowStepsEditor value={workflow} onChange={setWorkflow} />
@@ -408,10 +407,10 @@ const ProcessEditor = () => {
           <Alert className="border-amber-500/50 bg-amber-500/10">
             <Info className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-700 dark:text-amber-400">
-              {t('testMode') || 'ТЕСТОВИЙ РЕЖИМ'}
+              {t('testMode')}
             </AlertTitle>
             <AlertDescription className="text-xs">
-              {t('processPreviewHint') || 'Тестовий перегляд процесу — дані не зберігаються'}
+              {t('processPreviewHint')}
             </AlertDescription>
           </Alert>
 
@@ -447,7 +446,7 @@ const ProcessEditor = () => {
               {fields.length > 0 && (
                 <div className="pt-2 space-y-2">
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    {t('customFields') || 'Поля запуску'}
+                    {t('customFields')}
                   </div>
                   {fields.map((f, i) => (
                     <div key={i} className="text-xs pl-3 border-l-2 border-primary/40">
@@ -465,7 +464,7 @@ const ProcessEditor = () => {
 
           {workflow.length === 0 ? (
             <Card><CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('noSteps') || 'Немає кроків'}</p>
+              <p className="text-sm text-muted-foreground">{t('noSteps')}</p>
             </CardContent></Card>
           ) : workflow.map((w, i) => (
             <Card key={w.id}>
@@ -478,7 +477,7 @@ const ProcessEditor = () => {
                     <div className="font-semibold">{w.title}</div>
                     {w.sla_hours != null && (
                       <div className="text-[11px] text-muted-foreground">
-                        ⏱ {t('deadlineHours') || 'Термін'}: {w.sla_hours} год
+                        ⏱ {t('deadlineHours')}: {w.sla_hours} год
                       </div>
                     )}
                   </div>
@@ -500,14 +499,14 @@ const ProcessEditor = () => {
                       if (f.type === 'text' || f.type === 'number') {
                         return (
                           <div key={f.id} className="space-y-1">{label}
-                            <Input disabled placeholder={f.type === 'number' ? '0' : t('enterValue') || 'Введіть значення'} />
+                            <Input disabled placeholder={f.type === 'number' ? '0' : t('enterValue')} />
                           </div>
                         );
                       }
                       if (f.type === 'textarea') {
                         return (
                           <div key={f.id} className="space-y-1">{label}
-                            <Textarea disabled rows={2} placeholder={t('enterValue') || 'Введіть значення'} />
+                            <Textarea disabled rows={2} placeholder={t('enterValue')} />
                           </div>
                         );
                       }
@@ -526,7 +525,7 @@ const ProcessEditor = () => {
                         return (
                           <div key={f.id} className="space-y-1">{label}
                             <div className="border-2 border-dashed rounded-md px-3 py-3 text-xs text-muted-foreground text-center">
-                              📎 {t('uploadFile') || 'Завантажити файл'}
+                              📎 {t('uploadFile')}
                             </div>
                           </div>
                         );
@@ -535,7 +534,7 @@ const ProcessEditor = () => {
                         return (
                           <div key={f.id} className="space-y-1">{label}
                             <div className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md border bg-muted/40">
-                              ⬇ {f.sample_name || t('downloadSample') || 'Завантажити файл'}
+                              ⬇ {f.sample_name || t('downloadSample')}
                             </div>
                           </div>
                         );
@@ -544,7 +543,7 @@ const ProcessEditor = () => {
                         return (
                           <div key={f.id} className="space-y-1">{label}
                             <div className="text-xs px-3 py-2 rounded-md border bg-muted/40">
-                              👤 {t('selectUser') || 'Оберіть користувача'}
+                              👤 {t('selectUser')}
                             </div>
                           </div>
                         );
@@ -572,32 +571,32 @@ const ProcessEditor = () => {
 
       <div className="flex items-center justify-between pt-2 gap-3">
         <Button variant="outline" onClick={() => navigate('/processes')}>
-          {t('cancel') || 'Скасувати'}
+          {t('cancel')}
         </Button>
         <div className="flex-1 flex justify-center">
           {step === 1 && (
             <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(2)} disabled={!canGoNext}>
-              {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
+              {t('continueBtn')}<ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           )}
           {step === 2 && (
             <div className="flex gap-2">
               <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back')}
               </Button>
               <Button size="lg" className="px-10 h-12 text-base" onClick={() => setStep(3)}>
-                {t('continueBtn') || 'Продовжити'}<ArrowRight className="h-5 w-5 ml-2" />
+                {t('continueBtn')}<ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
           )}
           {step === 3 && (
             <div className="flex gap-2">
               <Button variant="outline" size="lg" className="h-12" onClick={() => setStep(2)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('back')}
               </Button>
               <Button size="lg" className="px-10 h-12 text-base" onClick={handleSave} disabled={saving || !title.trim()}>
                 {saving ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Save className="h-5 w-5 mr-2" />}
-                {t('save') || 'Зберегти'}
+                {t('save')}
               </Button>
             </div>
           )}

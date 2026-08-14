@@ -259,7 +259,7 @@ const ProcessRunEdit = () => {
       <div className="text-center py-16 space-y-4">
         <p className="text-muted-foreground">{t('noEditPermission')}</p>
         <Button variant="outline" onClick={() => navigate(`/processes/runs/${id}`)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />{t('back') || 'Назад'}
+          <ArrowLeft className="h-4 w-4 mr-2" />{t('back')}
         </Button>
       </div>
     );
@@ -272,7 +272,7 @@ const ProcessRunEdit = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{t('editProcessRunFull') || 'Редагування запуску'}</h1>
+          <h1 className="text-2xl font-bold">{t('editProcessRunFull')}</h1>
           <p className="text-muted-foreground">{processTitle}</p>
         </div>
         <Button onClick={save} disabled={saving}>
@@ -282,7 +282,7 @@ const ProcessRunEdit = () => {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">{t('basicInfo') || 'Основні дані'}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('basicInfo')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label>{t('runName')}</Label>
@@ -337,7 +337,7 @@ const ProcessRunEdit = () => {
 
       {steps.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">{t('stepsEditing') || 'Кроки'}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t('stepsEditing')}</CardTitle></CardHeader>
           <CardContent className="space-y-5">
             {steps.map((s, idx) => (
               <div key={s.id} className="rounded-lg border p-4 space-y-3">
@@ -354,7 +354,7 @@ const ProcessRunEdit = () => {
                 )}
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{t('responsible') || 'Відповідальний'}</Label>
+                    <Label className="text-xs">{t('responsible')}</Label>
                     <Select
                       value={s.assignee_id || ''}
                       onValueChange={(v) => setStep(idx, { assignee_id: v })}

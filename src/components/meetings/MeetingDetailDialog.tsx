@@ -86,12 +86,12 @@ export const MeetingDetailDialog = ({
 
       if (error) throw error;
 
-      toast({ title: t('meetingDeleted') || 'Встреча удалена' });
+      toast({ title: t('meetingDeleted') });
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error deleting meeting:', error);
-      toast({ title: t('errorDeleting') || 'Ошибка при удалении', variant: 'destructive' });
+      toast({ title: t('errorDeleting'), variant: 'destructive' });
     } finally {
       setDeleting(false);
     }
@@ -135,7 +135,7 @@ export const MeetingDetailDialog = ({
 
             {meeting.description && (
               <div className="space-y-1.5">
-                <h4 className="text-sm font-medium text-foreground">{t('description') || 'Описание'}</h4>
+                <h4 className="text-sm font-medium text-foreground">{t('description')}</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {meeting.description}
                 </p>
@@ -148,7 +148,7 @@ export const MeetingDetailDialog = ({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  {t('organizer') || 'Организатор'}
+                  {t('organizer')}
                 </h4>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{creator.name || creator.email}</Badge>
@@ -160,7 +160,7 @@ export const MeetingDetailDialog = ({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  {t('participants') || 'Участники'} ({meeting.participants.length})
+                  {t('participants')} ({meeting.participants.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {meeting.participants.map((p) => (
@@ -182,26 +182,26 @@ export const MeetingDetailDialog = ({
                     onClick={() => setEditOpen(true)}
                   >
                     <Pencil className="h-4 w-4" />
-                    {t('edit') || 'Редактировать'}
+                    {t('edit')}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" className="flex-1 gap-2">
                         <Trash2 className="h-4 w-4" />
-                        {t('delete') || 'Удалить'}
+                        {t('delete')}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>{t('deleteMeetingConfirm') || 'Удалить встречу?'}</AlertDialogTitle>
+                        <AlertDialogTitle>{t('deleteMeetingConfirm')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t('deleteMeetingDescription') || 'Это действие нельзя отменить. Встреча будет удалена навсегда.'}
+                          {t('deleteMeetingDescription')}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>{t('cancel') || 'Отмена'}</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-                          {t('delete') || 'Удалить'}
+                          {t('delete')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

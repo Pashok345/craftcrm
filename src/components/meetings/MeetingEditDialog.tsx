@@ -96,12 +96,12 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
         await supabase.from('meeting_participants').insert(participantRecords);
       }
 
-      toast({ title: t('meetingUpdated') || 'Встреча обновлена' });
+      toast({ title: t('meetingUpdated') });
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Error updating meeting:', error);
-      toast({ title: t('errorUpdatingMeeting') || 'Ошибка при обновлении', variant: 'destructive' });
+      toast({ title: t('errorUpdatingMeeting'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -119,33 +119,33 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('editMeeting') || 'Редактировать встречу'}</DialogTitle>
+          <DialogTitle>{t('editMeeting')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-title">{t('meetingTitle') || 'Название встречи'} *</Label>
+            <Label htmlFor="edit-title">{t('meetingTitle')} *</Label>
             <Input
               id="edit-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('enterTitle') || 'Введите название'}
+              placeholder={t('enterTitle')}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-description">{t('description') || 'Описание'}</Label>
+            <Label htmlFor="edit-description">{t('description')}</Label>
             <Textarea
               id="edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('describeMeeting') || 'Опишите встречу'}
+              placeholder={t('describeMeeting')}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>{t('date') || 'Дата'} *</Label>
+            <Label>{t('date')} *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -153,7 +153,7 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
                   className={cn('w-full justify-start text-left font-normal', !date && 'text-muted-foreground')}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate') || 'Выберите дату'}
+                  {date ? format(date, 'PPP', { locale: dateLocale }) : t('selectDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -170,7 +170,7 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-startTime">{t('startTime') || 'Начало'} *</Label>
+              <Label htmlFor="edit-startTime">{t('startTime')} *</Label>
               <Input
                 id="edit-startTime"
                 type="time"
@@ -180,7 +180,7 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-endTime">{t('endTime') || 'Окончание'}</Label>
+              <Label htmlFor="edit-endTime">{t('endTime')}</Label>
               <Input
                 id="edit-endTime"
                 type="time"
@@ -191,7 +191,7 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
           </div>
 
           <div className="space-y-2">
-            <Label>{t('participants') || 'Участники'}</Label>
+            <Label>{t('participants')}</Label>
             <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
               {users.map((u) => (
                 <label key={u.user_id} className="flex items-center gap-2 cursor-pointer">
@@ -207,11 +207,11 @@ export const MeetingEditDialog = ({ open, onOpenChange, meeting, onSuccess }: Me
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              {t('cancel') || 'Отмена'}
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading || !title.trim() || !date} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('save') || 'Сохранить'}
+              {t('save')}
             </Button>
           </div>
         </form>

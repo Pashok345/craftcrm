@@ -126,7 +126,7 @@ const CreateDeal = () => {
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => navigate('/sales')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('backToSales') || 'Назад'}
+          {t('backToSales')}
         </Button>
       </div>
 

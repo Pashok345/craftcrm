@@ -84,7 +84,7 @@ export const ProposalCommentsSection = ({ proposalId }: ProposalCommentsSectionP
           await supabase.from('notifications').insert({
             user_id: mentionedUserId,
             type: 'mention',
-            title: t('mentionInComment') || 'Згадка в коментарі',
+            title: t('mentionInComment'),
             message: `${myProfile?.name || t('user')} ${t('mentionedYouInComment')}: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`,
           });
         }

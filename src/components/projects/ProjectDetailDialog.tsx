@@ -197,7 +197,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
         .eq('id', project.id);
       
       if (error) throw error;
-      toast({ title: t('statusUpdated') || 'Статус обновлён' });
+      toast({ title: t('statusUpdated') });
       onUpdate();
 
       // Send email notifications about status change
@@ -235,7 +235,7 @@ export const ProjectDetailDialog = ({ project, open, onOpenChange, onUpdate }: P
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      toast({ title: t('errorUpdatingStatus') || 'Ошибка обновления статуса', variant: 'destructive' });
+      toast({ title: t('errorUpdatingStatus'), variant: 'destructive' });
     }
   };
 

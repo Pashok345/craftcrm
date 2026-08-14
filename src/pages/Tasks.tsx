@@ -374,7 +374,7 @@ const Tasks = () => {
     if (sortBy !== 'manual') setSortBy('manual');
     sessionStorage.setItem('tasks-manual-order', JSON.stringify(fullOrder));
     fetchTasks();
-    toast.success(t('statusUpdated') || 'Статус обновлён');
+    toast.success(t('statusUpdated'));
   }, [moveTaskToColumn, user, t, tasksByColumn, columns, sortBy]);
 
   // DnD handler — supports moving between column groups
@@ -517,11 +517,11 @@ const Tasks = () => {
             }}
           >
             <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder={t('project') || 'Проект'} />
+              <SelectValue placeholder={t('project')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('allProjects') || 'Все проекты'}</SelectItem>
-              <SelectItem value="none">{t('noProject') || 'Без проекта'}</SelectItem>
+              <SelectItem value="all">{t('allProjects')}</SelectItem>
+              <SelectItem value="none">{t('noProject')}</SelectItem>
               {Object.values(projects)
                 .sort((a, b) => a.title.localeCompare(b.title))
                 .map(p => (
@@ -545,7 +545,7 @@ const Tasks = () => {
               <SelectItem value="date_asc">{t('oldest')}</SelectItem>
               <SelectItem value="status">{t('sortByStatus')}</SelectItem>
               <SelectItem value="name">{t('sortByName')}</SelectItem>
-              <SelectItem value="manual">{t('manualSort') || 'Вручную'}</SelectItem>
+              <SelectItem value="manual">{t('manualSort')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -554,7 +554,7 @@ const Tasks = () => {
       {/* Active filter badges */}
       {hasActiveFilters(filters) && (
         <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-muted-foreground">{t('activeFilters') || 'Фильтры'}:</span>
+          <span className="text-sm text-muted-foreground">{t('activeFilters')}:</span>
           {filters.statuses.map(s => (
             <Badge key={s} variant="secondary" className="gap-1 cursor-pointer" onClick={() => setFilters(f => ({ ...f, statuses: f.statuses.filter(v => v !== s) }))}>
               {statusLabels[s]} ×
@@ -575,12 +575,12 @@ const Tasks = () => {
           })}
           {filters.deadlineFrom && (
             <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setFilters(f => ({ ...f, deadlineFrom: undefined }))}>
-              {t('from') || 'От'}: {format(filters.deadlineFrom, 'dd.MM.yy')} ×
+              {t('from')}: {format(filters.deadlineFrom, 'dd.MM.yy')} ×
             </Badge>
           )}
           {filters.deadlineTo && (
             <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setFilters(f => ({ ...f, deadlineTo: undefined }))}>
-              {t('to') || 'До'}: {format(filters.deadlineTo, 'dd.MM.yy')} ×
+              {t('to')}: {format(filters.deadlineTo, 'dd.MM.yy')} ×
             </Badge>
           )}
         </div>
@@ -733,7 +733,7 @@ const Tasks = () => {
                                             {...provided.dragHandleProps}
                                             className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary hover:bg-muted/60 rounded p-1 -ml-1 shrink-0 transition-colors"
                                             onClick={e => e.stopPropagation()}
-                                            title={t('manualSort') || 'Перетягивание'}
+                                            title={t('manualSort')}
                                             aria-label="drag"
                                           >
                                             <GripVertical className="h-5 w-5" />

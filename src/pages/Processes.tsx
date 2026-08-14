@@ -187,7 +187,7 @@ const Processes = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" />
-            {t('createFromTemplate') || 'З шаблону'}
+            {t('createFromTemplate')}
           </Button>
           <Button onClick={() => navigate('/processes/new')}>
 
@@ -201,29 +201,29 @@ const Processes = () => {
         <TabsList>
           <TabsTrigger value="my">
             <LayoutGrid className="h-4 w-4 mr-2" />
-            {t('allProcesses') || 'Всі процеси'}
+            {t('allProcesses')}
           </TabsTrigger>
           <TabsTrigger value="mine">
             <UserCheck className="h-4 w-4 mr-2" />
-            {t('myProcesses') || 'Мої процеси'}
+            {t('myProcesses')}
             {runCounts.mine > 0 && (
               <Badge variant="secondary" className="ml-2">{runCounts.mine}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="active">
             <PlayCircle className="h-4 w-4 mr-2" />
-            {t('activeRuns') || 'Активні запуски'}
+            {t('activeRuns')}
             {runCounts.active > 0 && (
               <Badge variant="secondary" className="ml-2">{runCounts.active}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="completed">
             <CheckCircle2 className="h-4 w-4 mr-2" />
-            {t('completedRuns') || 'Завершені'}
+            {t('completedRuns')}
           </TabsTrigger>
           <TabsTrigger value="templates">
             <FileStack className="h-4 w-4 mr-2" />
-            {t('processTemplates') || 'Шаблони'}
+            {t('processTemplates')}
           </TabsTrigger>
         </TabsList>
 
@@ -250,7 +250,7 @@ const Processes = () => {
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={t('searchProcesses') || 'Пошук процесів...'}
+                    placeholder={t('searchProcesses')}
                     className="pl-9"
                   />
                 </div>
@@ -259,13 +259,13 @@ const Processes = () => {
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <p className="text-muted-foreground mb-4">
-                        {processes.length === 0 ? t('noProcesses') : t('nothingFound') || 'Нічого не знайдено'}
+                        {processes.length === 0 ? t('noProcesses') : t('nothingFound')}
                       </p>
                       {processes.length === 0 && (
                         <div className="flex gap-2">
                           <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
                             <Sparkles className="h-4 w-4 mr-2" />
-                            {t('createFromTemplate') || 'З шаблону'}
+                            {t('createFromTemplate')}
                           </Button>
                           <Button onClick={() => navigate('/processes/new')}>
                             <Plus className="h-4 w-4 mr-2" />
@@ -307,11 +307,11 @@ const Processes = () => {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileStack className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">
-                {t('openTemplatesLibrary') || 'Відкрити бібліотеку шаблонів'}
+                {t('openTemplatesLibrary')}
               </p>
               <Button onClick={() => setTemplatesOpen(true)}>
                 <Sparkles className="h-4 w-4 mr-2" />
-                {t('browseTemplates') || 'Переглянути шаблони'}
+                {t('browseTemplates')}
               </Button>
             </CardContent>
           </Card>

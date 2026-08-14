@@ -91,7 +91,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
       ...steps,
       {
         id: uid(),
-        title: `${t('step') || 'Крок'} ${steps.length + 1}`,
+        title: `${t('step')} ${steps.length + 1}`,
         description: '',
         sla_hours: null,
         fields: [],
@@ -116,7 +116,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
     copy.splice(idx + 1, 0, {
       ...s,
       id: uid(),
-      title: `${s.title} (${t('copy') || 'копія'})`,
+      title: `${s.title} (${t('copy')})`,
       fields: s.fields.map((f) => ({ ...f, id: uid() })),
     });
     onChange(copy);
@@ -126,9 +126,9 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
     const copy = [...steps];
     const defaultOptions = type === 'button'
       ? [
-          t('buttonActionApprove') || 'Підтвердити',
-          t('buttonActionReject') || 'Скасувати',
-          t('buttonActionRevise') || 'На доопрацювання',
+          t('buttonActionApprove'),
+          t('buttonActionReject'),
+          t('buttonActionRevise'),
         ]
       : FIELD_TYPE_META[type].withOptions
         ? ['Варіант 1', 'Варіант 2']
@@ -184,7 +184,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
       {steps.length === 0 && (
         <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
           <p className="text-sm">
-            {t('noWorkflowSteps') || 'Ще немає жодного кроку. Додайте перший крок робочого процесу.'}
+            {t('noWorkflowSteps')}
           </p>
         </div>
       )}
@@ -194,7 +194,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 border-b">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground">
-              {t('step') || 'Крок'} {sIdx + 1}
+              {t('step')} {sIdx + 1}
             </span>
             <div className="flex-1" />
             <Button size="icon" variant="ghost" onClick={() => moveStep(sIdx, -1)} disabled={sIdx === 0}>
@@ -214,15 +214,15 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
           <CardContent className="p-4 space-y-4">
             <div className="grid md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">{t('stepName') || 'Назва кроку'}</Label>
+                <Label className="text-xs">{t('stepName')}</Label>
                 <Input
                   value={step.title}
                   onChange={(e) => updateStep(sIdx, { title: e.target.value })}
-                  placeholder={t('stepNamePlaceholder') || 'Наприклад, Підготувати документ'}
+                  placeholder={t('stepNamePlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">{t('deadlineHours') || 'Термін виконання (годин)'}</Label>
+                <Label className="text-xs">{t('deadlineHours')}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -236,12 +236,12 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">{t('stepDescription') || 'Опис кроку'}</Label>
+              <Label className="text-xs">{t('stepDescription')}</Label>
               <Textarea
                 rows={2}
                 value={step.description || ''}
                 onChange={(e) => updateStep(sIdx, { description: e.target.value })}
-                placeholder={t('stepDescriptionPlaceholder') || 'Що потрібно зробити на цьому кроці'}
+                placeholder={t('stepDescriptionPlaceholder')}
               />
             </div>
 
@@ -251,7 +251,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
             {/* Fields */}
             <div className="space-y-2 pt-2 border-t">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">{t('stepFields') || 'Поля кроку'}</Label>
+                <Label className="text-xs">{t('stepFields')}</Label>
               </div>
 
               {step.fields.map((field, fIdx) => {
@@ -265,7 +265,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                         className="flex-1"
                         value={field.label}
                         onChange={(e) => updateField(sIdx, fIdx, { label: e.target.value })}
-                        placeholder={t('fieldName') || 'Назва поля'}
+                        placeholder={t('fieldName')}
                       />
                       <Select
                         value={field.type}
@@ -298,7 +298,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                     {meta.withOptions && (
                       <div className="space-y-1.5">
                         <Label className="text-[11px] text-muted-foreground">
-                          {t('selectOptionsPlaceholder') || 'Варіанти (по одному в рядку)'}
+                          {t('selectOptionsPlaceholder')}
                         </Label>
                         <Textarea
                           rows={2}
@@ -315,13 +315,13 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                     {field.type === 'user' && (
                       <div className="space-y-1.5">
                         <Label className="text-[11px] text-muted-foreground">
-                          {t('responsibleUser') || 'Відповідальний за крок'}
+                          {t('responsibleUser')}
                         </Label>
                         <Select
                           value={field.assignee_user_id || ''}
                           onValueChange={(v) => updateField(sIdx, fIdx, { assignee_user_id: v })}
                         >
-                          <SelectTrigger><SelectValue placeholder={t('selectUser') || 'Оберіть користувача'} /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={t('selectUser')} /></SelectTrigger>
                           <SelectContent>
                             {profiles.map((p) => (
                               <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>
@@ -334,7 +334,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                     {field.type === 'file_download' && (
                       <div className="space-y-1.5">
                         <Label className="text-[11px] text-muted-foreground">
-                          {t('sampleFile') || 'Файл-зразок для завантаження користувачем'}
+                          {t('sampleFile')}
                         </Label>
                         {field.sample_url ? (
                           <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/40">
@@ -359,7 +359,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                         ) : (
                           <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-3 py-4 cursor-pointer hover:bg-muted/40 text-sm text-muted-foreground">
                             <Upload className="h-4 w-4" />
-                            {t('uploadSampleFile') || 'Завантажити файл-зразок'}
+                            {t('uploadSampleFile')}
                             <input
                               type="file"
                               className="hidden"
@@ -395,7 +395,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
                           checked={field.required}
                           onCheckedChange={(c) => updateField(sIdx, fIdx, { required: c })}
                         />
-                        <Label className="text-xs">{t('fieldRequired') || 'Обовʼязкове'}</Label>
+                        <Label className="text-xs">{t('fieldRequired')}</Label>
                       </div>
                     </div>
                   </div>
@@ -426,7 +426,7 @@ export function WorkflowStepsEditor({ value, onChange }: Props) {
       ))}
 
       <Button onClick={addStep} variant="outline" className="w-full">
-        <Plus className="h-4 w-4 mr-2" />{t('addStep') || 'Додати крок'}
+        <Plus className="h-4 w-4 mr-2" />{t('addStep')}
       </Button>
     </div>
   );

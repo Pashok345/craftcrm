@@ -138,14 +138,14 @@ export const ProcessCategoriesSidebar = ({
   return (
     <aside className="w-full md:w-64 flex-shrink-0 space-y-1">
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
-        {t('categories') || 'Категорії'}
+        {t('categories')}
       </div>
 
       <Row
         active={selectedCategoryId === null}
         onClick={() => onSelect(null)}
         icon={<Layers className="h-3.5 w-3.5" />}
-        label={t('allProcesses') || 'Всі процеси'}
+        label={t('allProcesses')}
         count={totalCount}
       />
 
@@ -214,10 +214,9 @@ export const ProcessCategoriesSidebar = ({
                     </AlertDialogTrigger>
                     <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>{t('confirmDelete') || 'Підтвердіть видалення'}</AlertDialogTitle>
+                        <AlertDialogTitle>{t('confirmDelete')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t('deleteCategoryConfirm') ||
-                            'Категорію буде видалено. Процеси залишаться без категорії.'}
+                          {t('deleteCategoryConfirm')}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -226,7 +225,7 @@ export const ProcessCategoriesSidebar = ({
                           onClick={() => deleteCategory(cat.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          {t('delete') || 'Видалити'}
+                          {t('delete')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -242,7 +241,7 @@ export const ProcessCategoriesSidebar = ({
         active={selectedCategoryId === '__uncategorized__'}
         onClick={() => onSelect('__uncategorized__')}
         icon={<Folder className="h-3.5 w-3.5" />}
-        label={t('uncategorized') || 'Без категорії'}
+        label={t('uncategorized')}
         count={uncategorizedCount}
       />
 
@@ -251,12 +250,12 @@ export const ProcessCategoriesSidebar = ({
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="w-full justify-start mt-2">
               <Plus className="h-4 w-4 mr-2" />
-              {t('addCategory') || 'Додати категорію'}
+              {t('addCategory')}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 space-y-2">
             <Input
-              placeholder={t('categoryName') || 'Назва категорії'}
+              placeholder={t('categoryName')}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addCategory()}
@@ -276,7 +275,7 @@ export const ProcessCategoriesSidebar = ({
               ))}
             </div>
             <Button size="sm" className="w-full" onClick={addCategory} disabled={!newName.trim()}>
-              {t('add') || 'Додати'}
+              {t('add')}
             </Button>
           </PopoverContent>
         </Popover>
