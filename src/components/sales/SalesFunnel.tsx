@@ -1,3 +1,4 @@
+import { ExportMenu } from '@/components/common/ExportMenu';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -135,6 +136,19 @@ export const SalesFunnel = () => {
           <span>{t('totalAmount')}: {formatCurrency(deals.reduce((sum, d) => sum + (d.amount || 0), 0))}</span>
         </div>
         <div className="flex gap-2">
+          <ExportMenu
+            filename="deals"
+            rows={deals}
+            columns={[
+              { key: 'title', header: t('title'), value: (d) => d.title },
+              { key: 'client', header: t('client'), value: (d) => d.client?.name || '' },
+              { key: 'stage', header: t('stage'), value: (d) => stages.find((s) => s.id === d.stage_id)?.name || '' },
+              { key: 'amount', header: t('amount'), value: (d) => Number(d.amount || 0) },
+              { key: 'probability', header: '%', value: (d) => d.probability ?? '' },
+              { key: 'expected_close_date', header: t('expectedCloseDate'), value: (d) => d.expected_close_date || '' },
+              { key: 'created_at', header: t('createdAt'), value: (d) => d.created_at?.slice(0, 10) || '' },
+            ]}
+          />
           <Button variant="outline" onClick={() => {
             setSelectedStage(undefined);
             setStageDialogOpen(true);

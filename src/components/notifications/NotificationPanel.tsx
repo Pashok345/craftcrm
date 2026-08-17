@@ -11,6 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NOTIFICATION_TYPES, NOTIFICATION_TYPE_LABEL_KEYS } from '@/lib/notificationPrefs';
 
 interface Notification {
   id: string;
@@ -28,8 +30,15 @@ interface NotificationPanelProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const PAGE_SIZE = 20;
+
 export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { user } = useAuth();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
@@ -39,6 +48,12 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
   useEffect(() => {
     if (user) {
       fetchNotifications();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, typeFilter, showUnreadOnly]);
+
+  useEffect(() => {
+    if (user) {
       checkDeadlineNotifications();
 
       const channel = supabase
@@ -63,17 +78,35 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
     }
   }, [user]);
 
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
+  const buildQuery = (from: number) => {
+    let q = supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .range(from, from + PAGE_SIZE - 1);
+    if (typeFilter !== 'all') q = q.eq('type', typeFilter);
+    if (showUnreadOnly) q = q.eq('is_read', false);
+    return q;
+  };
 
-    if (data) setNotifications(data as Notification[]);
+  const fetchNotifications = async () => {
+    if (!user) return;
+    const { data } = await buildQuery(0);
+    setPage(0);
+    setNotifications((data as Notification[]) || []);
+    setHasMore((data?.length || 0) === PAGE_SIZE);
+  };
+
+  const loadMore = async () => {
+    if (!user) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    const { data } = await buildQuery(nextPage * PAGE_SIZE);
+    setNotifications((prev) => [...prev, ...((data as Notification[]) || [])]);
+    setPage(nextPage);
+    setHasMore((data?.length || 0) === PAGE_SIZE);
+    setLoadingMore(false);
   };
 
   const checkDeadlineNotifications = async () => {
@@ -200,21 +233,40 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
               ✕
             </Button>
           </div>
-          {notifications.length > 0 && (
-            <div className="flex gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs">
-                <Check className="h-3 w-3 mr-1" />
-                {t('markAllRead')}
-              </Button>
-              <Button variant="outline" size="sm" onClick={clearAll} className="text-xs text-destructive hover:text-destructive">
-                <Trash2 className="h-3 w-3 mr-1" />
-                {t('delete')}
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-8 w-[150px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('notifFilterAllTypes')}</SelectItem>
+                {NOTIFICATION_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(NOTIFICATION_TYPE_LABEL_KEYS[type])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant={showUnreadOnly ? 'default' : 'outline'}
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => setShowUnreadOnly((v) => !v)}
+            >
+              {t('notifFilterUnread')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8">
+              <Check className="h-3 w-3 mr-1" />
+              {t('markAllRead')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={clearAll} className="text-xs h-8 text-destructive hover:text-destructive">
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t('delete')}
+            </Button>
+          </div>
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-120px)]">
+        <ScrollArea className="h-[calc(100vh-160px)]">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <Bell className="h-12 w-12 mb-4 opacity-30" />
@@ -273,6 +325,13 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
                   </div>
                 </div>
               ))}
+              {hasMore && (
+                <div className="p-3">
+                  <Button variant="outline" size="sm" className="w-full" onClick={loadMore} disabled={loadingMore}>
+                    {t('loadMore')}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </ScrollArea>

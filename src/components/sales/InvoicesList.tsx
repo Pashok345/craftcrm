@@ -16,6 +16,7 @@ import type { Client, Deal } from '@/types/sales';
 import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceDetailDialog } from './InvoiceDetailDialog';
 import { DocumentTemplatesDialog } from './DocumentTemplatesDialog';
+import { ExportMenu } from '@/components/common/ExportMenu';
 
 export const InvoicesList = () => {
   const { t } = useLanguage();
@@ -100,6 +101,21 @@ export const InvoicesList = () => {
           </Select>
         </div>
         <div className="flex gap-2">
+          <ExportMenu
+            filename="invoices"
+            rows={filtered}
+            columns={[
+              { key: 'number', header: t('invoiceNumber'), value: (i) => i.number },
+              { key: 'title', header: t('title'), value: (i) => i.title || '' },
+              { key: 'client', header: t('client'), value: (i) => i.client?.name || '' },
+              { key: 'status', header: t('status'), value: (i) => t(`invoiceStatus_${i.status}`) },
+              { key: 'total', header: t('total'), value: (i) => Number(i.total_amount || 0) },
+              { key: 'currency', header: t('currency'), value: (i) => i.currency },
+              { key: 'paid', header: t('paid'), value: (i) => paidByInvoice[i.id] || 0 },
+              { key: 'issue_date', header: t('issueDate'), value: (i) => i.issue_date || '' },
+              { key: 'due_date', header: t('dueDate'), value: (i) => i.due_date || '' },
+            ]}
+          />
           <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
             <Settings2 className="h-4 w-4 mr-1" />{t('documentTemplates')}
           </Button>

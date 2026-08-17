@@ -24,6 +24,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
+import {
+  NOTIFICATION_TYPES,
+  NOTIFICATION_TYPE_LABEL_KEYS,
+  isTypeEnabled,
+  setTypeEnabled,
+} from '@/lib/notificationPrefs';
 
 type CategoryValue = Record<string, any>;
 
@@ -99,6 +105,9 @@ const Settings = () => {
   const [notifyTasks, setNotifyTasks] = useState(() => localStorage.getItem('notify-tasks') !== 'false');
   const [notifyMessages, setNotifyMessages] = useState(() => localStorage.getItem('notify-messages') !== 'false');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('sound-enabled') !== 'false');
+  const [typePrefs, setTypePrefs] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NOTIFICATION_TYPES.map((tpe) => [tpe, isTypeEnabled(tpe)]))
+  );
 
   useEffect(() => { localStorage.setItem('notify-meetings', String(notifyMeetings)); }, [notifyMeetings]);
   useEffect(() => { localStorage.setItem('notify-tasks', String(notifyTasks)); }, [notifyTasks]);
@@ -194,6 +203,30 @@ const Settings = () => {
               <div className="flex items-center justify-between"><Label htmlFor="nt" className="flex-1 cursor-pointer">{t('notifyTasks')}</Label><Switch id="nt" checked={notifyTasks} onCheckedChange={setNotifyTasks} /></div>
               <div className="flex items-center justify-between"><Label htmlFor="nmsg" className="flex-1 cursor-pointer">{t('notifyMessages')}</Label><Switch id="nmsg" checked={notifyMessages} onCheckedChange={setNotifyMessages} /></div>
               <div className="flex items-center justify-between border-t pt-4"><Label htmlFor="ns" className="flex-1 cursor-pointer">{t('soundNotifications')}</Label><Switch id="ns" checked={soundEnabled} onCheckedChange={setSoundEnabled} /></div>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" />{t('notifPerTypeTitle')}</CardTitle>
+              <CardDescription>{t('notifPerTypeDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {NOTIFICATION_TYPES.map((type) => (
+                <div key={type} className="flex items-center justify-between">
+                  <Label htmlFor={`nt-${type}`} className="flex-1 cursor-pointer">
+                    {t(NOTIFICATION_TYPE_LABEL_KEYS[type])}
+                  </Label>
+                  <Switch
+                    id={`nt-${type}`}
+                    checked={typePrefs[type] !== false}
+                    onCheckedChange={(checked) => {
+                      setTypeEnabled(type, checked);
+                      setTypePrefs((p) => ({ ...p, [type]: checked }));
+                    }}
+                  />
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

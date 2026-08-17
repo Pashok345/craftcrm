@@ -1,3 +1,4 @@
+import { ExportMenu } from '@/components/common/ExportMenu';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -185,6 +186,18 @@ const Processes = () => {
           <p className="text-muted-foreground">{t('processesDescription')}</p>
         </div>
         <div className="flex gap-2">
+          <ExportMenu
+            filename="processes"
+            rows={filteredProcesses}
+            columns={[
+              { key: 'title', header: t('title'), value: (p) => p.title },
+              { key: 'description', header: t('description'), value: (p) => p.description || '' },
+              { key: 'status', header: t('status'), value: (p) => p.status },
+              { key: 'priority', header: t('priority'), value: (p) => (p as any).priority || '' },
+              { key: 'category', header: t('category'), value: (p) => categories.find((c) => c.id === p.category_id)?.name || '' },
+              { key: 'created_at', header: t('createdAt'), value: (p) => (p as any).created_at?.slice(0, 10) || '' },
+            ]}
+          />
           <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" />
             {t('createFromTemplate')}
