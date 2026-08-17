@@ -1225,6 +1225,21 @@ export const translations: Translations = {
   permWikiManage: { ru: 'Управление Wiki', en: 'Manage Wiki', uk: 'Керування Wiki' },
   permWhiteboardsManage: { ru: 'Управление досками', en: 'Manage whiteboards', uk: 'Керування дошками' },
   permKanbanColumns: { ru: 'Настройка колонок канбана', en: 'Configure kanban columns', uk: 'Налаштування колонок канбану' },
+  exportAction: { ru: 'Экспорт', en: 'Export', uk: 'Експорт' },
+  exportCsv: { ru: 'Скачать CSV', en: 'Download CSV', uk: 'Завантажити CSV' },
+  exportNothingToExport: { ru: 'Нет данных для экспорта', en: 'Nothing to export', uk: 'Немає даних для експорту' },
+  notifFilterAllTypes: { ru: 'Все типы', en: 'All types', uk: 'Усі типи' },
+  notifFilterUnread: { ru: 'Непрочитанные', en: 'Unread', uk: 'Непрочитані' },
+  notifPerTypeTitle: { ru: 'Типы уведомлений', en: 'Notification types', uk: 'Типи сповіщень' },
+  notifPerTypeDescription: { ru: 'Выберите, о чём вам присылать уведомления', en: 'Choose which events you want to be notified about', uk: 'Оберіть, про які події надсилати сповіщення' },
+  notifTypeTaskAssigned: { ru: 'Назначение задач', en: 'Task assignments', uk: 'Призначення завдань' },
+  notifTypeComment: { ru: 'Комментарии', en: 'Comments', uk: 'Коментарі' },
+  notifTypeMention: { ru: 'Упоминания', en: 'Mentions', uk: 'Згадки' },
+  notifTypeDeadline: { ru: 'Дедлайны', en: 'Deadlines', uk: 'Дедлайни' },
+  notifTypeMeeting: { ru: 'Встречи', en: 'Meetings', uk: 'Зустрічі' },
+  notifTypeMessage: { ru: 'Сообщения', en: 'Messages', uk: 'Повідомлення' },
+  notifTypeProcess: { ru: 'Процессы', en: 'Processes', uk: 'Процеси' },
+  notifTypeStatusChange: { ru: 'Смена статусов', en: 'Status changes', uk: 'Зміна статусів' },
 };
 
 interface LanguageContextType {
