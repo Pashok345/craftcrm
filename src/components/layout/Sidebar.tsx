@@ -38,7 +38,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
     });
 
   const renderNav = (onClickItem?: () => void) => (
-    <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+    <nav className="flex-1 min-h-0 p-2 space-y-0.5 overflow-hidden">
       {menuItems.map((item) => (
         <NavLink
           key={item.path}
