@@ -105,6 +105,9 @@ const Settings = () => {
   const [notifyTasks, setNotifyTasks] = useState(() => localStorage.getItem('notify-tasks') !== 'false');
   const [notifyMessages, setNotifyMessages] = useState(() => localStorage.getItem('notify-messages') !== 'false');
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('sound-enabled') !== 'false');
+  const [typePrefs, setTypePrefs] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NOTIFICATION_TYPES.map((tpe) => [tpe, isTypeEnabled(tpe)]))
+  );
 
   useEffect(() => { localStorage.setItem('notify-meetings', String(notifyMeetings)); }, [notifyMeetings]);
   useEffect(() => { localStorage.setItem('notify-tasks', String(notifyTasks)); }, [notifyTasks]);
