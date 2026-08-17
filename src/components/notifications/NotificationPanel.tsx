@@ -76,17 +76,35 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
     }
   }, [user]);
 
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
+  const buildQuery = (from: number) => {
+    let q = supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .range(from, from + PAGE_SIZE - 1);
+    if (typeFilter !== 'all') q = q.eq('type', typeFilter);
+    if (showUnreadOnly) q = q.eq('is_read', false);
+    return q;
+  };
 
-    if (data) setNotifications(data as Notification[]);
+  const fetchNotifications = async () => {
+    if (!user) return;
+    const { data } = await buildQuery(0);
+    setPage(0);
+    setNotifications((data as Notification[]) || []);
+    setHasMore((data?.length || 0) === PAGE_SIZE);
+  };
+
+  const loadMore = async () => {
+    if (!user) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    const { data } = await buildQuery(nextPage * PAGE_SIZE);
+    setNotifications((prev) => [...prev, ...((data as Notification[]) || [])]);
+    setPage(nextPage);
+    setHasMore((data?.length || 0) === PAGE_SIZE);
+    setLoadingMore(false);
   };
 
   const checkDeadlineNotifications = async () => {
