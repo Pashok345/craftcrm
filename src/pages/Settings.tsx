@@ -24,6 +24,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
+import {
+  NOTIFICATION_TYPES,
+  NOTIFICATION_TYPE_LABEL_KEYS,
+  isTypeEnabled,
+  setTypeEnabled,
+} from '@/lib/notificationPrefs';
 
 type CategoryValue = Record<string, any>;
 
