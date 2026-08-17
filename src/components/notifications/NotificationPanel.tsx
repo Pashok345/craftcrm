@@ -231,21 +231,40 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
               ✕
             </Button>
           </div>
-          {notifications.length > 0 && (
-            <div className="flex gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs">
-                <Check className="h-3 w-3 mr-1" />
-                {t('markAllRead')}
-              </Button>
-              <Button variant="outline" size="sm" onClick={clearAll} className="text-xs text-destructive hover:text-destructive">
-                <Trash2 className="h-3 w-3 mr-1" />
-                {t('delete')}
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-8 w-[150px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('notifFilterAllTypes')}</SelectItem>
+                {NOTIFICATION_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {t(NOTIFICATION_TYPE_LABEL_KEYS[type])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant={showUnreadOnly ? 'default' : 'outline'}
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => setShowUnreadOnly((v) => !v)}
+            >
+              {t('notifFilterUnread')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={markAllAsRead} className="text-xs h-8">
+              <Check className="h-3 w-3 mr-1" />
+              {t('markAllRead')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={clearAll} className="text-xs h-8 text-destructive hover:text-destructive">
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t('delete')}
+            </Button>
+          </div>
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-120px)]">
+        <ScrollArea className="h-[calc(100vh-160px)]">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <Bell className="h-12 w-12 mb-4 opacity-30" />
