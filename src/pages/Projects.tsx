@@ -176,7 +176,7 @@ const Projects = () => {
             rows={projects}
             columns={[
               { key: 'title', header: t('title'), value: (p) => p.title },
-              { key: 'status', header: t('status'), value: (p) => t(`projectStatus_${p.status}`) },
+              { key: 'status', header: t('status'), value: (p) => t(p.status) },
               { key: 'budget', header: t('budget'), value: (p) => (p.budget ?? '') as any },
               { key: 'currency', header: t('currency'), value: (p) => p.currency || '' },
               { key: 'start_date', header: t('startDate'), value: (p) => p.start_date || '' },
