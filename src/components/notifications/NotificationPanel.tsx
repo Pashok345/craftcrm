@@ -11,6 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { ru, enUS, uk } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NOTIFICATION_TYPES, NOTIFICATION_TYPE_LABEL_KEYS } from '@/lib/notificationPrefs';
 
 interface Notification {
   id: string;
