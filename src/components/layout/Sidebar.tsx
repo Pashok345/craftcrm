@@ -46,7 +46,7 @@ export const Sidebar = ({ collapsed, onToggle, mobileOpen = false, onMobileOpenC
           onClick={onClickItem}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+              'flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors text-sm',
               'hover:bg-muted',
               isActive
                 ? 'bg-primary/10 text-primary font-medium'
