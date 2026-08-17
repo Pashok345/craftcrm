@@ -212,6 +212,7 @@ export const translations: Translations = {
   projectUpdated: { ru: 'Проект обновлён', en: 'Project updated', uk: 'Проект оновлено' },
   projectName: { ru: 'Название проекта', en: 'Project name', uk: 'Назва проекту' },
   enterProjectName: { ru: 'Введите название проекта', en: 'Enter project name', uk: 'Введіть назву проекту' },
+  priority: { ru: 'Приоритет', en: 'Priority', uk: 'Пріоритет' },
   description: { ru: 'Описание', en: 'Description', uk: 'Опис' },
   projectDescriptionPlaceholder: { ru: 'Описание проекта...', en: 'Project description...', uk: 'Опис проекту...' },
   status: { ru: 'Статус', en: 'Status', uk: 'Статус' },
