@@ -16,6 +16,7 @@ import type { Client, Deal } from '@/types/sales';
 import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceDetailDialog } from './InvoiceDetailDialog';
 import { DocumentTemplatesDialog } from './DocumentTemplatesDialog';
+import { ExportMenu } from '@/components/common/ExportMenu';
 
 export const InvoicesList = () => {
   const { t } = useLanguage();
