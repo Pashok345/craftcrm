@@ -169,10 +169,25 @@ const Projects = () => {
           <h1 className="text-2xl font-bold text-foreground">{t('projectsTitle')}</h1>
           <p className="text-muted-foreground">{t('projectsDescription')}</p>
         </div>
-        <Button onClick={() => navigate('/projects/new')} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('newProject')}
-        </Button>
+        <div className="flex gap-2">
+          <ExportMenu
+            filename="projects"
+            rows={projects}
+            columns={[
+              { key: 'title', header: t('title'), value: (p) => p.title },
+              { key: 'status', header: t('status'), value: (p) => t(`projectStatus_${p.status}`) },
+              { key: 'budget', header: t('budget'), value: (p) => (p.budget ?? '') as any },
+              { key: 'currency', header: t('currency'), value: (p) => p.currency || '' },
+              { key: 'start_date', header: t('startDate'), value: (p) => p.start_date || '' },
+              { key: 'end_date', header: t('endDate'), value: (p) => p.end_date || '' },
+              { key: 'created_at', header: t('createdAt'), value: (p) => p.created_at?.slice(0, 10) || '' },
+            ]}
+          />
+          <Button onClick={() => navigate('/projects/new')} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('newProject')}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
