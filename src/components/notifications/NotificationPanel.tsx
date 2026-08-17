@@ -28,8 +28,15 @@ interface NotificationPanelProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const PAGE_SIZE = 20;
+
 export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { user } = useAuth();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
@@ -39,6 +46,12 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
   useEffect(() => {
     if (user) {
       fetchNotifications();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, typeFilter, showUnreadOnly]);
+
+  useEffect(() => {
+    if (user) {
       checkDeadlineNotifications();
 
       const channel = supabase
