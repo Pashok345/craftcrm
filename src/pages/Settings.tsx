@@ -196,6 +196,30 @@ const Settings = () => {
               <div className="flex items-center justify-between border-t pt-4"><Label htmlFor="ns" className="flex-1 cursor-pointer">{t('soundNotifications')}</Label><Switch id="ns" checked={soundEnabled} onCheckedChange={setSoundEnabled} /></div>
             </CardContent>
           </Card>
+
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" />{t('notifPerTypeTitle')}</CardTitle>
+              <CardDescription>{t('notifPerTypeDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {NOTIFICATION_TYPES.map((type) => (
+                <div key={type} className="flex items-center justify-between">
+                  <Label htmlFor={`nt-${type}`} className="flex-1 cursor-pointer">
+                    {t(NOTIFICATION_TYPE_LABEL_KEYS[type])}
+                  </Label>
+                  <Switch
+                    id={`nt-${type}`}
+                    checked={typePrefs[type] !== false}
+                    onCheckedChange={(checked) => {
+                      setTypeEnabled(type, checked);
+                      setTypePrefs((p) => ({ ...p, [type]: checked }));
+                    }}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* INTEGRATIONS */}
