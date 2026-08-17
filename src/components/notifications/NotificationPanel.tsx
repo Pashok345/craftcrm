@@ -325,6 +325,13 @@ export const NotificationPanel = ({ open, onOpenChange }: NotificationPanelProps
                   </div>
                 </div>
               ))}
+              {hasMore && (
+                <div className="p-3">
+                  <Button variant="outline" size="sm" className="w-full" onClick={loadMore} disabled={loadingMore}>
+                    {t('loadMore')}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </ScrollArea>
