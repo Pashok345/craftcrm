@@ -549,6 +549,7 @@ export const translations: Translations = {
   searchTemplates: { ru: 'Поиск шаблонов...', en: 'Search templates...', uk: 'Пошук шаблонів...' },
   searchProcesses: { ru: 'Поиск процессов...', en: 'Search processes...', uk: 'Пошук процесів...' },
   noTemplates: { ru: 'Шаблоны не найдены', en: 'No templates found', uk: 'Шаблонів не знайдено' },
+  createFirstTemplate: { ru: 'Создайте первый шаблон', en: 'Create your first template', uk: 'Створіть перший шаблон' },
   systemTemplate: { ru: 'Системный', en: 'System', uk: 'Системний' },
   processCreatedFromTemplate: { ru: 'Процесс создан из шаблона', en: 'Process created from template', uk: 'Процес створено з шаблону' },
   nothingFound: { ru: 'Ничего не найдено', en: 'Nothing found', uk: 'Нічого не знайдено' },
