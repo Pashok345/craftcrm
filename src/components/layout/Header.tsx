@@ -17,6 +17,7 @@ import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from 'next-themes';
 
 interface HeaderProps {
   profile: Profile | null;
