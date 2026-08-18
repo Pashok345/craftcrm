@@ -1,10 +1,13 @@
 import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import App from "./App.tsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
-  <LanguageProvider>
-    <App />
-  </LanguageProvider>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="theme">
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
+  </ThemeProvider>
 );
