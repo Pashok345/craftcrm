@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Pencil, Trash2, Pin, Eye, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Pin, Eye, MessageSquare, Send, History, Link2 } from 'lucide-react';
 import { WikiContent } from '@/lib/wikiMarkdown';
+import { WikiVersionHistory } from '@/components/wiki/WikiVersionHistory';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,6 +52,8 @@ export default function WikiArticle() {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [related, setRelated] = useState<{ id: string; title: string; tags: string[] }[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const loadComments = async (articleId: string) => {
     const { data } = await supabase
@@ -61,31 +64,60 @@ export default function WikiArticle() {
     setComments((data || []) as Comment[]);
   };
 
+  const loadRelated = useCallback(async (art: Article) => {
+    const { data } = await supabase
+      .from('wiki_articles')
+      .select('id,title,tags,category_id')
+      .eq('is_published', true)
+      .neq('id', art.id)
+      .limit(100);
+    const scored = (data || [])
+      .map((a: any) => {
+        const shared = (a.tags || []).filter((tag: string) => art.tags.includes(tag)).length;
+        const sameCat = art.category_id && a.category_id === art.category_id ? 1 : 0;
+        return { a, score: shared * 3 + sameCat };
+      })
+      .filter((s) => s.score > 0)
+      .sort((x, y) => y.score - x.score)
+      .slice(0, 5)
+      .map((s) => ({ id: s.a.id, title: s.a.title, tags: s.a.tags || [] }));
+    setRelated(scored);
+  }, []);
+
+  const loadArticle = useCallback(async (countView: boolean) => {
+    if (!id) return;
+    const { data } = await supabase.from('wiki_articles').select('*').eq('id', id).maybeSingle();
+    if (!data) {
+      setLoading(false);
+      return;
+    }
+    setArticle(data as Article);
+    setCategoryName(null);
+    if (data.category_id) {
+      const { data: cat } = await supabase
+        .from('wiki_categories')
+        .select('name,color')
+        .eq('id', data.category_id)
+        .maybeSingle();
+      if (cat) setCategoryName(cat as { name: string; color: string });
+    }
+    await loadRelated(data as Article);
+    if (countView) {
+      await supabase.from('wiki_articles').update({ views_count: (data.views_count || 0) + 1 }).eq('id', id);
+    }
+  }, [id, loadRelated]);
+
   useEffect(() => {
     if (!id) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from('wiki_articles').select('*').eq('id', id).maybeSingle();
-      if (!data) {
-        setLoading(false);
-        return;
-      }
-      setArticle(data as Article);
-      if (data.category_id) {
-        const { data: cat } = await supabase
-          .from('wiki_categories')
-          .select('name,color')
-          .eq('id', data.category_id)
-          .maybeSingle();
-        if (cat) setCategoryName(cat as { name: string; color: string });
-      }
+      await loadArticle(true);
       await loadComments(id);
       const { data: profs } = await supabase.from('profiles').select('user_id,name');
       setProfiles(Object.fromEntries((profs || []).map((p) => [p.user_id, p.name])));
-      await supabase.from('wiki_articles').update({ views_count: (data.views_count || 0) + 1 }).eq('id', id);
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, loadArticle]);
 
   const canEdit = !!article && (isAdmin || article.created_by === user?.id);
 
@@ -123,18 +155,24 @@ export default function WikiArticle() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('wiki')}
         </Button>
-        {canEdit && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate(`/wiki/${article.id}/edit`)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t('edit')}
-            </Button>
-            <Button variant="outline" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="h-4 w-4 mr-2 text-destructive" />
-              {t('delete')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+            <History className="h-4 w-4 mr-2" />
+            {t('wikiVersionHistory')}
+          </Button>
+          {canEdit && (
+            <>
+              <Button variant="outline" onClick={() => navigate(`/wiki/${article.id}/edit`)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t('edit')}
+              </Button>
+              <Button variant="outline" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                {t('delete')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div>
@@ -166,6 +204,35 @@ export default function WikiArticle() {
           <WikiContent content={article.content} />
         </CardContent>
       </Card>
+
+      {related.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Link2 className="h-4 w-4" />
+              {t('wikiRelated')}
+            </div>
+            <div className="space-y-2">
+              {related.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => navigate(`/wiki/${r.id}`)}
+                  className="w-full text-left rounded-lg border p-3 hover:bg-muted transition-colors"
+                >
+                  <p className="text-sm font-medium">{r.title}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {r.tags.slice(0, 5).map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">#{tag}</Badge>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <Card>
         <CardContent className="p-4 space-y-4">
@@ -226,6 +293,15 @@ export default function WikiArticle() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <WikiVersionHistory
+        articleId={article.id}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        profiles={profiles}
+        canRestore={canEdit}
+        onRestored={() => loadArticle(false)}
+      />
     </div>
   );
 }

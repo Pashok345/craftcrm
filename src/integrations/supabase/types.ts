@@ -2569,6 +2569,53 @@ export type Database = {
           },
         ]
       }
+      wiki_article_versions: {
+        Row: {
+          article_id: string
+          category_id: string | null
+          content: string
+          created_at: string
+          edited_by: string | null
+          excerpt: string | null
+          id: string
+          tags: string[]
+          title: string
+          version_number: number
+        }
+        Insert: {
+          article_id: string
+          category_id?: string | null
+          content: string
+          created_at?: string
+          edited_by?: string | null
+          excerpt?: string | null
+          id?: string
+          tags?: string[]
+          title: string
+          version_number: number
+        }
+        Update: {
+          article_id?: string
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          edited_by?: string | null
+          excerpt?: string | null
+          id?: string
+          tags?: string[]
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wiki_articles: {
         Row: {
           category_id: string | null

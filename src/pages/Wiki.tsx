@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { WikiAiSearch } from '@/components/wiki/WikiAiSearch';
 
 interface WikiCategory {
   id: string;
@@ -176,6 +177,8 @@ export default function Wiki() {
           className="pl-9"
         />
       </div>
+
+      <WikiAiSearch />
 
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
         <aside className="space-y-1">
