@@ -52,6 +52,8 @@ export default function WikiArticle() {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [related, setRelated] = useState<{ id: string; title: string; tags: string[] }[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const loadComments = async (articleId: string) => {
     const { data } = await supabase
@@ -62,31 +64,60 @@ export default function WikiArticle() {
     setComments((data || []) as Comment[]);
   };
 
+  const loadRelated = useCallback(async (art: Article) => {
+    const { data } = await supabase
+      .from('wiki_articles')
+      .select('id,title,tags,category_id')
+      .eq('is_published', true)
+      .neq('id', art.id)
+      .limit(100);
+    const scored = (data || [])
+      .map((a: any) => {
+        const shared = (a.tags || []).filter((tag: string) => art.tags.includes(tag)).length;
+        const sameCat = art.category_id && a.category_id === art.category_id ? 1 : 0;
+        return { a, score: shared * 3 + sameCat };
+      })
+      .filter((s) => s.score > 0)
+      .sort((x, y) => y.score - x.score)
+      .slice(0, 5)
+      .map((s) => ({ id: s.a.id, title: s.a.title, tags: s.a.tags || [] }));
+    setRelated(scored);
+  }, []);
+
+  const loadArticle = useCallback(async (countView: boolean) => {
+    if (!id) return;
+    const { data } = await supabase.from('wiki_articles').select('*').eq('id', id).maybeSingle();
+    if (!data) {
+      setLoading(false);
+      return;
+    }
+    setArticle(data as Article);
+    setCategoryName(null);
+    if (data.category_id) {
+      const { data: cat } = await supabase
+        .from('wiki_categories')
+        .select('name,color')
+        .eq('id', data.category_id)
+        .maybeSingle();
+      if (cat) setCategoryName(cat as { name: string; color: string });
+    }
+    await loadRelated(data as Article);
+    if (countView) {
+      await supabase.from('wiki_articles').update({ views_count: (data.views_count || 0) + 1 }).eq('id', id);
+    }
+  }, [id, loadRelated]);
+
   useEffect(() => {
     if (!id) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from('wiki_articles').select('*').eq('id', id).maybeSingle();
-      if (!data) {
-        setLoading(false);
-        return;
-      }
-      setArticle(data as Article);
-      if (data.category_id) {
-        const { data: cat } = await supabase
-          .from('wiki_categories')
-          .select('name,color')
-          .eq('id', data.category_id)
-          .maybeSingle();
-        if (cat) setCategoryName(cat as { name: string; color: string });
-      }
+      await loadArticle(true);
       await loadComments(id);
       const { data: profs } = await supabase.from('profiles').select('user_id,name');
       setProfiles(Object.fromEntries((profs || []).map((p) => [p.user_id, p.name])));
-      await supabase.from('wiki_articles').update({ views_count: (data.views_count || 0) + 1 }).eq('id', id);
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, loadArticle]);
 
   const canEdit = !!article && (isAdmin || article.created_by === user?.id);
 
