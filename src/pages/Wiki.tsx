@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { WikiAiSearch } from '@/components/wiki/WikiAiSearch';
 
 interface WikiCategory {
   id: string;
