@@ -155,18 +155,24 @@ export default function WikiArticle() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('wiki')}
         </Button>
-        {canEdit && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate(`/wiki/${article.id}/edit`)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t('edit')}
-            </Button>
-            <Button variant="outline" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="h-4 w-4 mr-2 text-destructive" />
-              {t('delete')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+            <History className="h-4 w-4 mr-2" />
+            {t('wikiVersionHistory')}
+          </Button>
+          {canEdit && (
+            <>
+              <Button variant="outline" onClick={() => navigate(`/wiki/${article.id}/edit`)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t('edit')}
+              </Button>
+              <Button variant="outline" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                {t('delete')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div>
