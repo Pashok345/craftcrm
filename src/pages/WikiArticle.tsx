@@ -293,6 +293,15 @@ export default function WikiArticle() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <WikiVersionHistory
+        articleId={article.id}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        profiles={profiles}
+        canRestore={canEdit}
+        onRestored={() => loadArticle(false)}
+      />
     </div>
   );
 }
