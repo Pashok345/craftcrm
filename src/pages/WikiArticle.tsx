@@ -205,6 +205,35 @@ export default function WikiArticle() {
         </CardContent>
       </Card>
 
+      {related.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Link2 className="h-4 w-4" />
+              {t('wikiRelated')}
+            </div>
+            <div className="space-y-2">
+              {related.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => navigate(`/wiki/${r.id}`)}
+                  className="w-full text-left rounded-lg border p-3 hover:bg-muted transition-colors"
+                >
+                  <p className="text-sm font-medium">{r.title}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {r.tags.slice(0, 5).map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">#{tag}</Badge>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+
       <Card>
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center gap-2 font-medium">
