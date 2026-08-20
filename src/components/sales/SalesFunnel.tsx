@@ -65,9 +65,27 @@ export const SalesFunnel = () => {
         .update({ stage_id: stageId })
         .eq('id', dealId);
       if (error) throw error;
+
+      if (user) {
+        const deal = deals.find((d) => d.id === dealId);
+        const created = await runDealStageAutomations({
+          dealId,
+          dealTitle: deal?.title || '',
+          stageId,
+          stageName: stages.find((s) => s.id === stageId)?.name,
+          userId: user.id,
+        });
+        return created;
+      }
+      return 0;
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      if (created) {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast({ title: `${t('automationRan')}: ${created}` });
+      }
+
     },
   });
 
