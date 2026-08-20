@@ -1,4 +1,6 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Link2 } from 'lucide-react';
 import { Task, STATUS_COLORS, STATUS_LABELS } from '@/types/database';
 import { format, differenceInDays, startOfDay, addDays, parseISO, isBefore } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -11,8 +13,30 @@ interface GanttChartProps {
   onTaskClick: (task: Task) => void;
 }
 
+interface Dependency {
+  id: string;
+  task_id: string;
+  depends_on_task_id: string;
+}
+
+const ROW_HEIGHT = 64;
+
 export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [dependencies, setDependencies] = useState<Dependency[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    supabase
+      .from('task_dependencies')
+      .select('id, task_id, depends_on_task_id')
+      .then(({ data }) => {
+        if (alive) setDependencies((data as Dependency[]) || []);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
   const today = startOfDay(new Date());
   
   const { tasksWithDeadlines, dateRange, dayWidth, totalDays, todayIndex } = useMemo(() => {
