@@ -1,6 +1,5 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Link2 } from 'lucide-react';
 import { Task, STATUS_COLORS, STATUS_LABELS } from '@/types/database';
 import { format, differenceInDays, startOfDay, addDays, parseISO, isBefore } from 'date-fns';
 import { ru } from 'date-fns/locale';
