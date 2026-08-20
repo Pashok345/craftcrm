@@ -60,6 +60,34 @@ const ACTION_COLORS: Record<string, string> = {
   DELETE: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
+/** Route for the section/record that was changed */
+const recordLink = (table: string, recordId: string | null): string | null => {
+  const byRecord: Record<string, (id: string) => string> = {
+    tasks: (id) => `/tasks/${id}`,
+    projects: (id) => `/projects/${id}`,
+    deals: (id) => `/sales/deals/${id}`,
+    wiki_articles: (id) => `/wiki/${id}`,
+    process_runs: (id) => `/processes/runs/${id}`,
+    processes: (id) => `/processes/${id}/edit`,
+  };
+  const bySection: Record<string, string> = {
+    clients: '/sales',
+    invoices: '/sales',
+    proposals: '/sales',
+    processes: '/processes',
+    process_runs: '/processes',
+    meetings: '/meetings',
+    user_roles: '/users',
+    tasks: '/tasks',
+    projects: '/projects',
+    deals: '/sales',
+    wiki_articles: '/wiki',
+  };
+  if (recordId && byRecord[table]) return byRecord[table](recordId);
+  return bySection[table] || null;
+};
+
+
 export default function AuditLog() {
   const { t } = useLanguage();
   const { can, loading: roleLoading } = usePermissions();
