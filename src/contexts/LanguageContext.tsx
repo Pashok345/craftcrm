@@ -830,7 +830,24 @@ export const translations: Translations = {
   deleteDeal: { ru: 'Удалить сделку', en: 'Delete deal', uk: 'Видалити угоду' },
   deleteDealConfirm: { ru: 'Вы уверены, что хотите удалить эту сделку?', en: 'Are you sure you want to delete this deal?', uk: 'Ви впевнені, що хочете видалити цю угоду?' },
   
+  // Deal automations
+  dealAutomations: { ru: 'Автоматизации', en: 'Automations', uk: 'Автоматизації' },
+  dealAutomationsDescription: { ru: 'Автоматическое создание задач при переходе сделки на этап', en: 'Automatically create tasks when a deal enters a stage', uk: 'Автоматичне створення завдань при переході угоди на етап' },
+  automationStage: { ru: 'Этап сделки', en: 'Deal stage', uk: 'Етап угоди' },
+  automationTaskTitle: { ru: 'Название задачи', en: 'Task title', uk: 'Назва завдання' },
+  automationTaskDescription: { ru: 'Описание задачи', en: 'Task description', uk: 'Опис завдання' },
+  automationAssignee: { ru: 'Исполнитель', en: 'Assignee', uk: 'Виконавець' },
+  automationDueInDays: { ru: 'Срок, дней', en: 'Due in days', uk: 'Термін, днів' },
+  automationAdd: { ru: 'Добавить правило', en: 'Add rule', uk: 'Додати правило' },
+  automationEmpty: { ru: 'Правил пока нет', en: 'No rules yet', uk: 'Правил поки немає' },
+  automationCreated: { ru: 'Правило создано', en: 'Rule created', uk: 'Правило створено' },
+  automationDeleted: { ru: 'Правило удалено', en: 'Rule deleted', uk: 'Правило видалено' },
+  automationRan: { ru: 'Создано задач по автоматизации', en: 'Tasks created by automation', uk: 'Створено завдань за автоматизацією' },
+  automationHint: { ru: 'Используйте {deal} в названии — подставится название сделки', en: 'Use {deal} in the title — it will be replaced with the deal name', uk: 'Використовуйте {deal} у назві — підставиться назва угоди' },
+  openRecord: { ru: 'Открыть раздел', en: 'Open section', uk: 'Відкрити розділ' },
+
   // Stages
+
   addStage: { ru: 'Добавить этап', en: 'Add stage', uk: 'Додати етап' },
   editStage: { ru: 'Редактировать этап', en: 'Edit stage', uk: 'Редагувати етап' },
   stageName: { ru: 'Название этапа', en: 'Stage name', uk: 'Назва етапу' },

@@ -363,6 +363,50 @@ export type Database = {
           },
         ]
       }
+      deal_stage_automations: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          created_by: string
+          due_in_days: number
+          id: string
+          is_active: boolean
+          stage_id: string
+          task_description: string | null
+          task_title: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by: string
+          due_in_days?: number
+          id?: string
+          is_active?: boolean
+          stage_id: string
+          task_description?: string | null
+          task_title: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string
+          due_in_days?: number
+          id?: string
+          is_active?: boolean
+          stage_id?: string
+          task_description?: string | null
+          task_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_automations_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "deal_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_stages: {
         Row: {
           color: string

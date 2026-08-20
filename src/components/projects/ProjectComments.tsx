@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { MentionInput, parseMentionedUserIds } from '@/components/ui/mention-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Trash2, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -63,14 +63,39 @@ export const ProjectComments = ({ projectId }: { projectId: string }) => {
   const send = async () => {
     if (!text.trim() || !user) return;
     setSending(true);
+    const content = text.trim();
     const { error } = await supabase.from('project_comments').insert({
       project_id: projectId,
       user_id: user.id,
-      content: text.trim(),
+      content,
     });
     if (error) {
       toast({ title: 'Помилка', description: error.message, variant: 'destructive' });
     } else {
+      // @mentions -> notifications
+      try {
+        const [{ data: allProfiles }, { data: project }, { data: me }] = await Promise.all([
+          supabase.from('public_profiles').select('user_id, name'),
+          supabase.from('projects').select('title').eq('id', projectId).maybeSingle(),
+          supabase.from('public_profiles').select('name').eq('user_id', user.id).maybeSingle(),
+        ]);
+        const mentioned = parseMentionedUserIds(
+          content,
+          (allProfiles || []) as { user_id: string; name: string }[],
+          user.id
+        );
+        for (const uid of mentioned) {
+          await supabase.from('notifications').insert({
+            user_id: uid,
+            type: 'mention',
+            title: project?.title || 'Проект',
+            message: `${me?.name || 'Користувач'}: "${content.slice(0, 80)}"`,
+            created_by: user.id,
+          });
+        }
+      } catch (e) {
+        console.error('mention notify failed', e);
+      }
       setText('');
       load();
     }
@@ -127,14 +152,13 @@ export const ProjectComments = ({ projectId }: { projectId: string }) => {
       )}
 
       <div className="flex gap-2 pt-2 border-t">
-        <Textarea
+        <MentionInput
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Написати коментар..."
+          onChange={setText}
+          onSubmit={send}
+          variant="textarea"
+          placeholder="Написати коментар... (@ — згадати колегу)"
           className="min-h-[60px] resize-none"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
-          }}
         />
         <Button onClick={send} disabled={!text.trim() || sending} className="self-end">
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

@@ -10,12 +10,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical } from 'lucide-react';
+import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { StageDialog } from './StageDialog';
+import { DealAutomationsDialog } from './DealAutomationsDialog';
+import { runDealStageAutomations } from '@/lib/dealAutomation';
 import type { Deal, DealStage, Client } from '@/types/sales';
+
 
 export const SalesFunnel = () => {
   const { user } = useAuth();
@@ -24,7 +27,9 @@ export const SalesFunnel = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [automationsOpen, setAutomationsOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<DealStage | undefined>(undefined);
+
 
   const { data: stages = [] } = useQuery({
     queryKey: ['deal-stages'],
@@ -60,9 +65,27 @@ export const SalesFunnel = () => {
         .update({ stage_id: stageId })
         .eq('id', dealId);
       if (error) throw error;
+
+      if (user) {
+        const deal = deals.find((d) => d.id === dealId);
+        const created = await runDealStageAutomations({
+          dealId,
+          dealTitle: deal?.title || '',
+          stageId,
+          stageName: stages.find((s) => s.id === stageId)?.name,
+          userId: user.id,
+        });
+        return created;
+      }
+      return 0;
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      if (created) {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        toast({ title: `${t('automationRan')}: ${created}` });
+      }
+
     },
   });
 
@@ -149,6 +172,10 @@ export const SalesFunnel = () => {
               { key: 'created_at', header: t('createdAt'), value: (d) => d.created_at?.slice(0, 10) || '' },
             ]}
           />
+          <Button variant="outline" onClick={() => setAutomationsOpen(true)}>
+            <Zap className="h-4 w-4 mr-2" />
+            {t('dealAutomations')}
+          </Button>
           <Button variant="outline" onClick={() => {
             setSelectedStage(undefined);
             setStageDialogOpen(true);
@@ -156,6 +183,7 @@ export const SalesFunnel = () => {
             <Settings2 className="h-4 w-4 mr-2" />
             {t('addStage')}
           </Button>
+
           <Button onClick={() => navigate('/sales/deals/new')}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addDeal')}
@@ -307,6 +335,13 @@ export const SalesFunnel = () => {
         stage={selectedStage}
         maxSortOrder={Math.max(...stages.map(s => s.sort_order), 0)}
       />
+
+      <DealAutomationsDialog
+        open={automationsOpen}
+        onOpenChange={setAutomationsOpen}
+        stages={stages}
+      />
+
     </div>
   );
 };

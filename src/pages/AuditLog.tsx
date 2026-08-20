@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DataPagination } from '@/components/ui/data-pagination';
-import { ScrollText, Search, Loader2, Eye } from 'lucide-react';
+import { ScrollText, Search, Loader2, Eye, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -59,6 +59,34 @@ const ACTION_COLORS: Record<string, string> = {
   UPDATE: 'bg-primary/10 text-primary border-primary/30',
   DELETE: 'bg-destructive/10 text-destructive border-destructive/30',
 };
+
+/** Route for the section/record that was changed */
+const recordLink = (table: string, recordId: string | null): string | null => {
+  const byRecord: Record<string, (id: string) => string> = {
+    tasks: (id) => `/tasks/${id}`,
+    projects: (id) => `/projects/${id}`,
+    deals: (id) => `/sales/deals/${id}`,
+    wiki_articles: (id) => `/wiki/${id}`,
+    process_runs: (id) => `/processes/runs/${id}`,
+    processes: (id) => `/processes/${id}/edit`,
+  };
+  const bySection: Record<string, string> = {
+    clients: '/sales',
+    invoices: '/sales',
+    proposals: '/sales',
+    processes: '/processes',
+    process_runs: '/processes',
+    meetings: '/meetings',
+    user_roles: '/users',
+    tasks: '/tasks',
+    projects: '/projects',
+    deals: '/sales',
+    wiki_articles: '/wiki',
+  };
+  if (recordId && byRecord[table]) return byRecord[table](recordId);
+  return bySection[table] || null;
+};
+
 
 export default function AuditLog() {
   const { t } = useLanguage();
@@ -223,6 +251,13 @@ export default function AuditLog() {
                     {e.changed_fields?.length ? ` · ${e.changed_fields.join(', ')}` : ''}
                   </p>
                 </div>
+                {recordLink(e.table_name, e.action === 'DELETE' ? null : e.record_id) && (
+                  <Button variant="ghost" size="icon" asChild aria-label={t('openRecord')} title={t('openRecord')}>
+                    <Link to={recordLink(e.table_name, e.action === 'DELETE' ? null : e.record_id)!}>
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" onClick={() => setSelected(e)} aria-label={t('auditDetails')}>
                   <Eye className="h-4 w-4" />
                 </Button>
@@ -258,7 +293,18 @@ export default function AuditLog() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('auditSection')}</p>
-                  <p className="font-medium">{tableLabel(selected.table_name)}</p>
+                  {recordLink(selected.table_name, selected.action === 'DELETE' ? null : selected.record_id) ? (
+                    <Link
+                      to={recordLink(selected.table_name, selected.action === 'DELETE' ? null : selected.record_id)!}
+                      className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                      onClick={() => setSelected(null)}
+                    >
+                      {tableLabel(selected.table_name)}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  ) : (
+                    <p className="font-medium">{tableLabel(selected.table_name)}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('auditRecord')}</p>
