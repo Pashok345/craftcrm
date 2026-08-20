@@ -10,12 +10,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical } from 'lucide-react';
+import { Plus, DollarSign, Calendar, Building2, Settings2, GripVertical, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { StageDialog } from './StageDialog';
+import { DealAutomationsDialog } from './DealAutomationsDialog';
+import { runDealStageAutomations } from '@/lib/dealAutomation';
 import type { Deal, DealStage, Client } from '@/types/sales';
+
 
 export const SalesFunnel = () => {
   const { user } = useAuth();
