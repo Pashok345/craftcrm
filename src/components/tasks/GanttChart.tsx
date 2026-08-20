@@ -111,6 +111,25 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
     };
   };
 
+  const rowIndex = new Map(tasksWithDeadlines.map((t, i) => [t.id, i]));
+
+  const visibleDeps = dependencies
+    .map((dep) => {
+      const fromIdx = rowIndex.get(dep.depends_on_task_id);
+      const toIdx = rowIndex.get(dep.task_id);
+      if (fromIdx === undefined || toIdx === undefined) return null;
+      const from = getTaskPosition(tasksWithDeadlines[fromIdx]);
+      const to = getTaskPosition(tasksWithDeadlines[toIdx]);
+      const x1 = from.left + from.width + 2;
+      const y1 = fromIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const x2 = to.left;
+      const y2 = toIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const mid = x2 > x1 + 16 ? (x1 + x2) / 2 : x1 + 16;
+      const path = `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`;
+      return { id: dep.id, path };
+    })
+    .filter(Boolean) as { id: string; path: string }[];
+
   const isToday = (date: Date) => {
     return date.getTime() === today.getTime();
   };
@@ -149,7 +168,7 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
           </div>
 
           {/* Task rows */}
-          <div>
+          <div className="relative">
             {tasksWithDeadlines.map((task) => {
               const position = getTaskPosition(task);
               
@@ -164,7 +183,7 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
                       {STATUS_LABELS[task.status]}
                     </Badge>
                   </div>
-                  <div className="relative h-16 flex items-center" style={{ width: totalDays * dayWidth }}>
+                  <div className="relative flex items-center" style={{ width: totalDays * dayWidth, height: ROW_HEIGHT }}>
                     {/* Grid lines */}
                     {days.map((day, i) => (
                       <div
@@ -206,6 +225,32 @@ export const GanttChart = ({ tasks, onTaskClick }: GanttChartProps) => {
                 </div>
               );
             })}
+
+            {/* Dependency arrows */}
+            {visibleDeps.length > 0 && (
+              <div className="absolute inset-0 flex pointer-events-none">
+                <div className="w-40 sm:w-64 shrink-0" />
+                <svg width={totalDays * dayWidth} height={tasksWithDeadlines.length * ROW_HEIGHT} className="overflow-visible">
+                  <defs>
+                    <marker id="gantt-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="hsl(var(--primary))" />
+                    </marker>
+                  </defs>
+                  {visibleDeps.map((d) => (
+                    <path
+                      key={d.id}
+                      d={d.path}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      markerEnd="url(#gantt-arrow)"
+                      opacity={0.8}
+                    />
+                  ))}
+                </svg>
+              </div>
+            )}
           </div>
         </div>
         <ScrollBar orientation="horizontal" />
