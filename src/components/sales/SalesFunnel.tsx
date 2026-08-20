@@ -172,6 +172,10 @@ export const SalesFunnel = () => {
               { key: 'created_at', header: t('createdAt'), value: (d) => d.created_at?.slice(0, 10) || '' },
             ]}
           />
+          <Button variant="outline" onClick={() => setAutomationsOpen(true)}>
+            <Zap className="h-4 w-4 mr-2" />
+            {t('dealAutomations')}
+          </Button>
           <Button variant="outline" onClick={() => {
             setSelectedStage(undefined);
             setStageDialogOpen(true);
@@ -179,6 +183,7 @@ export const SalesFunnel = () => {
             <Settings2 className="h-4 w-4 mr-2" />
             {t('addStage')}
           </Button>
+
           <Button onClick={() => navigate('/sales/deals/new')}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addDeal')}
