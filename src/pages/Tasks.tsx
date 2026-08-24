@@ -113,6 +113,30 @@ const Tasks = () => {
     return () => window.removeEventListener(KANBAN_CHANGED_EVENT, handler);
   }, []);
 
+  // Realtime sync: tasks, assignees, kanban placements, comments
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = (fn: () => void) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(fn, 400);
+    };
+
+    const channel = supabase
+      .channel('tasks-page-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => schedule(() => fetchTasks()))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kanban_task_placements' }, () => schedule(() => { refetchKanban(); }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, () => schedule(fetchTaskAssignees))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, () => schedule(fetchCommentInfo))
+      .subscribe();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+
+
   // Load manual order from sessionStorage
   useEffect(() => {
     const saved = sessionStorage.getItem('tasks-manual-order');
