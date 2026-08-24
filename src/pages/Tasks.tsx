@@ -188,23 +188,30 @@ const Tasks = () => {
   };
 
   const fetchTaskAssignees = async () => {
-    const { data, error } = await supabase.from('task_assignees').select('task_id, user_id, role, profiles(*)');
+    const [{ data, error }, { data: profilesData }] = await Promise.all([
+      supabase.from('task_assignees').select('task_id, user_id, role'),
+      supabase.from('profiles').select('*'),
+    ]);
     if (!error && data) {
+      const byUser: Record<string, Profile> = {};
+      ((profilesData || []) as unknown as Profile[]).forEach((p) => { byUser[p.user_id] = p; });
       const map: Record<string, Profile[]> = {};
       const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
-      (data as unknown as (TaskAssignee & { role: string })[]).forEach((item) => {
+      (data as unknown as { task_id: string; user_id: string; role: string }[]).forEach((item) => {
         if (!map[item.task_id]) map[item.task_id] = [];
         if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
-        if (item.profiles) {
-          map[item.task_id].push(item.profiles);
-          if (item.role === 'executor') roleMap[item.task_id].executors.push(item.profiles);
-          else if (item.role === 'observer') roleMap[item.task_id].observers.push(item.profiles);
+        const profile = byUser[item.user_id];
+        if (profile) {
+          map[item.task_id].push(profile);
+          if (item.role === 'executor') roleMap[item.task_id].executors.push(profile);
+          else if (item.role === 'observer') roleMap[item.task_id].observers.push(profile);
         }
       });
       setTaskAssignees(map);
       setTaskAssigneeRoles(roleMap);
     }
   };
+
 
   const fetchCommentInfo = async () => {
     const { data } = await supabase.from('task_comments').select('task_id, created_at');
