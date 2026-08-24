@@ -219,7 +219,7 @@ const Tasks = () => {
         if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
         const profile = byUser[item.user_id];
         if (profile) {
-          map[item.task_id].push(profile);
+          if (!map[item.task_id].some((x) => x.user_id === profile.user_id)) map[item.task_id].push(profile);
           if (item.role === 'executor') roleMap[item.task_id].executors.push(profile);
           else if (item.role === 'observer') roleMap[item.task_id].observers.push(profile);
         }
