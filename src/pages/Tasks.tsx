@@ -99,7 +99,6 @@ const Tasks = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
-    fetchCreators();
     fetchTaskTags();
     fetchTaskAssignees();
     fetchCommentInfo();
@@ -219,6 +218,7 @@ const Tasks = () => {
     if (!error && data) {
       const byUser: Record<string, Profile> = {};
       ((profilesData || []) as unknown as Profile[]).forEach((p) => { byUser[p.user_id] = p; });
+      setCreators(byUser);
       const map: Record<string, Profile[]> = {};
       const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
       (data as unknown as { task_id: string; user_id: string; role: string }[]).forEach((item) => {
