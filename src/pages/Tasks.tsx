@@ -99,7 +99,6 @@ const Tasks = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
-    fetchCreators();
     fetchTaskTags();
     fetchTaskAssignees();
     fetchCommentInfo();
@@ -112,6 +111,30 @@ const Tasks = () => {
     window.addEventListener(KANBAN_CHANGED_EVENT, handler);
     return () => window.removeEventListener(KANBAN_CHANGED_EVENT, handler);
   }, []);
+
+  // Realtime sync: tasks, assignees, kanban placements, comments
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = (fn: () => void) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(fn, 400);
+    };
+
+    const channel = supabase
+      .channel('tasks-page-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => schedule(() => fetchTasks()))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kanban_task_placements' }, () => schedule(() => { refetchKanban(); }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, () => schedule(fetchTaskAssignees))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, () => schedule(fetchCommentInfo))
+      .subscribe();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+
 
   // Load manual order from sessionStorage
   useEffect(() => {
@@ -130,7 +153,9 @@ const Tasks = () => {
         .order('created_at', { ascending: false })
         .range(0, limit - 1);
       if (error) throw error;
-      setTasks((data || []) as unknown as Task[]);
+      const rows = (data || []) as unknown as Task[];
+      const seen = new Set<string>();
+      setTasks(rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true))));
       setTotalTasks(count || 0);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -143,15 +168,6 @@ const Tasks = () => {
     const next = taskLimit + TASKS_PAGE_SIZE;
     setTaskLimit(next);
     fetchTasks(next);
-  };
-
-  const fetchCreators = async () => {
-    const { data, error } = await supabase.from('profiles').select('*');
-    if (!error && data) {
-      const map: Record<string, Profile> = {};
-      (data as Profile[]).forEach((p) => { map[p.user_id] = p; });
-      setCreators(map);
-    }
   };
 
   const fetchProjects = async () => {
@@ -195,6 +211,7 @@ const Tasks = () => {
     if (!error && data) {
       const byUser: Record<string, Profile> = {};
       ((profilesData || []) as unknown as Profile[]).forEach((p) => { byUser[p.user_id] = p; });
+      setCreators(byUser);
       const map: Record<string, Profile[]> = {};
       const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
       (data as unknown as { task_id: string; user_id: string; role: string }[]).forEach((item) => {
@@ -202,7 +219,7 @@ const Tasks = () => {
         if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
         const profile = byUser[item.user_id];
         if (profile) {
-          map[item.task_id].push(profile);
+          if (!map[item.task_id].some((x) => x.user_id === profile.user_id)) map[item.task_id].push(profile);
           if (item.role === 'executor') roleMap[item.task_id].executors.push(profile);
           else if (item.role === 'observer') roleMap[item.task_id].observers.push(profile);
         }
