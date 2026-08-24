@@ -168,15 +168,6 @@ const Tasks = () => {
     fetchTasks(next);
   };
 
-  const fetchCreators = async () => {
-    const { data, error } = await supabase.from('profiles').select('*');
-    if (!error && data) {
-      const map: Record<string, Profile> = {};
-      (data as Profile[]).forEach((p) => { map[p.user_id] = p; });
-      setCreators(map);
-    }
-  };
-
   const fetchProjects = async () => {
     const { data, error } = await supabase.from('projects').select('*');
     if (!error && data) {
