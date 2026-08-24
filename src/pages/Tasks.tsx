@@ -153,7 +153,9 @@ const Tasks = () => {
         .order('created_at', { ascending: false })
         .range(0, limit - 1);
       if (error) throw error;
-      setTasks((data || []) as unknown as Task[]);
+      const rows = (data || []) as unknown as Task[];
+      const seen = new Set<string>();
+      setTasks(rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true))));
       setTotalTasks(count || 0);
     } catch (error) {
       console.error('Error fetching tasks:', error);
