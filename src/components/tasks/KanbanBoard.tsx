@@ -342,12 +342,17 @@ export const KanbanBoard = ({ tasks, projects, onTaskClick, onTaskUpdate, select
   }, [tasks, selectedAssigneeIds, taskAssignees]);
 
   const getBaseTasksForColumn = useCallback((column: Column): Task[] => {
+    const seen = new Set<string>();
     return filteredTasks.filter(task => {
+      if (seen.has(task.id)) return false;
       const overriddenColumnId = taskColumnOverrides[task.id];
-      if (overriddenColumnId) return overriddenColumnId === column.id;
-      return task.status === column.status;
+      const belongs = overriddenColumnId ? overriddenColumnId === column.id : task.status === column.status;
+      if (!belongs) return false;
+      seen.add(task.id);
+      return true;
     });
   }, [filteredTasks, taskColumnOverrides]);
+
 
   // Auto-add new tasks to order
   useEffect(() => {
