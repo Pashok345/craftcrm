@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { WikiContent } from '@/lib/wikiMarkdown';
-import { WikiEditor } from '@/components/wiki/WikiEditor';
+const WikiEditor = lazy(() => import('@/components/wiki/WikiEditor').then((m) => ({ default: m.WikiEditor })));
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -186,7 +186,9 @@ export default function WikiArticleEdit() {
           <TabsTrigger value="preview">{t('wikiPreview')}</TabsTrigger>
         </TabsList>
         <TabsContent value="write">
-          <WikiEditor value={content} onChange={setContent} rows={20} placeholder={t('wikiContentPlaceholder')} />
+          <Suspense fallback={<div className="h-64 rounded-md bg-muted animate-pulse" />}>
+            <WikiEditor value={content} onChange={setContent} rows={20} placeholder={t('wikiContentPlaceholder')} />
+          </Suspense>
           <p className="text-xs text-muted-foreground mt-2">{t('wikiMarkdownHint')}</p>
         </TabsContent>
         <TabsContent value="preview">
