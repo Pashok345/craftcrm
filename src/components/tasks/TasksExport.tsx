@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { Task, Project } from '@/types/database';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
+import { loadPdfLib, loadExcelLib } from '@/utils/pdfLib';
 import { format, parseISO } from 'date-fns';
 import { loadRobotoFontBase64 } from '@/utils/fontBase64';
 
@@ -51,6 +49,7 @@ export const TasksExport = ({ tasks, projects }: Props) => {
   const exportPDF = async () => {
     setExporting(true);
     try {
+      const { jsPDF, autoTable } = await loadPdfLib();
       const doc = new jsPDF();
       
       // Load font
@@ -96,6 +95,7 @@ export const TasksExport = ({ tasks, projects }: Props) => {
   const exportExcel = async () => {
     setExporting(true);
     try {
+      const ExcelJS = await loadExcelLib();
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet(t('tasksTitle'));
 
