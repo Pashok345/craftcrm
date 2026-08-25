@@ -34,8 +34,7 @@ import {
 import { Pencil, Trash2, Download, Building2, Calendar, Mail, MessageSquare, Paperclip, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { loadPdfLib } from '@/utils/pdfLib';
 import { ProposalDialog } from './ProposalDialog';
 import { ProposalCommentsSection } from './ProposalCommentsSection';
 import { ProposalAttachmentsSection } from './ProposalAttachmentsSection';
@@ -85,7 +84,8 @@ export const ProposalDetailDialog = ({
   };
 
   const generatePDF = async () => {
-    const doc = new jsPDF();
+    const { jsPDF, autoTable } = await loadPdfLib();
+  const doc = new jsPDF();
     
     // Load font for Cyrillic support
     try {

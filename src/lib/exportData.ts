@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+import { loadExcelLib } from '@/utils/pdfLib';
 
 export interface ExportColumn<T> {
   key: string;
@@ -37,6 +37,7 @@ export const exportRowsToExcel = async <T,>(
   rows: T[],
   sheetName = 'Data'
 ) => {
+  const ExcelJS = await loadExcelLib();
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(sheetName.slice(0, 30));
   ws.columns = columns.map((c) => ({ header: c.header, key: c.key, width: 24 }));

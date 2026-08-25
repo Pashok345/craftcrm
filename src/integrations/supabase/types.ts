@@ -2836,6 +2836,28 @@ export type Database = {
         Args: { _user_id: string; _whiteboard_id: string }
         Returns: boolean
       }
+      project_attachment_counts: {
+        Args: never
+        Returns: {
+          attachment_count: number
+          project_id: string
+        }[]
+      }
+      task_comment_stats: {
+        Args: never
+        Returns: {
+          comment_count: number
+          last_comment_at: string
+          task_id: string
+        }[]
+      }
+      wiki_category_counts: {
+        Args: never
+        Returns: {
+          article_count: number
+          category_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

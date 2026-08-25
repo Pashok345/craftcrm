@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DataPagination } from '@/components/ui/data-pagination';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,15 +50,12 @@ export default function Wiki() {
   const isAdmin = can('wiki.manage');
   const { user } = useAuth();
 
-  const [categories, setCategories] = useState<WikiCategory[]>([]);
-  const [articles, setArticles] = useState<WikiArticle[]>([]);
-  const [totalArticles, setTotalArticles] = useState(0);
-  const [categoryIds, setCategoryIds] = useState<(string | null)[]>([]);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | 'all'>('all');
-  const [loading, setLoading] = useState(true);
 
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<WikiCategory | null>(null);
@@ -66,48 +64,79 @@ export default function Wiki() {
   const [catColor, setCatColor] = useState(COLORS[0]);
   const [deleteCat, setDeleteCat] = useState<WikiCategory | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-
-    let query = supabase
-      .from('wiki_articles')
-      .select(
-        'id,title,excerpt,category_id,tags,is_published,is_pinned,views_count,created_by,updated_at',
-        { count: 'exact' }
-      )
-      .order('is_pinned', { ascending: false })
-      .order('updated_at', { ascending: false });
-
-    if (activeCategory !== 'all') query = query.eq('category_id', activeCategory);
-    const q = search.trim().replace(/[%,()]/g, '');
-    if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
-
-    const [{ data: cats }, artsRes, { data: catRows }] = await Promise.all([
-      supabase.from('wiki_categories').select('*').order('sort_order').order('name'),
-      query.range((page - 1) * pageSize, page * pageSize - 1),
-      supabase.from('wiki_articles').select('category_id'),
-    ]);
-
-    setCategories((cats || []) as WikiCategory[]);
-    setArticles((artsRes.data || []) as WikiArticle[]);
-    setTotalArticles(artsRes.count || 0);
-    setCategoryIds(((catRows || []) as { category_id: string | null }[]).map((r) => r.category_id));
-    setLoading(false);
-  };
-
   useEffect(() => {
-    const timer = setTimeout(load, search ? 300 : 0);
+    const timer = setTimeout(() => setDebouncedSearch(search), search ? 300 : 0);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, activeCategory]);
+  }, [search]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, activeCategory, pageSize]);
+  }, [debouncedSearch, activeCategory, pageSize]);
+
+  const categoriesQuery = useQuery({
+    queryKey: ['wiki-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('wiki_categories')
+        .select('*')
+        .order('sort_order')
+        .order('name');
+      if (error) throw error;
+      return (data || []) as WikiCategory[];
+    },
+  });
+  const categories = categoriesQuery.data ?? [];
+
+  // Counts come from a server-side aggregate instead of loading every article row
+  const countsQuery = useQuery({
+    queryKey: ['wiki-category-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('wiki_category_counts');
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      ((data || []) as { category_id: string | null; article_count: number }[]).forEach((row) => {
+        if (row.category_id) map[row.category_id] = Number(row.article_count);
+      });
+      return map;
+    },
+  });
+
+  const articlesQuery = useQuery({
+    queryKey: ['wiki-articles', debouncedSearch, activeCategory, page, pageSize],
+    queryFn: async () => {
+      let query = supabase
+        .from('wiki_articles')
+        .select(
+          'id,title,excerpt,category_id,tags,is_published,is_pinned,views_count,created_by,updated_at',
+          { count: 'exact' }
+        )
+        .order('is_pinned', { ascending: false })
+        .order('updated_at', { ascending: false });
+
+      if (activeCategory !== 'all') query = query.eq('category_id', activeCategory);
+      const q = debouncedSearch.trim().replace(/[%,()]/g, '');
+      if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`);
+
+      const { data, error, count } = await query.range((page - 1) * pageSize, page * pageSize - 1);
+      if (error) throw error;
+      return { rows: (data || []) as WikiArticle[], count: count || 0 };
+    },
+    placeholderData: (prev) => prev,
+  });
+
+  const articles = articlesQuery.data?.rows ?? [];
+  const totalArticles = articlesQuery.data?.count ?? 0;
+  const loading = articlesQuery.isLoading || categoriesQuery.isLoading;
+
+  const load = () => {
+    queryClient.invalidateQueries({ queryKey: ['wiki-categories'] });
+    queryClient.invalidateQueries({ queryKey: ['wiki-articles'] });
+    queryClient.invalidateQueries({ queryKey: ['wiki-category-counts'] });
+  };
 
   const filtered = articles;
 
-  const countFor = (id: string) => categoryIds.filter((c) => c === id).length;
+  const countFor = (id: string) => countsQuery.data?.[id] ?? 0;
 
   const openCatDialog = (cat?: WikiCategory) => {
     setEditingCat(cat || null);

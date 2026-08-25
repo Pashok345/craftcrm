@@ -1,5 +1,4 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { loadPdfLib } from '@/utils/pdfLib';
 import { format } from 'date-fns';
 import { loadRobotoFontBase64 } from '@/utils/fontBase64';
 import { formatMoney } from '@/types/finance';
@@ -30,6 +29,7 @@ export const generateInvoicePdf = async (
   company: DocumentTemplateCompany,
   labels: PdfLabels,
 ) => {
+  const { jsPDF, autoTable } = await loadPdfLib();
   const doc = new jsPDF();
   try {
     const fontBase64 = await loadRobotoFontBase64();

@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { Task, Project, Profile, Tag } from '@/types/database';
 
 import { TaskTemplatesDialog } from '@/components/tasks/TaskTemplatesDialog';
 import { TasksExport } from '@/components/tasks/TasksExport';
-import { GanttChart } from '@/components/tasks/GanttChart';
+const GanttChart = lazy(() => import('@/components/tasks/GanttChart').then((m) => ({ default: m.GanttChart })));
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { TaskFilters, TaskFiltersState, emptyFilters, hasActiveFilters } from '@/components/tasks/TaskFilters';
 import { useTaskShortcuts } from '@/hooks/useTaskShortcuts';
@@ -52,19 +53,10 @@ const Tasks = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { columns, getColumnForTask, moveTaskToColumn, refetch: refetchKanban } = useKanbanColumns();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const queryClient = useQueryClient();
   const [taskLimit, setTaskLimit] = useState(TASKS_PAGE_SIZE);
-  const [totalTasks, setTotalTasks] = useState(0);
   const [manualOrder, setManualOrder] = useState<string[]>([]);
-  const [projects, setProjects] = useState<Record<string, Project>>({});
-  const [creators, setCreators] = useState<Record<string, Profile>>({});
-  const [taskTags, setTaskTags] = useState<Record<string, Tag[]>>({});
-  const [taskAssignees, setTaskAssignees] = useState<Record<string, Profile[]>>({});
-  const [taskAssigneeRoles, setTaskAssigneeRoles] = useState<Record<string, { executors: Profile[]; observers: Profile[] }>>({});
-  const [commentInfo, setCommentInfo] = useState<Record<string, { count: number; lastAt: string | null }>>({});
-  const [lastReads, setLastReads] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  
+
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tasks-active-tab') || 'list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,21 +88,146 @@ const Tasks = () => {
     done: 3,
   };
 
+  // ---------- Data (React Query) ----------
+  const tasksQuery = useQuery({
+    queryKey: ['tasks', taskLimit],
+    queryFn: async () => {
+      const { data, error, count } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(0, taskLimit - 1);
+      if (error) throw error;
+      const rows = (data || []) as unknown as Task[];
+      const seen = new Set<string>();
+      return {
+        rows: rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true))),
+        count: count || 0,
+      };
+    },
+    placeholderData: (prev) => prev,
+  });
+
+  const tasks = tasksQuery.data?.rows ?? [];
+  const totalTasks = tasksQuery.data?.count ?? 0;
+  const loading = tasksQuery.isLoading;
+
+  const projectsQuery = useQuery({
+    queryKey: ['tasks-projects-map'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('projects').select('*');
+      if (error) throw error;
+      const map: Record<string, Project> = {};
+      (data as unknown as Project[]).forEach((p) => { map[p.id] = p; });
+      return map;
+    },
+  });
+  const projects = useMemo(() => projectsQuery.data ?? {}, [projectsQuery.data]);
+
+  const taskTagsQuery = useQuery({
+    queryKey: ['task-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('task_tags').select('task_id, tag_id, tags(*)');
+      if (error) throw error;
+      const map: Record<string, Tag[]> = {};
+      (data as unknown as (TaskTagJoin & { task_id: string })[]).forEach((item) => {
+        if (!map[item.task_id]) map[item.task_id] = [];
+        if (item.tags) map[item.task_id].push(item.tags);
+      });
+      return map;
+    },
+  });
+  const taskTags = useMemo(() => taskTagsQuery.data ?? {}, [taskTagsQuery.data]);
+
+  const assigneesQuery = useQuery({
+    queryKey: ['task-assignees'],
+    queryFn: async () => {
+      const [{ data, error }, { data: profilesData }] = await Promise.all([
+        supabase.from('task_assignees').select('task_id, user_id, role'),
+        supabase.from('profiles').select('*'),
+      ]);
+      if (error) throw error;
+      const byUser: Record<string, Profile> = {};
+      ((profilesData || []) as unknown as Profile[]).forEach((p) => { byUser[p.user_id] = p; });
+      const map: Record<string, Profile[]> = {};
+      const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
+      ((data || []) as unknown as { task_id: string; user_id: string; role: string }[]).forEach((item) => {
+        if (!map[item.task_id]) map[item.task_id] = [];
+        if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
+        const profile = byUser[item.user_id];
+        if (profile) {
+          if (!map[item.task_id].some((x) => x.user_id === profile.user_id)) map[item.task_id].push(profile);
+          if (item.role === 'executor') roleMap[item.task_id].executors.push(profile);
+          else if (item.role === 'observer') roleMap[item.task_id].observers.push(profile);
+        }
+      });
+      return { byUser, map, roleMap };
+    },
+  });
+  const creators = useMemo(() => assigneesQuery.data?.byUser ?? {}, [assigneesQuery.data]);
+  const taskAssignees = useMemo(() => assigneesQuery.data?.map ?? {}, [assigneesQuery.data]);
+  const taskAssigneeRoles = useMemo(() => assigneesQuery.data?.roleMap ?? {}, [assigneesQuery.data]);
+
+  // Aggregated on the server (RPC) instead of downloading every comment row
+  const commentInfoQuery = useQuery({
+    queryKey: ['task-comment-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('task_comment_stats');
+      if (error) throw error;
+      const map: Record<string, { count: number; lastAt: string | null }> = {};
+      ((data || []) as { task_id: string; comment_count: number; last_comment_at: string | null }[]).forEach((row) => {
+        map[row.task_id] = { count: Number(row.comment_count), lastAt: row.last_comment_at };
+      });
+      return map;
+    },
+  });
+  const commentInfo = useMemo(() => commentInfoQuery.data ?? {}, [commentInfoQuery.data]);
+
+  const lastReadsQuery = useQuery({
+    queryKey: ['task-last-reads', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('task_comment_reads')
+        .select('task_id, last_read_at')
+        .eq('user_id', user!.id);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      ((data || []) as { task_id: string; last_read_at: string }[]).forEach((row) => { map[row.task_id] = row.last_read_at; });
+      return map;
+    },
+  });
+  const lastReads = useMemo(() => lastReadsQuery.data ?? {}, [lastReadsQuery.data]);
+
+  const fetchTasks = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  }, [queryClient]);
+
+  const loadMoreTasks = () => setTaskLimit((prev) => prev + TASKS_PAGE_SIZE);
+
+  // Default to last worked project on first load
   useEffect(() => {
-    fetchTasks();
-    fetchProjects();
-    fetchTaskTags();
-    fetchTaskAssignees();
-    fetchCommentInfo();
-    fetchLastReads();
-  }, []);
+    if (!projectsQuery.data) return;
+    const map = projectsQuery.data;
+    const stored = localStorage.getItem('tasks-selected-project');
+    if (!stored) {
+      const lastProject = localStorage.getItem('lastProjectId');
+      if (lastProject && map[lastProject]) {
+        setSelectedProjectId(lastProject);
+        localStorage.setItem('tasks-selected-project', lastProject);
+      }
+    } else if (stored !== 'all' && stored !== 'none' && !map[stored]) {
+      setSelectedProjectId('all');
+      localStorage.setItem('tasks-selected-project', 'all');
+    }
+  }, [projectsQuery.data]);
 
   // Refetch tasks when kanban placements change (cross-view sync)
   useEffect(() => {
     const handler = () => fetchTasks();
     window.addEventListener(KANBAN_CHANGED_EVENT, handler);
     return () => window.removeEventListener(KANBAN_CHANGED_EVENT, handler);
-  }, []);
+  }, [fetchTasks]);
 
   // Realtime sync: tasks, assignees, kanban placements, comments
   useEffect(() => {
@@ -122,135 +239,25 @@ const Tasks = () => {
 
     const channel = supabase
       .channel('tasks-page-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => schedule(() => fetchTasks()))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => schedule(() => queryClient.invalidateQueries({ queryKey: ['tasks'] })))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'kanban_task_placements' }, () => schedule(() => { refetchKanban(); }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, () => schedule(fetchTaskAssignees))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, () => schedule(fetchCommentInfo))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, () => schedule(() => queryClient.invalidateQueries({ queryKey: ['task-assignees'] })))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, () => schedule(() => queryClient.invalidateQueries({ queryKey: ['task-comment-stats'] })))
       .subscribe();
 
     return () => {
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
-  }, []);
-
-
+  }, [queryClient, refetchKanban]);
 
   // Load manual order from sessionStorage
   useEffect(() => {
     const saved = sessionStorage.getItem('tasks-manual-order');
     if (saved) {
-      try { setManualOrder(JSON.parse(saved)); } catch {}
+      try { setManualOrder(JSON.parse(saved)); } catch { /* ignore */ }
     }
   }, []);
-
-  const fetchTasks = async (limitArg?: unknown) => {
-    const limit = typeof limitArg === 'number' ? limitArg : taskLimit;
-    try {
-      const { data, error, count } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(0, limit - 1);
-      if (error) throw error;
-      const rows = (data || []) as unknown as Task[];
-      const seen = new Set<string>();
-      setTasks(rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true))));
-      setTotalTasks(count || 0);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMoreTasks = () => {
-    const next = taskLimit + TASKS_PAGE_SIZE;
-    setTaskLimit(next);
-    fetchTasks(next);
-  };
-
-  const fetchProjects = async () => {
-    const { data, error } = await supabase.from('projects').select('*');
-    if (!error && data) {
-      const map: Record<string, Project> = {};
-      (data as unknown as Project[]).forEach((p) => { map[p.id] = p; });
-      setProjects(map);
-      // Default to last worked project on first load
-      const stored = localStorage.getItem('tasks-selected-project');
-      if (!stored) {
-        const lastProject = localStorage.getItem('lastProjectId');
-        if (lastProject && map[lastProject]) {
-          setSelectedProjectId(lastProject);
-          localStorage.setItem('tasks-selected-project', lastProject);
-        }
-      } else if (stored !== 'all' && stored !== 'none' && !map[stored]) {
-        setSelectedProjectId('all');
-        localStorage.setItem('tasks-selected-project', 'all');
-      }
-    }
-  };
-
-  const fetchTaskTags = async () => {
-    const { data, error } = await supabase.from('task_tags').select('task_id, tag_id, tags(*)');
-    if (!error && data) {
-      const map: Record<string, Tag[]> = {};
-      (data as unknown as (TaskTagJoin & { task_id: string })[]).forEach((item) => {
-        if (!map[item.task_id]) map[item.task_id] = [];
-        if (item.tags) map[item.task_id].push(item.tags);
-      });
-      setTaskTags(map);
-    }
-  };
-
-  const fetchTaskAssignees = async () => {
-    const [{ data, error }, { data: profilesData }] = await Promise.all([
-      supabase.from('task_assignees').select('task_id, user_id, role'),
-      supabase.from('profiles').select('*'),
-    ]);
-    if (!error && data) {
-      const byUser: Record<string, Profile> = {};
-      ((profilesData || []) as unknown as Profile[]).forEach((p) => { byUser[p.user_id] = p; });
-      setCreators(byUser);
-      const map: Record<string, Profile[]> = {};
-      const roleMap: Record<string, { executors: Profile[]; observers: Profile[] }> = {};
-      (data as unknown as { task_id: string; user_id: string; role: string }[]).forEach((item) => {
-        if (!map[item.task_id]) map[item.task_id] = [];
-        if (!roleMap[item.task_id]) roleMap[item.task_id] = { executors: [], observers: [] };
-        const profile = byUser[item.user_id];
-        if (profile) {
-          if (!map[item.task_id].some((x) => x.user_id === profile.user_id)) map[item.task_id].push(profile);
-          if (item.role === 'executor') roleMap[item.task_id].executors.push(profile);
-          else if (item.role === 'observer') roleMap[item.task_id].observers.push(profile);
-        }
-      });
-      setTaskAssignees(map);
-      setTaskAssigneeRoles(roleMap);
-    }
-  };
-
-
-  const fetchCommentInfo = async () => {
-    const { data } = await supabase.from('task_comments').select('task_id, created_at');
-    if (!data) return;
-    const map: Record<string, { count: number; lastAt: string | null }> = {};
-    data.forEach((row: any) => {
-      const cur = map[row.task_id] || { count: 0, lastAt: null };
-      cur.count += 1;
-      if (!cur.lastAt || row.created_at > cur.lastAt) cur.lastAt = row.created_at;
-      map[row.task_id] = cur;
-    });
-    setCommentInfo(map);
-  };
-
-  const fetchLastReads = async () => {
-    if (!user) return;
-    const { data } = await supabase.from('task_comment_reads').select('task_id, last_read_at').eq('user_id', user.id);
-    if (!data) return;
-    const map: Record<string, string> = {};
-    data.forEach((row: any) => { map[row.task_id] = row.last_read_at; });
-    setLastReads(map);
-  };
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -940,7 +947,9 @@ const Tasks = () => {
         <TabsContent value="gantt" className="mt-4">
           <Card>
             <CardContent className="p-4">
-              <GanttChart tasks={filteredAndSortedTasks} onTaskClick={handleTaskClick} />
+              <Suspense fallback={<div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <GanttChart tasks={filteredAndSortedTasks} onTaskClick={handleTaskClick} />
+              </Suspense>
             </CardContent>
           </Card>
         </TabsContent>

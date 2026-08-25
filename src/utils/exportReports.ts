@@ -1,6 +1,5 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
+import type { jsPDF as JsPdfType } from 'jspdf';
+import { loadPdfLib, loadExcelLib } from './pdfLib';
 import { Task, Project, Profile, TimeEntry } from '@/types/database';
 import { format, parseISO } from 'date-fns';
 import { loadRobotoFontBase64 } from './fontBase64';
@@ -56,7 +55,7 @@ interface ExportData {
 }
 
 // Setup PDF with Cyrillic font support
-const setupPdfWithFont = async (doc: jsPDF): Promise<void> => {
+const setupPdfWithFont = async (doc: InstanceType<typeof JsPdfType>): Promise<void> => {
   try {
     const fontBase64 = await loadRobotoFontBase64();
     doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
@@ -68,6 +67,7 @@ const setupPdfWithFont = async (doc: jsPDF): Promise<void> => {
 };
 
 export const exportToPDF = async (data: ExportData) => {
+  const { jsPDF, autoTable } = await loadPdfLib();
   const doc = new jsPDF();
   const { translations: t } = data;
   
@@ -262,6 +262,7 @@ export const exportToPDF = async (data: ExportData) => {
 };
 
 export const exportToExcel = async (data: ExportData) => {
+  const ExcelJS = await loadExcelLib();
   const { translations: t } = data;
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'CRM Pro';

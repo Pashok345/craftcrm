@@ -1,5 +1,6 @@
 import { ExportMenu } from '@/components/common/ExportMenu';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { DataPagination } from '@/components/ui/data-pagination';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,15 +24,11 @@ const RECENT_MAX = 4;
 const Projects = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [totalProjects, setTotalProjects] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-  const [, setManagers] = useState<Record<string, Profile>>({});
-  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [recentIds, setRecentIds] = useState<string[]>(() => {
@@ -52,34 +49,17 @@ const Projects = () => {
   };
 
   useEffect(() => {
-    fetchManagers();
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(fetchProjects, searchQuery ? 300 : 0);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), searchQuery ? 300 : 0);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, searchQuery, sortBy, statusFilter]);
+  }, [searchQuery]);
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, sortBy, statusFilter, pageSize]);
+  }, [debouncedSearch, sortBy, statusFilter, pageSize]);
 
-  useEffect(() => {
-    if (recentIds.length === 0) { setRecentProjects([]); return; }
-    supabase
-      .from('projects')
-      .select('*')
-      .in('id', recentIds)
-      .then(({ data }) => {
-        const map = new Map(((data || []) as unknown as Project[]).map((p) => [p.id, p]));
-        setRecentProjects(recentIds.map((id) => map.get(id)).filter(Boolean) as Project[]);
-      });
-  }, [recentIds]);
-
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
+  const projectsQuery = useQuery({
+    queryKey: ['projects-list', debouncedSearch, sortBy, statusFilter, page, pageSize],
+    queryFn: async () => {
       let query = supabase.from('projects').select('*', { count: 'exact' });
 
       if (statusFilter === 'active') {
@@ -88,7 +68,7 @@ const Projects = () => {
         query = query.in('status', ['completed', 'cancelled']);
       }
 
-      const q = searchQuery.trim().replace(/[%,()]/g, '');
+      const q = debouncedSearch.trim().replace(/[%,()]/g, '');
       if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
 
       if (sortBy === 'name') query = query.order('title', { ascending: true });
@@ -97,23 +77,26 @@ const Projects = () => {
 
       const { data, error, count } = await query.range((page - 1) * pageSize, page * pageSize - 1);
       if (error) throw error;
-      setProjects((data || []) as unknown as Project[]);
-      setTotalProjects(count || 0);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { rows: (data || []) as unknown as Project[], count: count || 0 };
+    },
+    placeholderData: (prev) => prev,
+  });
 
-  const fetchManagers = async () => {
-    const { data, error } = await supabase.from('profiles').select('*');
-    if (!error && data) {
-      const map: Record<string, Profile> = {};
-      (data as Profile[]).forEach((p) => { map[p.user_id] = p; });
-      setManagers(map);
-    }
-  };
+  const projects = projectsQuery.data?.rows ?? [];
+  const totalProjects = projectsQuery.data?.count ?? 0;
+  const loading = projectsQuery.isLoading;
+
+  const recentQuery = useQuery({
+    queryKey: ['projects-recent', recentIds],
+    enabled: recentIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('projects').select('*').in('id', recentIds);
+      if (error) throw error;
+      const map = new Map(((data || []) as unknown as Project[]).map((pr) => [pr.id, pr]));
+      return recentIds.map((id) => map.get(id)).filter(Boolean) as Project[];
+    },
+  });
+  const recentProjects = recentQuery.data ?? [];
 
   const openProject = (id: string) => {
     try {
