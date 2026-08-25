@@ -947,7 +947,9 @@ const Tasks = () => {
         <TabsContent value="gantt" className="mt-4">
           <Card>
             <CardContent className="p-4">
-              <GanttChart tasks={filteredAndSortedTasks} onTaskClick={handleTaskClick} />
+              <Suspense fallback={<div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <GanttChart tasks={filteredAndSortedTasks} onTaskClick={handleTaskClick} />
+              </Suspense>
             </CardContent>
           </Card>
         </TabsContent>
