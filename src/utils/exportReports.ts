@@ -1,3 +1,4 @@
+import type { jsPDF as JsPdfType } from 'jspdf';
 import { loadPdfLib, loadExcelLib } from './pdfLib';
 import { Task, Project, Profile, TimeEntry } from '@/types/database';
 import { format, parseISO } from 'date-fns';
@@ -54,7 +55,7 @@ interface ExportData {
 }
 
 // Setup PDF with Cyrillic font support
-const setupPdfWithFont = async (doc: jsPDF): Promise<void> => {
+const setupPdfWithFont = async (doc: InstanceType<typeof JsPdfType>): Promise<void> => {
   try {
     const fontBase64 = await loadRobotoFontBase64();
     doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
