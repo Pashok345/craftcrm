@@ -197,15 +197,31 @@ export const ClientDetailDialog = ({
             )}
           </div>
 
-          <Tabs defaultValue="interactions" className="w-full">
-            <TabsList className="w-full">
+          <Tabs defaultValue="timeline" className="w-full">
+            <TabsList className="w-full flex-wrap h-auto">
+              <TabsTrigger value="timeline" className="flex-1">
+                {t('communicationTimeline')}
+              </TabsTrigger>
               <TabsTrigger value="interactions" className="flex-1">
                 {t('interactionHistory')}
               </TabsTrigger>
               <TabsTrigger value="deals" className="flex-1">
                 {t('clientDeals')} ({deals.length})
               </TabsTrigger>
+              <TabsTrigger value="ai" className="flex-1 gap-1">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="timeline" className="mt-4">
+              <CommunicationTimeline clientId={client.id} />
+            </TabsContent>
+
+            <TabsContent value="ai" className="mt-4">
+              <AIInsightsPanel entityType="client" entityId={client.id} />
+            </TabsContent>
+
 
             <TabsContent value="interactions" className="space-y-4 mt-4">
               <div className="flex gap-2">
