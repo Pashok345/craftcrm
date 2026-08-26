@@ -45,7 +45,7 @@ export const AIInsightsPanel = ({ entityType, entityId }: Props) => {
   const applyFields = useMutation({
     mutationFn: async () => {
       if (entityType !== 'deal' || !insights) return;
-      const patch: Record<string, unknown> = {};
+      const patch: { probability?: number; expected_close_date?: string } = {};
       if (insights.win_probability != null) patch.probability = insights.win_probability;
       const d = insights.suggested_fields?.expected_close_date;
       if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) patch.expected_close_date = d;
