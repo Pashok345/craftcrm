@@ -33,10 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Mail, Phone, Building2, Briefcase, Pencil, Trash2, Plus, FileText, Users, Phone as PhoneIcon } from 'lucide-react';
+import { Mail, Phone, Building2, Briefcase, Pencil, Trash2, Plus, FileText, Users, Sparkles, Phone as PhoneIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ClientDialog } from './ClientDialog';
+import { CommunicationTimeline } from './CommunicationTimeline';
+import { AIInsightsPanel } from './AIInsightsPanel';
 import type { Client, ClientInteraction, Deal } from '@/types/sales';
 import { INTERACTION_TYPES } from '@/types/sales';
 
@@ -197,15 +199,31 @@ export const ClientDetailDialog = ({
             )}
           </div>
 
-          <Tabs defaultValue="interactions" className="w-full">
-            <TabsList className="w-full">
+          <Tabs defaultValue="timeline" className="w-full">
+            <TabsList className="w-full flex-wrap h-auto">
+              <TabsTrigger value="timeline" className="flex-1">
+                {t('communicationTimeline')}
+              </TabsTrigger>
               <TabsTrigger value="interactions" className="flex-1">
                 {t('interactionHistory')}
               </TabsTrigger>
               <TabsTrigger value="deals" className="flex-1">
                 {t('clientDeals')} ({deals.length})
               </TabsTrigger>
+              <TabsTrigger value="ai" className="flex-1 gap-1">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="timeline" className="mt-4">
+              <CommunicationTimeline clientId={client.id} />
+            </TabsContent>
+
+            <TabsContent value="ai" className="mt-4">
+              <AIInsightsPanel entityType="client" entityId={client.id} />
+            </TabsContent>
+
 
             <TabsContent value="interactions" className="space-y-4 mt-4">
               <div className="flex gap-2">

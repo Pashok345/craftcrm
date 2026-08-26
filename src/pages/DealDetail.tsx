@@ -18,10 +18,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Building2, Calendar, DollarSign, Pencil, Percent, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Building2, Calendar, DollarSign, Pencil, Percent, Sparkles, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { DealCommentsSection } from '@/components/sales/DealCommentsSection';
+import { CommunicationTimeline } from '@/components/sales/CommunicationTimeline';
+import { AIInsightsPanel } from '@/components/sales/AIInsightsPanel';
 import type { Client, Deal, DealStage } from '@/types/sales';
 
 const DealDetail = () => {
@@ -171,9 +174,28 @@ const DealDetail = () => {
 
           <Separator />
 
-          <DealCommentsSection dealId={deal.id} />
+          <Tabs defaultValue="comments">
+            <TabsList className="flex-wrap h-auto">
+              <TabsTrigger value="comments">{t('comments')}</TabsTrigger>
+              <TabsTrigger value="timeline">{t('communicationTimeline')}</TabsTrigger>
+              <TabsTrigger value="ai" className="gap-1">
+                <Sparkles className="h-3.5 w-3.5" />
+                {t('aiAssistantSales')}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="comments" className="mt-4">
+              <DealCommentsSection dealId={deal.id} />
+            </TabsContent>
+            <TabsContent value="timeline" className="mt-4">
+              <CommunicationTimeline dealId={deal.id} clientId={deal.client_id || undefined} />
+            </TabsContent>
+            <TabsContent value="ai" className="mt-4">
+              <AIInsightsPanel entityType="deal" entityId={deal.id} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
+
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
