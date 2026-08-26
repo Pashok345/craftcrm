@@ -33,10 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Mail, Phone, Building2, Briefcase, Pencil, Trash2, Plus, FileText, Users, Phone as PhoneIcon } from 'lucide-react';
+import { Mail, Phone, Building2, Briefcase, Pencil, Trash2, Plus, FileText, Users, Sparkles, Phone as PhoneIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ClientDialog } from './ClientDialog';
+import { CommunicationTimeline } from './CommunicationTimeline';
+import { AIInsightsPanel } from './AIInsightsPanel';
 import type { Client, ClientInteraction, Deal } from '@/types/sales';
 import { INTERACTION_TYPES } from '@/types/sales';
 
