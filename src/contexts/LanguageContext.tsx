@@ -731,6 +731,7 @@ export const translations: Translations = {
   invitationResent: { ru: 'Приглашение отправлено повторно', en: 'Invitation resent', uk: 'Запрошення надіслано повторно' },
   profileUpdated: { ru: 'Профиль обновлён', en: 'Profile updated', uk: 'Профіль оновлено' },
   administrator: { ru: 'Администратор', en: 'Administrator', uk: 'Адміністратор' },
+  admin: { ru: 'Администратор', en: 'Admin', uk: 'Адміністратор' },
   invitationSentBadge: { ru: 'Отправлено приглашение', en: 'Invitation sent', uk: 'Надіслано запрошення' },
   verified: { ru: 'Верифицирован', en: 'Verified', uk: 'Верифіковано' },
   notVerified: { ru: 'Не верифицирован', en: 'Not verified', uk: 'Не верифіковано' },
