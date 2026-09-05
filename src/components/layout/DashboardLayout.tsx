@@ -3,6 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { AIAssistant } from '@/components/ai/AIAssistant';
+import { RemindersWatcher } from '@/components/common/RemindersWatcher';
 import { useAuth } from '@/hooks/useAuth';
 
 export const DashboardLayout = () => {
