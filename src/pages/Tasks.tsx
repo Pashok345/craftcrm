@@ -440,6 +440,42 @@ const Tasks = () => {
     toast.success(t('statusUpdated'));
   }, [moveTaskToColumn, user, t, tasksByColumn, columns, sortBy]);
 
+  // ---------- Bulk actions ----------
+  const toggleSelected = useCallback((taskId: string) => {
+    setSelectedIds((prev) => (prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]));
+  }, []);
+
+  const bulkMoveToColumn = async (column: KanbanColumn) => {
+    setBulkBusy(true);
+    try {
+      for (const id of selectedIds) {
+        const task = tasks.find((t) => t.id === id);
+        if (task) await moveTaskToColumn(task, column, user?.id);
+      }
+      setSelectedIds([]);
+      fetchTasks();
+      refetchKanban();
+      toast.success(t('statusUpdated'));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    setBulkBusy(true);
+    try {
+      const { error } = await supabase.from('tasks').delete().in('id', selectedIds);
+      if (error) throw error;
+      setSelectedIds([]);
+      fetchTasks();
+      toast.success(t('taskDeleted'));
+    } catch {
+      toast.error(t('error'));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   // DnD handler — supports moving between column groups
   const handleDragStart = () => { setIsDragging(true); };
 
@@ -613,6 +649,58 @@ const Tasks = () => {
           </Select>
         </div>
       </div>
+
+      {/* Quick filters */}
+      <div className="flex flex-wrap gap-2">
+        {([
+          { id: 'mine', label: t('myTasksFilter') },
+          { id: 'today', label: t('todayFilter') },
+          { id: 'overdue', label: t('overdueFilter') },
+          { id: 'pinned', label: t('pinnedFilter') },
+        ] as { id: QuickFilter; label: string }[]).map((q) => (
+          <Button
+            key={q.id}
+            size="sm"
+            variant={quickFilter === q.id ? 'default' : 'outline'}
+            className="rounded-full h-8"
+            onClick={() => setQuickFilter(quickFilter === q.id ? 'none' : q.id)}
+          >
+            {q.id === 'pinned' && <Pin className="h-3.5 w-3.5 mr-1" />}
+            {q.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky top-2 z-30 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2 shadow-md animate-fade-in">
+          <Badge variant="secondary">{t('selectedCount')}: {selectedIds.length}</Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" disabled={bulkBusy} className="gap-1">
+                {t('status')}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {columns.map((c) => (
+                <DropdownMenuItem key={c.id} className="gap-2" onClick={() => bulkMoveToColumn(c)}>
+                  <span className="inline-block w-3 h-3 rounded-sm border border-border/50" style={{ backgroundColor: c.color }} />
+                  {getColumnTitleI18n(c, t)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" variant="destructive" disabled={bulkBusy} onClick={bulkDelete} className="gap-1">
+            <Trash2 className="h-4 w-4" />
+            {t('delete')}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="gap-1 ml-auto">
+            <XIcon className="h-4 w-4" />
+            {t('cancel')}
+          </Button>
+        </div>
+      )}
 
       {/* Active filter badges */}
       {hasActiveFilters(filters) && (
@@ -792,14 +880,42 @@ const Tasks = () => {
                                     <CardContent className="p-4">
                                       <div className="flex items-start justify-between gap-4 min-w-0">
                                         <div className="flex items-start gap-2 flex-1 min-w-0">
-                                          <div
-                                            {...provided.dragHandleProps}
-                                            className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary hover:bg-muted/60 rounded p-1 -ml-1 shrink-0 transition-colors"
-                                            onClick={e => e.stopPropagation()}
-                                            title={t('manualSort')}
-                                            aria-label="drag"
-                                          >
-                                            <GripVertical className="h-5 w-5" />
+                                          <div className="mt-1 flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox
+                                              checked={selectedIds.includes(task.id)}
+                                              onCheckedChange={() => toggleSelected(task.id)}
+                                              aria-label={t('selectedCount')}
+                                            />
+                                            <div
+                                              {...provided.dragHandleProps}
+                                              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary hover:bg-muted/60 rounded p-1 transition-colors"
+                                              title={t('manualSort')}
+                                              aria-label="drag"
+                                            >
+                                              <GripVertical className="h-5 w-5" />
+                                            </div>
+                                            <button
+                                              onClick={() => togglePin(task.id)}
+                                              className={cn(
+                                                'rounded p-1 transition-colors hover:bg-muted/60',
+                                                isPinned(task.id) ? 'text-primary' : 'text-muted-foreground/60 hover:text-primary'
+                                              )}
+                                              title={t('pinnedFilter')}
+                                              aria-label={t('pinnedFilter')}
+                                            >
+                                              <Pin className={cn('h-4 w-4', isPinned(task.id) && 'fill-current')} />
+                                            </button>
+                                            <button
+                                              onClick={async () => {
+                                                await navigator.clipboard.writeText(`${window.location.origin}/tasks/${task.id}`);
+                                                toast.success('Ссылка скопирована');
+                                              }}
+                                              className="rounded p-1 text-muted-foreground/60 hover:text-primary hover:bg-muted/60 transition-colors"
+                                              title="Копировать ссылку"
+                                              aria-label="Копировать ссылку"
+                                            >
+                                              <Link2 className="h-4 w-4" />
+                                            </button>
                                           </div>
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 min-w-0">
