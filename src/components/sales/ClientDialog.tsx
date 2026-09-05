@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertTriangle } from 'lucide-react';
 import type { Client } from '@/types/sales';
 
 const AVATAR_COLORS = [
@@ -40,6 +41,24 @@ export const ClientDialog = ({ open, onOpenChange, client }: ClientDialogProps) 
   const [position, setPosition] = useState('');
   const [notes, setNotes] = useState('');
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
+  const [duplicates, setDuplicates] = useState<Client[]>([]);
+
+  // Warn about existing clients with the same email or phone
+  useEffect(() => {
+    const em = email.trim();
+    const ph = phone.trim();
+    if (!open || (!em && !ph)) { setDuplicates([]); return; }
+    const timer = setTimeout(async () => {
+      const filters: string[] = [];
+      if (em) filters.push(`email.eq.${em}`);
+      if (ph) filters.push(`phone.eq.${ph}`);
+      let query = supabase.from('clients').select('*').or(filters.join(',')).limit(5);
+      if (client) query = query.neq('id', client.id);
+      const { data } = await query;
+      setDuplicates((data as Client[]) || []);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [email, phone, open, client]);
 
   useEffect(() => {
     if (client) {
