@@ -19,6 +19,8 @@ export const GlobalSearch = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [recentOpen, setRecentOpen] = useState(false);
+  const { items: recentItems, clear: clearRecent } = useRecentlyViewed();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
