@@ -44,6 +44,7 @@ export const GlobalSearch = () => {
       }
       if (e.key === 'Escape') {
         setOpen(false);
+        setRecentOpen(false);
         if (document.activeElement === inputRef.current) inputRef.current?.blur();
       }
     };
@@ -57,6 +58,7 @@ export const GlobalSearch = () => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setRecentOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
