@@ -197,6 +197,12 @@ export const translations: Translations = {
   filterByAssignee: { ru: 'Исполнители', en: 'Assignees', uk: 'Виконавці' },
   noAssignees: { ru: 'Нет исполнителей', en: 'No assignees', uk: 'Немає виконавців' },
   clearFilter: { ru: 'Сбросить фильтр', en: 'Clear filter', uk: 'Скинути фільтр' },
+  recentlyViewed: { ru: 'Недавно открытые', en: 'Recently opened', uk: 'Нещодавно відкриті' },
+  myTasksFilter: { ru: 'Мои задачи', en: 'My tasks', uk: 'Мої завдання' },
+  overdueFilter: { ru: 'Просроченные', en: 'Overdue', uk: 'Прострочені' },
+  todayFilter: { ru: 'На сегодня', en: 'Due today', uk: 'На сьогодні' },
+  pinnedFilter: { ru: 'Закреплённые', en: 'Pinned', uk: 'Закріплені' },
+  selectedCount: { ru: 'Выбрано', en: 'Selected', uk: 'Обрано' },
   
   // Projects
   projectsTitle: { ru: 'Проекты', en: 'Projects', uk: 'Проекти' },
