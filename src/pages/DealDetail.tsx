@@ -25,6 +25,10 @@ import { ru } from 'date-fns/locale';
 import { DealCommentsSection } from '@/components/sales/DealCommentsSection';
 import { CommunicationTimeline } from '@/components/sales/CommunicationTimeline';
 import { AIInsightsPanel } from '@/components/sales/AIInsightsPanel';
+import { CopyLinkButton } from '@/components/common/CopyLinkButton';
+import { ReminderButton } from '@/components/common/ReminderButton';
+import { PersonalNotes } from '@/components/common/PersonalNotes';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import type { Client, Deal, DealStage } from '@/types/sales';
 
 const DealDetail = () => {
@@ -71,6 +75,10 @@ const DealDetail = () => {
     onError: () => toast({ title: t('error'), variant: 'destructive' }),
   });
 
+  useRecentlyViewed(
+    deal ? { type: 'deal' as const, id: deal.id, title: deal.title, path: `/sales/deals/${deal.id}` } : undefined
+  );
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
 
@@ -103,7 +111,9 @@ const DealDetail = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('backToSales')}
         </Button>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ReminderButton entityType="deal" entityId={deal.id} title={deal.title} />
+          <CopyLinkButton path={`/sales/deals/${deal.id}`} compact />
           <Button variant="outline" size="sm" onClick={() => navigate(`/sales/deals/${deal.id}/edit`)}>
             <Pencil className="h-4 w-4 mr-1" />
             {t('edit')}
@@ -196,6 +206,7 @@ const DealDetail = () => {
         </CardContent>
       </Card>
 
+      <PersonalNotes entityType="deal" entityId={deal.id} />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
