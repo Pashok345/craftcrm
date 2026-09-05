@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare, BookOpen, CalendarDays, Workflow, PlayCircle, PenTool, User } from 'lucide-react';
+import { CheckSquare, FolderKanban, Users, DollarSign, Search, Loader2, MessageSquare, BookOpen, CalendarDays, Workflow, PlayCircle, PenTool, User, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 interface SearchResult {
   id: string;
@@ -18,28 +19,46 @@ export const GlobalSearch = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [recentOpen, setRecentOpen] = useState(false);
+  const { items: recentItems, clear: clearRecent } = useRecentlyViewed();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Cmd+K / Ctrl+K shortcut
+  // Cmd+K / Ctrl+K, "/" to focus, Esc to close
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         inputRef.current?.focus();
+        return;
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target as HTMLElement | null;
+        const tag = el?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return;
+        e.preventDefault();
+        inputRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setRecentOpen(false);
+        if (document.activeElement === inputRef.current) inputRef.current?.blur();
       }
     };
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
 
+
   // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setRecentOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -235,7 +254,7 @@ export const GlobalSearch = () => {
           placeholder={t('globalSearchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => { if (results.length > 0) setOpen(true); }}
+          onFocus={() => { setRecentOpen(true); if (results.length > 0) setOpen(true); }}
           className="pl-9 pr-16 h-10 bg-background"
         />
         {loading && (
@@ -243,7 +262,33 @@ export const GlobalSearch = () => {
         )}
       </div>
 
+      {/* Recently opened — shown while the field is empty */}
+      {recentOpen && !query && recentItems.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border bg-popover shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50">
+            <span className="text-xs font-medium text-muted-foreground">{t('recentlyViewed')}</span>
+            <button className="text-xs text-muted-foreground hover:text-foreground" onClick={clearRecent}>
+              {t('clearFilter')}
+            </button>
+          </div>
+          {recentItems.map((item) => {
+            const Icon = iconMap[item.type as keyof typeof iconMap] || Clock;
+            return (
+              <button
+                key={`${item.type}-${item.id}`}
+                onClick={() => { setRecentOpen(false); navigate(item.path); }}
+                className="group w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+              >
+                <Icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground shrink-0" />
+                <span className="truncate">{item.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {open && results.length > 0 && (
+
         <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border bg-popover shadow-lg overflow-hidden max-h-[400px] overflow-y-auto">
           {Object.entries(grouped).map(([type, items]) => {
             const Icon = iconMap[type as keyof typeof iconMap];

@@ -39,6 +39,8 @@ import { ru } from 'date-fns/locale';
 import { ClientDialog } from './ClientDialog';
 import { CommunicationTimeline } from './CommunicationTimeline';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { PersonalNotes } from '@/components/common/PersonalNotes';
+import { ReminderButton } from '@/components/common/ReminderButton';
 import type { Client, ClientInteraction, Deal } from '@/types/sales';
 import { INTERACTION_TYPES } from '@/types/sales';
 
@@ -207,6 +209,9 @@ export const ClientDetailDialog = ({
               <TabsTrigger value="interactions" className="flex-1">
                 {t('interactionHistory')}
               </TabsTrigger>
+              <TabsTrigger value="notes" className="flex-1">
+                Заметки
+              </TabsTrigger>
               <TabsTrigger value="deals" className="flex-1">
                 {t('clientDeals')} ({deals.length})
               </TabsTrigger>
@@ -218,6 +223,11 @@ export const ClientDetailDialog = ({
 
             <TabsContent value="timeline" className="mt-4">
               <CommunicationTimeline clientId={client.id} />
+            </TabsContent>
+
+            <TabsContent value="notes" className="mt-4 space-y-3">
+              <ReminderButton entityType="client" entityId={client.id} title={client.name} />
+              <PersonalNotes entityType="client" entityId={client.id} />
             </TabsContent>
 
             <TabsContent value="ai" className="mt-4">

@@ -29,6 +29,10 @@ import { linkifyText } from '@/utils/linkifyText';
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog';
 import { BlockMenu } from '@/components/tasks/BlockMenu';
 import { ShareButton } from '@/components/share/ShareButton';
+import { CopyLinkButton } from '@/components/common/CopyLinkButton';
+import { ReminderButton } from '@/components/common/ReminderButton';
+import { QuickTimerButton } from '@/components/tasks/QuickTimerButton';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
 import { TimeTracker } from '@/components/tasks/TimeTracker';
@@ -660,6 +664,10 @@ const TaskDetail = () => {
     await handleStatusChange(newStatus);
   };
 
+  useRecentlyViewed(
+    task ? { type: 'task' as const, id: task.id, title: task.title, path: `/tasks/${task.id}` } : undefined
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -709,6 +717,9 @@ const TaskDetail = () => {
             )}
             {t('addFile')}
           </Button>
+          {user && <QuickTimerButton taskId={task.id} userId={user.id} />}
+          <ReminderButton entityType="task" entityId={task.id} title={task.title} />
+          <CopyLinkButton path={`/tasks/${task.id}`} compact />
           <ShareButton type="task" id={task.id} title={task.title} />
           <Button variant="outline" onClick={() => navigate(`/tasks/${task.id}/edit`)}>
             <Pencil className="h-4 w-4 mr-2" />
