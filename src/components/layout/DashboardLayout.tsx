@@ -49,6 +49,8 @@ export const DashboardLayout = () => {
         </main>
       </div>
       <AIAssistant />
+      <RemindersWatcher />
+
     </div>
   );
 };
