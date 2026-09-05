@@ -32,7 +32,6 @@ import { ShareButton } from '@/components/share/ShareButton';
 import { CopyLinkButton } from '@/components/common/CopyLinkButton';
 import { ReminderButton } from '@/components/common/ReminderButton';
 import { QuickTimerButton } from '@/components/tasks/QuickTimerButton';
-import { PersonalNotes } from '@/components/common/PersonalNotes';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 import { AddAssigneeDialog } from '@/components/tasks/AddAssigneeDialog';
@@ -664,6 +663,10 @@ const TaskDetail = () => {
     const newStatus = task.status === 'done' ? 'todo' : 'done';
     await handleStatusChange(newStatus);
   };
+
+  useRecentlyViewed(
+    task ? { type: 'task' as const, id: task.id, title: task.title, path: `/tasks/${task.id}` } : undefined
+  );
 
   if (loading) {
     return (
