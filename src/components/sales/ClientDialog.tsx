@@ -216,6 +216,25 @@ export const ClientDialog = ({ open, onOpenChange, client }: ClientDialogProps) 
             />
           </div>
 
+          {duplicates.length > 0 && (
+            <div className="flex gap-2 rounded-lg border border-crm-warning/40 bg-crm-warning/10 p-3 text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-crm-warning" />
+              <div>
+                <p className="font-medium">Возможные дубли</p>
+                <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                  {duplicates.map((d) => (
+                    <li key={d.id}>
+                      {d.name}
+                      {d.email ? ` · ${d.email}` : ''}
+                      {d.phone ? ` · ${d.phone}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
