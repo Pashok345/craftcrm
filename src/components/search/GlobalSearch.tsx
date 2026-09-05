@@ -23,17 +23,31 @@ export const GlobalSearch = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Cmd+K / Ctrl+K shortcut
+  // Cmd+K / Ctrl+K, "/" to focus, Esc to close
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         inputRef.current?.focus();
+        return;
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target as HTMLElement | null;
+        const tag = el?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return;
+        e.preventDefault();
+        inputRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape') {
+        setOpen(false);
+        if (document.activeElement === inputRef.current) inputRef.current?.blur();
       }
     };
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
+
 
   // Close on click outside
   useEffect(() => {
